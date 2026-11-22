@@ -1236,14 +1236,17 @@ function doPost(e) {
         "gym_long_pull", "gym_shoulder_press", "gym_leg_press", "gym_leg_extension", "gym_leg_curl",
         "gym_inner_thigh", "gym_cable_crunch", "gym_captain_chair", "gym_incline_treadmill"
       ];
+      const ASSET_BASE = (location.hostname.includes("google.com") || location.hostname.includes("googleusercontent.com"))
+        ? "https://loleq209-source.github.io/workout-companion/"
+        : "";
       const m = {};
       ids.forEach(id => {
         m[id] = {
-          full: `assets/guides/${id}_full.webp`,
+          full: `${ASSET_BASE}assets/guides/${id}_full.webp`,
           frames: [
-            `assets/guides/${id}_1.webp`,
-            `assets/guides/${id}_2.webp`,
-            `assets/guides/${id}_3.webp`
+            `${ASSET_BASE}assets/guides/${id}_1.webp`,
+            `${ASSET_BASE}assets/guides/${id}_2.webp`,
+            `${ASSET_BASE}assets/guides/${id}_3.webp`
           ]
         };
       });
