@@ -1,0 +1,22 @@
+{
+  "name": "홈트 & 기구운동 컴패니언",
+  "short_name": "홈트 컴패니언",
+  "description": "체지방 감량 및 복근/근력 완성을 위한 인터랙티브 운동 관리 PWA",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#0b1120",
+  "theme_color": "#0b1120",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "assets/guides/home_kb_squat_1.webp",
+      "sizes": "192x192",
+      "type": "image/webp"
+    },
+    {
+      "src": "assets/guides/home_kb_squat_1.webp",
+      "sizes": "512x512",
+      "type": "image/webp"
+    }
+  ]
+}
