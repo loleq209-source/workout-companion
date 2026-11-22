@@ -1411,23 +1411,46 @@ function doPost(e) {
       const min = String(Math.floor(timer.remaining / 60)).padStart(2, "0");
       const sec = String(timer.remaining % 60).padStart(2, "0");
       const txt = `${min}:${sec}`;
-      document.getElementById("timerDisplay").textContent = txt;
-      document.getElementById("timerStatus").textContent = timer.label;
-  
+      const tDisp = document.getElementById("timerDisplay");
+      if (tDisp) tDisp.textContent = txt;
+      const tStat = document.getElementById("timerStatus");
+      if (tStat) tStat.textContent = timer.label;
+      const tBtn = document.getElementById("timerStartPauseBtn");
+      if (tBtn) tBtn.textContent = timer.running ? "일시정지" : "시작";
+
+      const fTime = document.getElementById("focusRingTime");
+      const fLabel = document.getElementById("focusRingLabel");
+      const fCircle = document.getElementById("focusRingProgress");
+      if (fTime) fTime.textContent = txt;
+      if (fLabel) fLabel.textContent = timer.running ? timer.label : "타이머 대기";
+      if (fCircle) {
+        const circum = 2 * Math.PI * 46;
+        const ratio = timer.duration > 0 ? Math.max(0, Math.min(1, timer.remaining / timer.duration)) : 1;
+        fCircle.style.strokeDasharray = `${circum}`;
+        fCircle.style.strokeDashoffset = `${circum * (1 - ratio)}`;
+      }
+    }
+
     let pendingRpeExId = null;
     function openRpeBottomSheet(exId) {
       const ex = getEffectiveExercises().find(x => x.id === exId);
       if (!ex) return;
       pendingRpeExId = exId;
-      document.getElementById("rpeSheetTitle").textContent = `${ex.name} — 체감 강도는?`;
-      document.getElementById("rpeSheetGrid").innerHTML = FOCUS_RPE_OPTIONS.map(o => `
-        <button type="button" class="fm-rpe-chip" data-pick-rpe="${o.v}">
-          <strong>${o.v}</strong>
-          <span>${o.label}</span>
-        </button>
-      `).join("");
-      document.getElementById("rpeSheetBackdrop").classList.remove("hidden");
+      const titleEl = document.getElementById("rpeSheetTitle");
+      if (titleEl) titleEl.textContent = `${ex.name} — 체감 강도는?`;
+      const gridEl = document.getElementById("rpeSheetGrid");
+      if (gridEl) {
+        gridEl.innerHTML = FOCUS_RPE_OPTIONS.map(o => `
+          <button type="button" class="fm-rpe-chip" data-pick-rpe="${o.v}">
+            <strong>${o.v}</strong>
+            <span>${o.label}</span>
+          </button>
+        `).join("");
+      }
+      const backdropEl = document.getElementById("rpeSheetBackdrop");
+      if (backdropEl) backdropEl.classList.remove("hidden");
     }
+    window.openRpeBottomSheet = openRpeBottomSheet;
 
     function finalizeFinishWithRpe(rpeVal) {
       const ex = getEffectiveExercises().find(x => x.id === pendingRpeExId);
@@ -1442,34 +1465,33 @@ function doPost(e) {
         showToast(rpeVal !== null ? `✅ ${ex.name} 완료 + RPE ${rpeVal} 자동 동기화됨` : `✅ ${ex.name} 완료 · 자동 동기화됨`);
       }
       pendingRpeExId = null;
-      document.getElementById("rpeSheetBackdrop").classList.add("hidden");
+      const backdropEl = document.getElementById("rpeSheetBackdrop");
+      if (backdropEl) backdropEl.classList.add("hidden");
       stopFocusGuidePlay();
       state.focusScreen = "list";
       renderAll();
       window.scrollTo({ top: 0, behavior: "instant" });
     }
+    window.finalizeFinishWithRpe = finalizeFinishWithRpe;
 
-    document.getElementById("rpeSkipBtn").addEventListener("click", () => finalizeFinishWithRpe(null));
-    document.getElementById("rpeSheetBackdrop").addEventListener("click", (e) => {
-      const chip = e.target.closest("[data-pick-rpe]");
-      if (chip) { finalizeFinishWithRpe(Number(chip.dataset.pickRpe)); return; }
-      if (e.target.id === "rpeSheetBackdrop") finalizeFinishWithRpe(null);
-    });
-
-    document.getElementById("timerStartPauseBtn").textContent = timer.running ? "일시정지" : "시작";
-
-      const fTime = document.getElementById("focusRingTime");
-      const fLabel = document.getElementById("focusRingLabel");
-      const fCircle = document.getElementById("focusRingProgress");
-      if (fTime) fTime.textContent = txt;
-      if (fLabel) fLabel.textContent = timer.running ? timer.label : "타이머 대기";
-      if (fCircle) {
-        const circum = 2 * Math.PI * 46;
-        const ratio = timer.duration > 0 ? Math.max(0, Math.min(1, timer.remaining / timer.duration)) : 1;
-        fCircle.style.strokeDasharray = `${circum}`;
-        fCircle.style.strokeDashoffset = `${circum * (1 - ratio)}`;
+    function initRpeSheetEvents() {
+      const skipBtn = document.getElementById("rpeSkipBtn");
+      if (skipBtn && !skipBtn._rpeBound) {
+        skipBtn._rpeBound = true;
+        skipBtn.addEventListener("click", () => finalizeFinishWithRpe(null));
+      }
+      const backdrop = document.getElementById("rpeSheetBackdrop");
+      if (backdrop && !backdrop._rpeBound) {
+        backdrop._rpeBound = true;
+        backdrop.addEventListener("click", (e) => {
+          const chip = e.target.closest("[data-pick-rpe]");
+          if (chip) { finalizeFinishWithRpe(Number(chip.dataset.pickRpe)); return; }
+          if (e.target.id === "rpeSheetBackdrop") finalizeFinishWithRpe(null);
+        });
       }
     }
+    document.addEventListener("DOMContentLoaded", initRpeSheetEvents);
+    initRpeSheetEvents();
 
     function startTimer(seconds, label) {
       clearInterval(timer.intervalId);
