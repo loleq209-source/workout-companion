@@ -1212,17 +1212,17 @@ function doPost(e) {
     ];
 
     const DEFAULT_TODAY_ROUTINE = {
-      date: "2026-11-22",
-      title: "11/22(일) 오늘의 홈트 수행 리스트 (하체·코어 집중 / 약 35분)",
-      note: "※ 다리 상처 보호 해제 반영 · 금/토 상체 분할 후 하체+코어 루틴 (야외 라이딩/로라 Zone 2 병행 가능)",
+      date: "2026-11-23",
+      title: "11/23(월) 오늘의 홈트 수행 리스트 (능동 회복 · 가동성 · 코어 / 약 25분)",
+      note: "※ 일요일 하체·스윙+상체 추가+자전거 누적 피로 회복용 저강도 가동성·코어 루틴 (로라는 Zone 1 리커버리 20~30분만 권장)",
       mode: "home",
       items: [
         { id: "home_smr", label: "폼롤러 근막 이완 (SMR)", sets: 2, reps: "45초", restSec: 30 },
-        { id: "home_goblet_squat", label: "14kg 케틀벨 고블릿 스쿼트", sets: 4, reps: "10회", restSec: 90 },
-        { id: "home_bulgarian", label: "14kg 케틀벨 불가리안 스플릿 스쿼트", sets: 3, reps: "10회", restSec: 60 },
-        { id: "home_kickstand_rdl", label: "14kg 케틀벨 킥스탠드 RDL", sets: 3, reps: "12회", restSec: 60 },
-        { id: "home_kb_swing", label: "14kg 케틀벨 양손 스윙", sets: 3, reps: "15회", restSec: 60 },
+        { id: "home_thoracic_rot", label: "네발기기 흉추 회전 스트레칭", sets: 2, reps: "10회", restSec: 30 },
+        { id: "home_kb_halo", label: "14kg 케틀벨 헤일로", sets: 3, reps: "8회", restSec: 45 },
+        { id: "home_scapular_pullup", label: "치닝디핑 스카풀라 풀업", sets: 3, reps: "10회", restSec: 45 },
         { id: "home_plank_deadbug", label: "포어암 플랭크 & 데드버그", sets: 3, reps: "50초", restSec: 45 },
+        { id: "home_core_twist", label: "14kg 케틀벨 스탠딩 코어 트위스트", sets: 2, reps: "12회", restSec: 45 },
         { id: "home_hip_calf", label: "장요근 & 종아리 스트레칭", sets: 2, reps: "30초", restSec: 30 }
       ]
     };
@@ -1787,6 +1787,50 @@ function doPost(e) {
         setSyncStatusMsg(`❌ 드라이브 저장 실패: ${err.message}`, true);
         if (!silent) showToast("❌ 드라이브 저장 실패: " + err.message);
         return false;
+      }
+    }
+
+        function applyLoadedDriveData(data, silent) {
+      if (!data || !data.ok) {
+        setSyncStatusMsg("❌ 드라이브 데이터가 올바르지 않습니다.", true);
+        if (!silent) showToast("❌ 드라이브 불러오기 실패: 유효하지 않은 데이터");
+        return;
+      }
+
+      if (Array.isArray(data.history)) {
+        state.history = data.history;
+      }
+      if (data.records && typeof data.records === "object") {
+        state.records = data.records;
+      }
+      if (Array.isArray(data.customExercises)) {
+        state.customExercises = data.customExercises;
+      }
+
+      let isNewDay = false;
+      if (data.todayRoutine && data.todayRoutine.date) {
+        const curDate = (state.todayRoutine && state.todayRoutine.date) ? state.todayRoutine.date : "";
+        if (!curDate || data.todayRoutine.date >= curDate) {
+          if (curDate && data.todayRoutine.date > curDate) {
+            isNewDay = true;
+          }
+          state.todayRoutine = data.todayRoutine;
+        }
+      }
+
+      if (isNewDay) {
+        resetExerciseCompletion();
+      }
+
+      state.lastSyncAt = new Date().toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" });
+      cleanAllSavedReps();
+      persistState();
+      renderAll();
+
+      const routineTitle = (state.todayRoutine && state.todayRoutine.title) ? state.todayRoutine.title : "오늘의 추천 루틴";
+      setSyncStatusMsg(`✅ 드라이브 동기화 완료: ${routineTitle} (${state.lastSyncAt})`, false);
+      if (!silent) {
+        showToast(`📥 ${state.todayRoutine ? state.todayRoutine.date : "오늘"} 루틴 및 기록 불러오기 완료!`);
       }
     }
 
@@ -2941,7 +2985,7 @@ function doPost(e) {
     });
 
     document.getElementById("pushDriveBtn").addEventListener("click", () => pushToGoogleDrive(false));
-    document.getElementById("pullDriveBtn").addEventListener("click", pullFromGoogleDrive);
+    document.getElementById("pullDriveBtn").addEventListener("click", () => pullFromGoogleDrive(false));
 
     document.getElementById("toggleGasGuideBtn").addEventListener("click", () => {
       const body = document.getElementById("gasGuideBody");
@@ -3297,6 +3341,21 @@ function doPost(e) {
     });
 
     updateTimerUI();
+    
+    // Auto-sync today's routine on visibility change (foreground return in WebView / browser, min 60s throttle)
+    let lastVisibilityPullAt = Date.now();
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "visible") {
+        const now = Date.now();
+        if (now - lastVisibilityPullAt >= 60000) {
+          lastVisibilityPullAt = now;
+          if (hasGasBridge() || state.gasUrl) {
+            pullFromGoogleDrive(true);
+          }
+        }
+      }
+    });
+
     renderAll();
     if (hasGasBridge() || state.gasUrl) { pullFromGoogleDrive(true); }
   </script>
