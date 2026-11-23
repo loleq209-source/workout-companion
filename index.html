@@ -1337,55 +1337,60 @@ const ENRICHED_DB = {"home_smr": {"tempo": "왕복 4초 · 정지 3~5초", "unil
       return list;
     }
 
+    function getEffectiveExercises() {
+      return getTodayRoutineExercises();
+    }
+
     // --- 1. Real-time Auto-Sync Logic (Debounced 800ms) ---
     function buildWorkoutLogPayload() {
       const today = getTodayStr();
-      const items = getTodayRoutineExercises();
+      const items = getEffectiveExercises();
       const routineItems = items.map(ex => {
         const rec = getRecord(ex);
-        const doneSets = rec.sets.filter(s => s.done).length;
-        const w = (rec.sets[0] && rec.sets[0].weightKg) ? rec.sets[0].weightKg : (ex.defaultWeightKg || 0);
-        const r = (rec.sets[0] && rec.sets[0].reps) ? rec.sets[0].reps : (ex.defaultReps || "10회");
+        const doneSets = (rec.sets && Array.isArray(rec.sets)) ? rec.sets.filter(s => s.done).length : 0;
+        const totalSets = (rec.sets && Array.isArray(rec.sets)) ? rec.sets.length : (ex.defaultSets || 3);
+        const w = (rec.sets && rec.sets[0] && typeof rec.sets[0].weightKg === "number") ? rec.sets[0].weightKg : (ex.defaultWeightKg != null ? ex.defaultWeightKg : null);
+        const r = (rec.sets && rec.sets[0] && rec.sets[0].reps) ? rec.sets[0].reps : (ex.defaultReps || "10회");
+        const isComp = !!rec.isCompleted || (doneSets >= totalSets && totalSets > 0);
         return {
           id: ex.id,
           name: ex.name,
-          mode: ex.mode,
-          category: ex.category,
-          equipment: ex.equipment,
-          targetMuscle: ex.targetMuscle,
-          plannedSets: ex.defaultSets,
-          plannedReps: ex.defaultReps,
-          plannedWeightKg: ex.defaultWeightKg,
+          mode: ex.mode || "home",
+          category: ex.category || "근력",
+          equipment: ex.equipment || "맨몸/소도구",
+          targetMuscle: ex.targetMuscle || "전신",
+          plannedSets: ex.defaultSets || totalSets,
+          plannedReps: ex.defaultReps || r,
+          plannedWeightKg: ex.defaultWeightKg != null ? ex.defaultWeightKg : null,
           completedSets: doneSets,
           actualWeightKg: w,
-          rpe: rec.rpe || null,
-          isCompleted: rec.isCompleted || (doneSets >= ex.defaultSets),
-          preference: rec.preference || null,
+          rpe: rec.rpe != null ? rec.rpe : null,
+          isCompleted: isComp,
+          preference: rec.preference || "neutral",
           preferenceNote: rec.preferenceNote || "",
-          setLogs: rec.sets.map((s, idx) => ({
+          setLogs: (rec.sets && Array.isArray(rec.sets)) ? rec.sets.map((s, idx) => ({
             set: idx + 1,
-            weightKg: s.weightKg || w,
+            weightKg: s.weightKg != null ? s.weightKg : w,
             reps: s.reps || r,
             done: !!s.done
-          }))
+          })) : []
         };
       });
 
       return {
         savedAt: new Date().toISOString(),
         date: today,
+        timestamp: new Date().toISOString(),
         mode: state.todayRoutine ? state.todayRoutine.mode : "home",
         preset: state.preset,
         routineTitle: state.todayRoutine ? state.todayRoutine.title : "오늘의 추천 루틴",
         summary: {
           totalExercises: items.length,
-          completedExercises: items.filter(e => {
-            const r = getRecord(e);
-            return r.isCompleted || r.sets.every(s => s.done);
-          }).length,
-          totalSets: items.reduce((a, e) => a + getRecord(e).sets.length, 0),
-          completedSets: items.reduce((a, e) => a + getRecord(e).sets.filter(s => s.done).length, 0)
+          completedExercises: routineItems.filter(e => e.isCompleted).length,
+          totalSets: routineItems.reduce((a, e) => a + (e.plannedSets || (e.setLogs && e.setLogs.length) || 0), 0),
+          completedSets: routineItems.reduce((a, e) => a + e.completedSets, 0)
         },
+        exercises: routineItems,
         items: routineItems
       };
     }
@@ -1394,12 +1399,35 @@ const ENRICHED_DB = {"home_smr": {"tempo": "왕복 4초 · 정지 3~5초", "unil
       const payloadLog = buildWorkoutLogPayload();
       const today = getTodayStr();
       if (!Array.isArray(state.history)) state.history = [];
+
+      const currentExercises = payloadLog.exercises || [];
+
+      // Guard: if currentExercises is empty (0건), never overwrite existing history with empty array
       const idx = state.history.findIndex(h => h && h.date === today);
-      const entry = Object.assign({}, payloadLog, { date: today });
       if (idx >= 0) {
-        state.history[idx] = entry;
+        const existing = state.history[idx] || {};
+        if (currentExercises.length === 0 && Array.isArray(existing.exercises) && existing.exercises.length > 0) {
+          payloadLog.exercises = existing.exercises;
+          payloadLog.items = existing.exercises;
+          if (existing.summary) payloadLog.summary = existing.summary;
+        }
+        state.history[idx] = Object.assign({}, existing, payloadLog, {
+          date: today,
+          timestamp: new Date().toISOString(),
+          savedAt: new Date().toISOString(),
+          exercises: payloadLog.exercises,
+          items: payloadLog.exercises
+        });
       } else {
-        state.history.push(entry);
+        if (currentExercises.length > 0) {
+          state.history.push(Object.assign({}, payloadLog, {
+            date: today,
+            timestamp: new Date().toISOString(),
+            savedAt: new Date().toISOString(),
+            exercises: currentExercises,
+            items: currentExercises
+          }));
+        }
       }
       return payloadLog;
     }
@@ -1422,6 +1450,14 @@ const ENRICHED_DB = {"home_smr": {"tempo": "왕복 4초 · 정지 3~5초", "unil
     async function pushToGoogleDrive(silent) {
       const payloadLog = upsertTodayHistory();
       persistState();
+
+      if ((!payloadLog.exercises || payloadLog.exercises.length === 0) && Array.isArray(state.history)) {
+        const hToday = state.history.find(h => h && h.date === getTodayStr());
+        if (hToday && Array.isArray(hToday.exercises) && hToday.exercises.length > 0) {
+          payloadLog.exercises = hToday.exercises;
+          payloadLog.items = hToday.exercises;
+        }
+      }
 
       const bodyObj = {
         updatedAt: new Date().toISOString(),
