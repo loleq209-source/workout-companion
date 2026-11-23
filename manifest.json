@@ -4,19 +4,19 @@
   "description": "체지방 감량 및 복근/근력 완성을 위한 인터랙티브 운동 관리 PWA",
   "start_url": "./",
   "display": "standalone",
-  "background_color": "#0b1120",
-  "theme_color": "#0b1120",
+  "background_color": "#000000",
+  "theme_color": "#000000",
   "orientation": "portrait",
   "icons": [
     {
-      "src": "assets/guides/home_kb_squat_1.webp",
+      "src": "assets/icon-192.png",
       "sizes": "192x192",
-      "type": "image/webp"
+      "type": "image/png"
     },
     {
-      "src": "assets/guides/home_kb_squat_1.webp",
+      "src": "assets/icon-512.png",
       "sizes": "512x512",
-      "type": "image/webp"
+      "type": "image/png"
     }
   ]
 }

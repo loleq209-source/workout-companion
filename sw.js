@@ -1,8 +1,11 @@
-const CACHE_NAME = "workout-companion-v8.1";
+const CACHE_NAME = "workout-companion-v9.0";
 const STATIC_ASSETS = [
   "./",
   "./index.html",
   "./manifest.json",
+  "./favicon.png",
+  "./assets/icon-192.png",
+  "./assets/icon-512.png",
   "./data/exercises_enriched_34.json"
 ];
 
@@ -35,7 +38,7 @@ self.addEventListener("fetch", (e) => {
   }
 
   // Cache-first for assets (images, data, manifest)
-  if (url.pathname.includes("/assets/") || url.pathname.includes("/data/")) {
+  if (url.pathname.includes("/assets/") || url.pathname.includes("/data/") || url.pathname.endsWith(".png")) {
     e.respondWith(
       caches.match(e.request).then((cached) => {
         if (cached) return cached;
