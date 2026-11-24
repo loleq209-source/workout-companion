@@ -1998,14 +1998,19 @@ const ENRICHED_DB = {"home_smr": {"tempo": "왕복 4초 · 정지 3~5초", "unil
           </div>
         ` : ""}
 
-        <!-- 2. Exercise Title Header -->
-        <div style="display:flex; align-items:center; justify-content:space-between; gap:6px; margin-top:2px;">
-          <div style="display:flex; align-items:center; gap:6px; min-width:0;">
-            <span style="font-size:16px; font-weight:900; color:#ffffff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; letter-spacing:-0.3px;">${ex.name}</span>
-            ${enriched && enriched.unilateral ? '<span class="badge badge-purple" style="font-size:9.5px; padding:1px 5px; flex-shrink:0;">↔ 양쪽</span>' : ''}
-            <span class="badge badge-muted" style="font-size:9.5px; padding:1px 5px; flex-shrink:0;">${ex.equipment}</span>
+        <!-- 2. Exercise Title (Row 1) & Meta Header (Row 2) -->
+        <div style="display:flex; flex-direction:column; gap:2px; margin-top:2px;">
+          <!-- Row 1: Exercise Title (Full, No Ellipsis) + Unilateral Badge -->
+          <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:6px;">
+            <span style="font-size:16px; font-weight:900; color:#ffffff; word-break:keep-all; line-height:1.25; letter-spacing:-0.3px;">${ex.name}</span>
+            ${enriched && enriched.unilateral ? '<span class="badge badge-purple" style="font-size:9.5px; padding:1px 5px; flex-shrink:0; white-space:nowrap; margin-top:1px;">↔ 양쪽</span>' : ''}
           </div>
-          <span style="font-size:11px; font-weight:800; color:var(--accent); flex-shrink:0;">${ex.targetMuscle}</span>
+
+          <!-- Row 2: Equipment Badge (Left) & Target Muscle (Right) -->
+          <div style="display:flex; align-items:center; justify-content:space-between; gap:6px; font-size:11px;">
+            <span class="badge badge-muted" style="font-size:9.5px; padding:1px 5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:55%; flex-shrink:0;">${ex.equipment}</span>
+            <span style="font-size:11px; font-weight:800; color:var(--accent); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; text-align:right; min-width:0; flex:1;">${ex.targetMuscle}</span>
+          </div>
         </div>
 
         <!-- 3. Middle Controls (Stretching: 1-line badge / Strength: Timer + Steppers) -->
