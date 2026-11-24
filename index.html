@@ -1805,144 +1805,217 @@ const ENRICHED_DB = {"home_smr": {"tempo": "왕복 4초 · 정지 3~5초", "unil
       const currentWeight = (rec.sets[0] && rec.sets[0].weightKg) ? rec.sets[0].weightKg : (ex.defaultWeightKg || 0);
       const currentReps = (rec.sets[0] && rec.sets[0].reps) ? rec.sets[0].reps : (ex.defaultReps || "10회");
 
+      const isStretch = isWarmupOrStretch(ex);
+      const remainingSetsCount = rec.sets.filter(s => !s.done).length;
+      const isLastRemainingSet = remainingSetsCount <= 1;
+
+      // 1. Middle Controls HTML
+      let middleControlsHtml = "";
+      if (isStretch) {
+        middleControlsHtml = `
+          <!-- 1-line stretching progress badge -->
+          <div style="background:var(--card-2); border:1px solid var(--border); border-radius:10px; padding:6px 10px; display:flex; align-items:center; justify-content:space-between; margin-top:2px;">
+            <span style="font-size:11.5px; font-weight:800; color:var(--text-soft);">
+              ${curSetNum} / ${rec.sets.length}세트 · 목표 ${currentReps}
+            </span>
+            <div class="row-gap" style="gap:4px;">
+              ${rec.sets.map((s, i) => `<span style="width:7.5px; height:7.5px; border-radius:50%; background:${s.done ? 'var(--accent)' : (i === activeSetIdx ? '#ffffff' : '#333338')};"></span>`).join("")}
+            </div>
+          </div>
+        `;
+      } else {
+        middleControlsHtml = `
+          <!-- Timer (Left) + Batch Stepper (Right) 2-Column Combined Card -->
+          <div style="margin-top:2px; background:#0e0e11; border:1px solid var(--border); border-radius:12px; padding:6px 10px; display:flex; align-items:center; gap:8px;">
+            <!-- Left: Compact Circular Timer (62x62) -->
+            <div style="flex:0 0 74px; display:flex; flex-direction:column; align-items:center; gap:2px;">
+              <div style="position:relative; width:62px; height:62px; display:flex; align-items:center; justify-content:center;">
+                <svg width="62" height="62" viewBox="0 0 68 68" style="transform: rotate(-90deg);">
+                  <circle cx="34" cy="34" r="28" fill="none" stroke="#222226" stroke-width="5" />
+                  <circle id="timerRingProgress" cx="34" cy="34" r="28" fill="none" stroke="#a3e635" stroke-width="5" stroke-linecap="round"
+                    style="stroke-dasharray:175.9; stroke-dashoffset:${175.9 * (1 - ratio)}; transition: stroke-dashoffset 0.3s linear;" />
+                </svg>
+                <div style="position:absolute; text-align:center;">
+                  <div id="timerRingTime" style="font-size:14px; font-weight:900; color:#ffffff; font-variant-numeric:tabular-nums;">${min}:${sec}</div>
+                  <div id="timerRingLabel" style="font-size:8px; font-weight:800; color:var(--text-muted); max-width:48px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${timer.running ? "휴식 중" : "휴식"}</div>
+                </div>
+              </div>
+              <div class="row-gap" style="gap:3px; width:100%;">
+                <button id="timerToggleBtn" type="button" class="btn-tap" style="flex:1; height:22px; border-radius:6px; font-size:9.5px; font-weight:800; border:1px solid var(--accent); background:var(--accent-bg); color:var(--accent); padding:0;">
+                  ${timer.running ? "⏸ 정지" : "⏱️ 시작"}
+                </button>
+                <button type="button" data-card-action="timer-add" class="btn-tap btn-secondary" style="flex:1; height:22px; border-radius:6px; font-size:9.5px; padding:0;">
+                  +15초
+                </button>
+              </div>
+            </div>
+
+            <!-- Right: Set Dots + Steppers -->
+            <div style="flex:1; min-width:0; display:flex; flex-direction:column; gap:4px;">
+              <!-- Set Progress Dots -->
+              <div style="display:flex; align-items:center; justify-content:space-between;">
+                <span style="font-size:11px; font-weight:800; color:var(--text-soft);">${curSetNum} / ${rec.sets.length}세트</span>
+                <div class="row-gap" style="gap:4px;">
+                  ${rec.sets.map((s, i) => `<span style="width:7px; height:7px; border-radius:50%; background:${s.done ? 'var(--accent)' : (i === activeSetIdx ? '#ffffff' : '#333338')};"></span>`).join("")}
+                </div>
+              </div>
+
+              <!-- Weight Stepper -->
+              <div style="background:var(--card); border:1px solid var(--border); border-radius:8px; padding:3px 8px; display:flex; align-items:center; justify-content:space-between;">
+                <div>
+                  <div style="font-size:8px; color:var(--text-muted); font-weight:700;">중량</div>
+                  <div id="batchWeightDisplay" style="font-size:12px; font-weight:900; color:#fff;">${currentWeight > 0 ? `${currentWeight}kg` : "맨몸/밴드"}</div>
+                </div>
+                <div class="row-gap" style="gap:3px;">
+                  <button type="button" data-card-action="step-weight" data-delta="-2" class="btn-tap stepper-btn" style="width:24px; height:24px; font-size:13px; border-radius:6px;">-</button>
+                  <button type="button" data-card-action="step-weight" data-delta="2" class="btn-tap stepper-btn" style="width:24px; height:24px; font-size:13px; border-radius:6px;">+</button>
+                </div>
+              </div>
+
+              <!-- Reps Stepper -->
+              <div style="background:var(--card); border:1px solid var(--border); border-radius:8px; padding:3px 8px; display:flex; align-items:center; justify-content:space-between;">
+                <div>
+                  <div style="font-size:8px; color:var(--text-muted); font-weight:700;">횟수/시간</div>
+                  <div id="batchRepsDisplay" style="font-size:12px; font-weight:900; color:#fff;">${currentReps}</div>
+                </div>
+                <div class="row-gap" style="gap:3px;">
+                  <button type="button" data-card-action="step-reps" data-delta="-1" class="btn-tap stepper-btn" style="width:24px; height:24px; font-size:13px; border-radius:6px;">-</button>
+                  <button type="button" data-card-action="step-reps" data-delta="1" class="btn-tap stepper-btn" style="width:24px; height:24px; font-size:13px; border-radius:6px;">+</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+
+      // 2. CTA Button HTML
+      let ctaButtonHtml = "";
+      if (isStretch) {
+        if (!allDone) {
+          const btnText = isLastRemainingSet ? "✅ 종목 완료" : `✅ ${curSetNum}세트 완료`;
+          ctaButtonHtml = `
+            <button id="cardSetCompleteBtn" type="button" class="btn-tap btn-primary" style="margin-top:4px; height:42px; border-radius:12px; font-size:13.5px; font-weight:900;">
+              ${btnText}
+            </button>
+          `;
+        } else {
+          ctaButtonHtml = `
+            <button id="cardSetCompleteBtn" type="button" class="btn-tap btn-primary" style="margin-top:4px; height:42px; border-radius:12px; font-size:13.5px; font-weight:900; background:#facc15; color:#050507;">
+              ✅ 종목 완료 (다음 종목 이동)
+            </button>
+          `;
+        }
+      } else {
+        if (!allDone) {
+          ctaButtonHtml = `
+            <button id="cardSetCompleteBtn" type="button" class="btn-tap btn-primary" style="margin-top:4px; height:42px; border-radius:12px; font-size:13.5px; font-weight:900;">
+              ✅ ${curSetNum}세트 완료 · ${ex.restSec || 60}초 휴식 시작
+            </button>
+          `;
+        } else {
+          ctaButtonHtml = `
+            <button id="cardSetCompleteBtn" type="button" class="btn-tap btn-primary" style="margin-top:4px; height:42px; border-radius:12px; font-size:13.5px; font-weight:900; background:#facc15; color:#050507;">
+              🎉 전 세트 완료 (RPE 강도 기록)
+            </button>
+          `;
+        }
+      }
+
+      // 3. Exercise Detail Guide Card HTML
+      const phases = (enriched && Array.isArray(enriched.phases)) ? enriched.phases : [];
+      const doCue = (enriched && enriched.doCue) ? enriched.doCue : (ex.prep || "통제된 자세로 자극 집중");
+      const dontCue = (enriched && enriched.dontCue) ? enriched.dontCue : "반동을 쓰거나 무리한 가동범위 주의";
+      const tempo = (enriched && enriched.tempo) ? enriched.tempo : (ex.tempo || "자연스러운 템포");
+      const painAlts = (enriched && Array.isArray(enriched.painAlternatives)) ? enriched.painAlternatives : [];
+      const firstAlt = painAlts.length > 0 ? painAlts[0] : null;
+
+      const guideCardHtml = `
+        <!-- 하단 운동 상세 가이드 카드 (Compact 3-Tier) -->
+        <div class="card-surface" style="padding:8px 10px; display:flex; flex-direction:column; gap:5px; border-radius:14px; background:#141416; border:1px solid var(--border); margin-top:4px;">
+          <!-- Tier 1: 3단계 동작 요약 (Phases 1~3) -->
+          ${phases.length > 0 ? `
+            <div style="display:flex; flex-direction:column; gap:4px;">
+              ${phases.map((p, pIdx) => `
+                <div style="display:flex; align-items:flex-start; gap:5px; font-size:11.5px; line-height:1.35;">
+                  <span style="display:inline-flex; align-items:center; justify-content:center; width:15px; height:15px; border-radius:50%; background:var(--accent-bg); color:var(--accent); font-size:9.5px; font-weight:900; flex-shrink:0; margin-top:1px;">
+                    ${p.step || (pIdx + 1)}
+                  </span>
+                  <div style="flex:1; min-width:0; color:var(--text-soft);">
+                    <strong style="color:#ffffff; font-weight:800;">[${p.title}]</strong>
+                    <span>${p.cue}</span>
+                    ${p.breath ? `<span style="color:var(--text-muted); font-size:10px; margin-left:3px; white-space:nowrap;">💨 ${p.breath}</span>` : ''}
+                  </div>
+                </div>
+              `).join("")}
+            </div>
+          ` : `
+            <div style="font-size:11.5px; color:var(--text-soft); line-height:1.35;">
+              <strong style="color:#ffffff;">[동작 요약]</strong> ${ex.prep || "올바른 자세를 유지하며 통제된 속도로 진행합니다."}
+            </div>
+          `}
+
+          <!-- Tier 2: 자세 체크 2줄 박스 (doCue & dontCue) -->
+          <div style="background:var(--card-2); border:1px solid var(--border); border-radius:9px; padding:5px 8px; display:flex; flex-direction:column; gap:3px;">
+            <div style="display:flex; align-items:flex-start; gap:5px; font-size:11px; line-height:1.35;">
+              <span style="color:var(--accent); font-weight:900; flex-shrink:0;">⭕</span>
+              <span style="color:var(--text-soft);">${doCue}</span>
+            </div>
+            <div style="display:flex; align-items:flex-start; gap:5px; font-size:11px; line-height:1.35;">
+              <span style="color:var(--rose); font-weight:900; flex-shrink:0;">❌</span>
+              <span style="color:var(--text-soft);">${dontCue}</span>
+            </div>
+          </div>
+
+          <!-- Tier 3: 하단 통합 유틸리티 바 (1줄 Flex, height 약 32px) -->
+          <div style="display:flex; align-items:center; justify-content:space-between; height:32px; background:var(--card-2); border:1px solid var(--border); border-radius:9px; padding:0 8px; gap:6px;">
+            <!-- 좌측: 템포 & 편측/양측 배지 -->
+            <div style="display:flex; align-items:center; gap:5px; min-width:0; flex-shrink:1;">
+              <span style="font-size:11px; font-weight:800; color:var(--text-soft); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                ⏱ ${tempo}
+              </span>
+              ${enriched && enriched.unilateral ? `<span class="badge badge-purple" style="font-size:9.5px; padding:1px 5px; flex-shrink:0;">좌우 각각</span>` : ''}
+            </div>
+
+            <!-- 우측: 🩹 통증 시 대체 버튼 -->
+            ${firstAlt ? `
+              <button type="button" data-card-action="switch-alt" data-alt-id="${firstAlt.altId}" class="btn-tap" style="font-size:10.5px; font-weight:800; color:var(--amber); background:rgba(250,204,21,0.1); border:1px solid rgba(250,204,21,0.3); border-radius:7px; height:24px; padding:0 7px; display:flex; align-items:center; gap:3px; white-space:nowrap; max-width:62%; overflow:hidden; text-overflow:ellipsis; flex-shrink:0;">
+                <span style="overflow:hidden; text-overflow:ellipsis;">🩹 ${firstAlt.area} 불편 시 → ${firstAlt.altName.replace(/^[0-9]+kg\s*/, '')}</span>
+              </button>
+            ` : `
+              <span style="font-size:10px; color:var(--text-muted); flex-shrink:0;">표준 자세 권장</span>
+            `}
+          </div>
+        </div>
+      `;
+
       const cardContainer = document.getElementById("cardMainContent");
       cardContainer.innerHTML = `
-        <!-- 1. 3-Cut Continuous Action Image (Fixed 136px height, object-fit contain) -->
+        <!-- 1. 3-Cut Continuous Action Image -->
         ${media ? `
-          <div id="card3CutImgBox" style="position:relative; width:100%; height:136px; background:#000000; border-radius:14px; overflow:hidden; border:1px solid var(--border); display:flex; align-items:center; justify-content:center; cursor:zoom-in;">
+          <div id="card3CutImgBox" style="position:relative; width:100%; height:126px; background:#000000; border-radius:12px; overflow:hidden; border:1px solid var(--border); display:flex; align-items:center; justify-content:center; cursor:zoom-in;">
             <img src="${media.full}" alt="${ex.name} 3컷 동작" loading="eager" data-zoom-src="${media.full}" data-zoom-title="${ex.name} · 3컷 가이드" style="width:100%; height:100%; object-fit:contain; display:block;">
-            <span style="position:absolute; right:8px; bottom:6px; font-size:9.5px; font-weight:800; background:rgba(0,0,0,0.75); color:var(--accent); border:1px solid rgba(163,230,53,0.3); border-radius:6px; padding:2px 6px;">🔍 탭하여 확대</span>
+            <span style="position:absolute; right:8px; bottom:6px; font-size:9px; font-weight:800; background:rgba(0,0,0,0.75); color:var(--accent); border:1px solid rgba(163,230,53,0.3); border-radius:5px; padding:1px 5px;">🔍 탭하여 확대</span>
           </div>
         ` : ""}
 
-        <!-- 2. Exercise Title & Cue Header -->
-        <div style="display:flex; align-items:baseline; justify-content:space-between; gap:6px; margin-top:2px;">
+        <!-- 2. Exercise Title Header -->
+        <div style="display:flex; align-items:center; justify-content:space-between; gap:6px; margin-top:2px;">
           <div style="display:flex; align-items:center; gap:6px; min-width:0;">
-            <span style="font-size:17px; font-weight:900; color:#ffffff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; letter-spacing:-0.3px;">${ex.name}</span>
-            ${enriched && enriched.unilateral ? '<span class="badge badge-purple" style="font-size:10px; padding:1px 5px; flex-shrink:0;">↔ 양쪽</span>' : ''}
-            <span class="badge badge-muted" style="font-size:10px; padding:1px 5px; flex-shrink:0;">${ex.equipment}</span>
+            <span style="font-size:16px; font-weight:900; color:#ffffff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; letter-spacing:-0.3px;">${ex.name}</span>
+            ${enriched && enriched.unilateral ? '<span class="badge badge-purple" style="font-size:9.5px; padding:1px 5px; flex-shrink:0;">↔ 양쪽</span>' : ''}
+            <span class="badge badge-muted" style="font-size:9.5px; padding:1px 5px; flex-shrink:0;">${ex.equipment}</span>
           </div>
           <span style="font-size:11px; font-weight:800; color:var(--accent); flex-shrink:0;">${ex.targetMuscle}</span>
         </div>
-        <div style="font-size:11.5px; color:var(--text-soft); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-top:1px; line-height:1.3;">
-          💡 <span style="color:#ffffff;">${enriched && enriched.doCue ? enriched.doCue : (ex.prep || "통제된 자세로 자극 집중")}</span>
-        </div>
 
-        <!-- Collapsible detail cues toggle buttons (default collapsed) -->
-        <div class="row-gap" style="gap:6px; margin-top:3px;">
-          ${enriched && (enriched.doCue || enriched.dontCue) ? `
-            <button type="button" class="btn-tap toggle-cue-btn" data-toggle="posture" style="font-size:10.5px; height:24px; padding:0 8px; border-radius:8px; background:var(--card-2); border:1px solid var(--border); color:var(--text-soft);">
-              💡 자세 팁 <span id="postureToggleArrow">▾</span>
-            </button>
-          ` : ''}
-          ${enriched && Array.isArray(enriched.painAlternatives) && enriched.painAlternatives.length > 0 ? `
-            <button type="button" class="btn-tap toggle-cue-btn" data-toggle="alt" style="font-size:10.5px; height:24px; padding:0 8px; border-radius:8px; background:var(--card-2); border:1px solid var(--border); color:var(--amber);">
-              🩹 통증 시 대체 <span id="altToggleArrow">▾</span>
-            </button>
-          ` : ''}
-        </div>
+        <!-- 3. Middle Controls (Stretching: 1-line badge / Strength: Timer + Steppers) -->
+        ${middleControlsHtml}
 
-        <!-- Collapsible posture content (hidden by default) -->
-        ${enriched && (enriched.doCue || enriched.dontCue) ? `
-          <div id="postureDetailsBox" class="hidden" style="margin-top:4px; display:grid; grid-template-columns:1fr 1fr; gap:6px;">
-            <div style="background:rgba(163,230,53,0.06); border:1px solid rgba(163,230,53,0.25); border-radius:10px; padding:6px 8px;">
-              <div style="font-size:10.5px; font-weight:900; color:var(--accent); margin-bottom:2px;">⭕ 바른 자세</div>
-              <div style="font-size:11px; line-height:1.4; color:var(--text-soft);">${enriched.doCue || ""}</div>
-            </div>
-            <div style="background:rgba(251,113,133,0.06); border:1px solid rgba(251,113,133,0.25); border-radius:10px; padding:6px 8px;">
-              <div style="font-size:10.5px; font-weight:900; color:var(--rose); margin-bottom:2px;">❌ 흔한 실수</div>
-              <div style="font-size:11px; line-height:1.4; color:var(--text-soft);">${enriched.dontCue || ""}</div>
-            </div>
-          </div>
-        ` : ''}
+        <!-- 4. CTA Button -->
+        ${ctaButtonHtml}
 
-        <!-- Collapsible alt content (hidden by default) -->
-        ${enriched && Array.isArray(enriched.painAlternatives) && enriched.painAlternatives.length > 0 ? `
-          <div id="altDetailsBox" class="hidden stack-2" style="margin-top:4px; gap:4px;">
-            ${enriched.painAlternatives.map(alt => `
-              <button type="button" data-card-action="switch-alt" data-alt-id="${alt.altId}" class="btn-tap" style="width:100%; text-align:left; padding:6px 10px; background:var(--card-2); border:1px solid var(--border); border-radius:10px; display:flex; align-items:center; justify-content:space-between;">
-                <div>
-                  <span style="font-size:10.5px; color:var(--amber); font-weight:800;">[${alt.area} 통증 시]</span>
-                  <strong style="font-size:11.5px; margin-left:4px; color:#ffffff;">${alt.altName}</strong>
-                  <div style="font-size:10px; color:var(--text-muted);">${alt.reason}</div>
-                </div>
-                <span style="font-size:10.5px; color:var(--accent); font-weight:800;">전환 ➔</span>
-              </button>
-            `).join("")}
-          </div>
-        ` : ''}
-
-        <!-- 3. Timer (Left) + Batch Stepper (Right) 2-Column Combined Card -->
-        <div style="margin-top:4px; background:#0e0e11; border:1px solid var(--border); border-radius:14px; padding:8px 10px; display:flex; align-items:center; gap:10px;">
-          <!-- Left: Compact Circular Timer (72x72) -->
-          <div style="flex:0 0 80px; display:flex; flex-direction:column; align-items:center; gap:3px;">
-            <div style="position:relative; width:68px; height:68px; display:flex; align-items:center; justify-content:center;">
-              <svg width="68" height="68" viewBox="0 0 68 68" style="transform: rotate(-90deg);">
-                <circle cx="34" cy="34" r="28" fill="none" stroke="#222226" stroke-width="5" />
-                <circle id="timerRingProgress" cx="34" cy="34" r="28" fill="none" stroke="#a3e635" stroke-width="5" stroke-linecap="round"
-                  style="stroke-dasharray:175.9; stroke-dashoffset:${175.9 * (1 - ratio)}; transition: stroke-dashoffset 0.3s linear;" />
-              </svg>
-              <div style="position:absolute; text-align:center;">
-                <div id="timerRingTime" style="font-size:15px; font-weight:900; color:#ffffff; font-variant-numeric:tabular-nums;">${min}:${sec}</div>
-                <div id="timerRingLabel" style="font-size:8px; font-weight:800; color:var(--text-muted); max-width:50px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${timer.running ? "휴식 중" : "휴식"}</div>
-              </div>
-            </div>
-            <div class="row-gap" style="gap:3px; width:100%;">
-              <button id="timerToggleBtn" type="button" class="btn-tap" style="flex:1; height:24px; border-radius:6px; font-size:10px; font-weight:800; border:1px solid var(--accent); background:var(--accent-bg); color:var(--accent); padding:0;">
-                ${timer.running ? "⏸ 정지" : "⏱️ 시작"}
-              </button>
-              <button type="button" data-card-action="timer-add" class="btn-tap btn-secondary" style="flex:1; height:24px; border-radius:6px; font-size:10px; padding:0;">
-                +15초
-              </button>
-            </div>
-          </div>
-
-          <!-- Right: Set Dots + Steppers -->
-          <div style="flex:1; min-width:0; display:flex; flex-direction:column; gap:5px;">
-            <!-- Set Progress Dots -->
-            <div style="display:flex; align-items:center; justify-content:space-between;">
-              <span style="font-size:11px; font-weight:800; color:var(--text-soft);">${curSetNum} / ${rec.sets.length}세트</span>
-              <div class="row-gap" style="gap:4px;">
-                ${rec.sets.map((s, i) => `<span style="width:7px; height:7px; border-radius:50%; background:${s.done ? 'var(--accent)' : (i === activeSetIdx ? '#ffffff' : '#333338')};"></span>`).join("")}
-              </div>
-            </div>
-
-            <!-- Weight Stepper -->
-            <div style="background:var(--card); border:1px solid var(--border); border-radius:9px; padding:4px 8px; display:flex; align-items:center; justify-content:space-between;">
-              <div>
-                <div style="font-size:9px; color:var(--text-muted); font-weight:700;">중량</div>
-                <div id="batchWeightDisplay" style="font-size:13px; font-weight:900; color:#fff;">${currentWeight > 0 ? `${currentWeight}kg` : "맨몸/밴드"}</div>
-              </div>
-              <div class="row-gap" style="gap:3px;">
-                <button type="button" data-card-action="step-weight" data-delta="-2" class="btn-tap stepper-btn" style="width:26px; height:26px; font-size:14px; border-radius:6px;">-</button>
-                <button type="button" data-card-action="step-weight" data-delta="2" class="btn-tap stepper-btn" style="width:26px; height:26px; font-size:14px; border-radius:6px;">+</button>
-              </div>
-            </div>
-
-            <!-- Reps Stepper -->
-            <div style="background:var(--card); border:1px solid var(--border); border-radius:9px; padding:4px 8px; display:flex; align-items:center; justify-content:space-between;">
-              <div>
-                <div style="font-size:9px; color:var(--text-muted); font-weight:700;">횟수/시간</div>
-                <div id="batchRepsDisplay" style="font-size:13px; font-weight:900; color:#fff;">${currentReps}</div>
-              </div>
-              <div class="row-gap" style="gap:3px;">
-                <button type="button" data-card-action="step-reps" data-delta="-1" class="btn-tap stepper-btn" style="width:26px; height:26px; font-size:14px; border-radius:6px;">-</button>
-                <button type="button" data-card-action="step-reps" data-delta="1" class="btn-tap stepper-btn" style="width:26px; height:26px; font-size:14px; border-radius:6px;">+</button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- 4. Bottom Sticky Thumb Button -->
-        ${!allDone ? `
-          <button id="cardSetCompleteBtn" type="button" class="btn-tap btn-primary" style="margin-top:6px; height:44px; border-radius:13px; font-size:14px; font-weight:900;">
-            ✅ ${curSetNum}세트 완료 · ${ex.restSec || 60}초 휴식 시작
-          </button>
-        ` : `
-          <button id="cardSetCompleteBtn" type="button" class="btn-tap btn-primary" style="margin-top:6px; height:44px; border-radius:13px; font-size:14px; font-weight:900; background:#facc15; color:#050507;">
-            🎉 전 세트 완료 (${isWarmupOrStretch(ex) ? "다음 종목 이동" : "RPE 강도 기록"})
-          </button>
-        `}
+        <!-- 5. Bottom Exercise Detail Guide Card -->
+        ${guideCardHtml}
       `;
 
       bindCardActions(ex, rec);
@@ -1965,28 +2038,6 @@ const ENRICHED_DB = {"home_smr": {"tempo": "왕복 4초 · 정지 3~5초", "unil
         }
       }
 
-      // Collapsible Toggles
-      container.querySelectorAll(".toggle-cue-btn").forEach(btn => {
-        btn.addEventListener("click", () => {
-          const type = btn.dataset.toggle;
-          if (type === "posture") {
-            const box = document.getElementById("postureDetailsBox");
-            const arrow = document.getElementById("postureToggleArrow");
-            if (box) {
-              const isHidden = box.classList.toggle("hidden");
-              if (arrow) arrow.textContent = isHidden ? "▾" : "▴";
-            }
-          } else if (type === "alt") {
-            const box = document.getElementById("altDetailsBox");
-            const arrow = document.getElementById("altToggleArrow");
-            if (box) {
-              const isHidden = box.classList.toggle("hidden");
-              if (arrow) arrow.textContent = isHidden ? "▾" : "▴";
-            }
-          }
-        });
-      });
-
       // Actions: switch-alt, timer-add, step-weight, step-reps
       container.querySelectorAll("[data-card-action]").forEach(el => {
         el.addEventListener("click", () => {
@@ -2000,7 +2051,26 @@ const ENRICHED_DB = {"home_smr": {"tempo": "왕복 4초 · 정지 3~5초", "unil
               renderAll();
               showToast(`🩹 ${items[targetIdx].name}(으)로 대체 전환되었습니다.`);
             } else {
-              showToast(`대체 종목(${altId})으로 이동합니다.`);
+              const allEx = getAllExercises();
+              const altEx = allEx.find(x => x.id === altId);
+              if (altEx) {
+                const curIdx = state.todayCardIndex;
+                const replacedItem = JSON.parse(JSON.stringify(altEx));
+                items[curIdx] = replacedItem;
+                if (state.todayRoutine) {
+                  if (Array.isArray(state.todayRoutine.items)) {
+                    state.todayRoutine.items[curIdx] = replacedItem;
+                  }
+                  if (Array.isArray(state.todayRoutine.exercises)) {
+                    state.todayRoutine.exercises[curIdx] = replacedItem;
+                  }
+                }
+                persistState();
+                renderAll();
+                showToast(`🩹 ${altEx.name}(으)로 대체 전환되었습니다.`);
+              } else {
+                showToast(`대체 종목(${altId}) 정보를 찾을 수 없습니다.`);
+              }
             }
           } else if (act === "timer-add") {
             timer.remaining += 15;
@@ -2044,6 +2114,7 @@ const ENRICHED_DB = {"home_smr": {"tempo": "왕복 4초 · 정지 3~5초", "unil
       const completeBtn = document.getElementById("cardSetCompleteBtn");
       if (completeBtn) {
         completeBtn.addEventListener("click", () => {
+          const isStretch = isWarmupOrStretch(ex);
           const nextSetIdx = rec.sets.findIndex(s => !s.done);
           if (nextSetIdx !== -1) {
             rec.sets[nextSetIdx].done = true;
@@ -2051,11 +2122,13 @@ const ENRICHED_DB = {"home_smr": {"tempo": "왕복 4초 · 정지 3~5초", "unil
             rec.isCompleted = rec.sets.every(s => s.done);
             persistState();
 
-            // Start Rest Timer
-            startTimer(ex.restSec || 60, `${ex.name} ${nextSetIdx + 1}세트 후 휴식`);
+            if (!isStretch) {
+              // Start Rest Timer ONLY for strength/core exercises
+              startTimer(ex.restSec || 60, `${ex.name} ${nextSetIdx + 1}세트 후 휴식`);
+            }
 
             if (rec.isCompleted) {
-              if (isWarmupOrStretch(ex)) {
+              if (isStretch) {
                 directFinishExercise(ex, rec);
               } else {
                 openRpeBottomSheet(ex.id, rec);
@@ -2067,7 +2140,7 @@ const ENRICHED_DB = {"home_smr": {"tempo": "왕복 4초 · 정지 3~5초", "unil
             }
           } else {
             // Already all sets done
-            if (isWarmupOrStretch(ex)) {
+            if (isStretch) {
               directFinishExercise(ex, rec);
             } else {
               openRpeBottomSheet(ex.id, rec);
