@@ -396,9 +396,9 @@
 
       <!-- Mode Filters -->
       <div class="grid-2" style="grid-template-columns: repeat(3, 1fr); gap: 6px;">
-        <button type="button" class="btn-tap mode-btn active" data-mode="home" style="padding:10px 4px; border-radius:14px; border:1px solid var(--border); background:var(--card-2); color:var(--text); font-weight:800; font-size:12.5px;">🏠 홈트 (22)</button>
+        <button type="button" class="btn-tap mode-btn active" data-mode="home" style="padding:10px 4px; border-radius:14px; border:1px solid var(--border); background:var(--card-2); color:var(--text); font-weight:800; font-size:12.5px;">🏠 홈트 (32)</button>
         <button type="button" class="btn-tap mode-btn" data-mode="gym" style="padding:10px 4px; border-radius:14px; border:1px solid var(--border); background:var(--card-2); color:var(--text); font-weight:800; font-size:12.5px;">🏋️ 헬스장 (12)</button>
-        <button type="button" class="btn-tap mode-btn" data-mode="all" style="padding:10px 4px; border-radius:14px; border:1px solid var(--border); background:var(--card-2); color:var(--text); font-weight:800; font-size:12.5px;">🌟 전체 (34)</button>
+        <button type="button" class="btn-tap mode-btn" data-mode="all" style="padding:10px 4px; border-radius:14px; border:1px solid var(--border); background:var(--card-2); color:var(--text); font-weight:800; font-size:12.5px;">🌟 전체 (44)</button>
       </div>
 
       <!-- Search & Presets -->
@@ -2192,6 +2192,20 @@ const ENRICHED_DB = {"home_smr": {"tempo": "왕복 4초 · 정지 3~5초", "unil
 
     // 5. Render Catalog (Tab 2)
     function renderCatalogList() {
+      // Dynamic mode counter update
+      try {
+        const allList = getAllExercises();
+        const homeCount = allList.filter(x => x.mode === "home").length;
+        const gymCount = allList.filter(x => x.mode === "gym").length;
+        const totalCount = allList.length;
+        const hBtn = document.querySelector('.mode-btn[data-mode="home"]');
+        const gBtn = document.querySelector('.mode-btn[data-mode="gym"]');
+        const aBtn = document.querySelector('.mode-btn[data-mode="all"]');
+        if (hBtn) hBtn.textContent = `🏠 홈트 (${homeCount})`;
+        if (gBtn) gBtn.textContent = `🏋️ 헬스장 (${gymCount})`;
+        if (aBtn) aBtn.textContent = `🌟 전체 (${totalCount})`;
+      } catch(e) {}
+
       const listContainer = document.getElementById("catalogList");
       const items = getFilteredExercises();
       if (!items.length) {
