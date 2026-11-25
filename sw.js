@@ -1,4 +1,4 @@
-const CACHE_NAME = "workout-companion-v9.0";
+const CACHE_NAME = "workout-companion-v10.0";
 const STATIC_ASSETS = [
   "./",
   "./index.html",
@@ -30,6 +30,7 @@ self.addEventListener("activate", (e) => {
 });
 
 self.addEventListener("fetch", (e) => {
+  if (e.request.method !== "GET") return;
   const url = new URL(e.request.url);
 
   // Ignore cross-origin API calls or Apps Script requests from SW caching
@@ -37,23 +38,24 @@ self.addEventListener("fetch", (e) => {
     return;
   }
 
-  // Cache-first for assets (images, data, manifest)
-  if (url.pathname.includes("/assets/") || url.pathname.includes("/data/") || url.pathname.endsWith(".png")) {
+  // Stale-while-revalidate for static illustrations & assets (instant load + background freshness)
+  if (url.pathname.includes("/assets/") || url.pathname.includes("/data/") || url.pathname.endsWith(".png") || url.pathname.endsWith(".webp")) {
     e.respondWith(
       caches.match(e.request).then((cached) => {
-        if (cached) return cached;
-        return fetch(e.request).then((resp) => {
-          if (!resp || resp.status !== 200 || resp.type !== "basic") return resp;
-          const toCache = resp.clone();
-          caches.open(CACHE_NAME).then((c) => c.put(e.request, toCache));
+        const fetchPromise = fetch(e.request).then((resp) => {
+          if (resp && resp.status === 200) {
+            const toCache = resp.clone();
+            caches.open(CACHE_NAME).then((c) => c.put(e.request, toCache));
+          }
           return resp;
-        });
+        }).catch(() => cached);
+        return cached || fetchPromise;
       })
     );
     return;
   }
 
-  // Network-first with cache fallback for app shell / HTML
+  // Network-first with offline cache fallback for app shell / HTML
   e.respondWith(
     fetch(e.request)
       .then((networkResp) => {
@@ -69,7 +71,7 @@ self.addEventListener("fetch", (e) => {
           if (e.request.mode === "navigate") {
             return caches.match("./index.html");
           }
-          return null;
+          return Response.error();
         });
       })
   );

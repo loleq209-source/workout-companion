@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" type="image/png" href="favicon.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="theme-color" content="#000000">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>홈트 & 기구운동 컴패니언</title>
+  <style>
+/* __INLINE_CSS__ */
+  </style>
+</head>
+<body>
+
+  <!-- Floating Toast -->
+  <div id="toast">알림 메시지</div>
+
+  <div class="app-container">
+
+    <!-- TAB 1: 🎯 오늘 운동 (Dashboard & Sequential Card) -->
+    <div id="tabToday" class="stack-2">
+
+      <!-- SCREEN 1: 오늘의 미션 요약 대시보드 -->
+      <div id="viewDashboard" class="stack-3" style="padding-top: 4px;">
+        <!-- Header with Date & Progress Ring -->
+        <div class="row-between" style="padding: 2px 2px 0;">
+          <div>
+            <div style="font-size: 10.5px; font-weight: 800; color: var(--accent); letter-spacing: 0.5px; text-transform: uppercase;">TODAY MISSION</div>
+            <div class="title-large" id="dashDateTitle">오늘의 운동</div>
+          </div>
+          <div class="row-gap" style="gap: 8px;">
+            <span id="headerSyncBadge" class="badge badge-muted" style="font-size: 10px;">동기화 대기</span>
+            <div style="position: relative; width: 56px; height: 56px; display: flex; align-items: center; justify-content: center;">
+              <svg width="56" height="56" viewBox="0 0 56 56" style="transform: rotate(-90deg);">
+                <circle cx="28" cy="28" r="23" fill="none" stroke="#222226" stroke-width="5" />
+                <circle id="dashRingProgress" cx="28" cy="28" r="23" fill="none" stroke="#a3e635" stroke-width="5" stroke-linecap="round"
+                  style="stroke-dasharray: 144.5; stroke-dashoffset: 144.5; transition: stroke-dashoffset 0.4s ease;" />
+              </svg>
+              <div id="dashRingText" class="tabular-nums" style="position: absolute; font-size: 11.5px; font-weight: 900; color: #ffffff;">0/7</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Hero Mission Card -->
+        <div class="card-surface hero-card stack-3">
+          <div class="row-between">
+            <span class="badge badge-lime" id="dashHeroBadge">⭐ 오늘 AI 추천</span>
+            <span class="badge badge-muted" id="dashHeroTime">⏱️ 약 30분</span>
+          </div>
+          <div>
+            <div id="dashHeroTitle" style="font-size: 18px; font-weight: 900; color: #ffffff; line-height: 1.35; margin-bottom: 4px;">오늘의 추천 루틴</div>
+            <div id="dashHeroNote" style="font-size: 11.5px; color: var(--text-muted); line-height: 1.45;"></div>
+          </div>
+          <div id="dashExtraNotice" class="hidden" style="background: rgba(163,230,53,0.08); border: 1px solid rgba(163,230,53,0.28); border-radius: 10px; padding: 7px 10px; font-size: 11px; color: var(--text-soft);"></div>
+          <button id="dashCtaBtn" type="button" class="btn-tap btn-primary" style="margin-top: 2px; height: 44px;">▶ 운동 시작하기</button>
+        </div>
+
+        <!-- Today Routine Items List -->
+        <div class="stack-2" style="margin-top: 4px;">
+          <div class="row-between" style="padding: 0 4px;">
+            <span style="font-size: 13px; font-weight: 900; color: var(--text-soft);">루틴 종목</span>
+            <div class="row-gap" style="gap: 8px;">
+              <button id="dashQuickAddBtn" type="button" class="btn-tap badge badge-muted" style="font-size: 10.5px;">+ 종목 추가</button>
+              <span id="dashStatusSummary" class="badge badge-lime tabular-nums" style="font-size: 10.5px;">0 / 7 완료</span>
+            </div>
+          </div>
+          <div id="dashRoutineList" class="stack-2"></div>
+        </div>
+      </div>
+
+      <!-- SCREEN 2: 순차 카드 진행 화면 (Ultra Compact 1-Screen Layout) -->
+      <div id="viewCard" class="hidden" style="display:flex; flex-direction:column; gap:6px;">
+        <!-- Top Slim Bar -->
+        <div class="card-top-bar" style="display:flex; align-items:center; justify-content:space-between; gap:6px; height:38px; padding:0 2px;">
+          <button id="cardBackBtn" type="button" class="btn-tap btn-secondary" style="height:30px; padding:0 8px; font-size:11.5px; font-weight:800; border-radius:9px; white-space:nowrap; flex:0 0 auto;">
+            ← 미션
+          </button>
+          <div id="cardStepBar" class="step-bar-scroll"></div>
+          <button id="cardDirectFinishBtn" type="button" class="btn-tap badge badge-lime" style="height:30px; padding:0 9px; font-size:11.5px; font-weight:900; border-radius:9px; white-space:nowrap; flex:0 0 auto;">
+            ✓ 완료
+          </button>
+        </div>
+
+        <!-- Single Focused Exercise Card Content -->
+        <div id="cardMainContent" style="display:flex; flex-direction:column; gap:5px;"></div>
+      </div>
+
+    </div>
+
+    <!-- TAB 2: 📋 전체 종목 (Catalog, Presets & Detail Player) -->
+    <div id="tabCatalog" class="stack-3 hidden" style="padding-top: 8px;">
+      <div class="row-between" style="padding: 4px 4px 0;">
+        <div class="title-large">전체 종목</div>
+        <button id="addCustomExBtn" type="button" class="btn-tap badge badge-lime" style="padding: 6px 12px; font-size: 12px; border-radius: 12px;">+ 종목 추가</button>
+      </div>
+
+      <!-- Mode Filters -->
+      <div class="grid-3" style="gap: 6px;">
+        <button type="button" class="btn-tap mode-btn active" data-mode="home">🏠 홈트 (32)</button>
+        <button type="button" class="btn-tap mode-btn" data-mode="gym">🏋️ 헬스장 (12)</button>
+        <button type="button" class="btn-tap mode-btn" data-mode="all">🌟 전체 (44)</button>
+      </div>
+
+      <!-- Presets + Search + Preference Filter -->
+      <div class="stack-2">
+        <div id="presetChipsWrap" class="row-gap" style="overflow-x:auto; padding-bottom:4px; scrollbar-width:none;"></div>
+        <div class="row-gap" style="gap: 6px;">
+          <input id="catalogSearchInput" type="search" class="input-dark" placeholder="🔍 운동명, 타깃 부위, 기구 검색..." style="flex: 1; height: 38px;">
+          <select id="catalogPrefFilter" class="input-dark" style="width: auto; flex: 0 0 auto; height: 38px; padding: 0 8px; font-weight: 700; font-size: 11.5px;">
+            <option value="all">필터: 전체</option>
+            <option value="like">⭐ 선호</option>
+            <option value="dislike">⚠️ 비선호</option>
+            <option value="completed">✓ 오늘 완료</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Exercises Catalog List -->
+      <div id="catalogList" class="stack-2"></div>
+    </div>
+
+    <!-- TAB 3: ☁️ 동기화·기록 (Integrated Condition, Muscle Freshness, Sync & History) -->
+    <div id="tabSync" class="stack-3 hidden" style="padding-top: 8px;">
+      <div class="title-large" style="padding: 4px 4px 0;">통합 피로도 & 동기화</div>
+
+      <!-- Card 1: [통합 컨디션 & 피로도] -->
+      <div id="cardIntegratedCondition" class="card-surface stack-2"></div>
+
+      <!-- Card 2: [부위별 회복도 & 주간 볼륨] -->
+      <div id="cardMuscleFreshness" class="card-surface stack-2"></div>
+
+      <!-- Live Sync Status & Preferences Card -->
+      <div class="card-surface stack-3">
+        <div class="row-between">
+          <strong style="color: #ffffff; font-size: 14px;">⚡ 실시간 자동 동기화</strong>
+          <span class="badge badge-lime">활성화됨</span>
+        </div>
+        <div style="font-size: 12px; color: var(--text-muted); line-height: 1.5;">
+          세트 체크, 중량·횟수 조절, 종목 완료, RPE 입력 시 <strong>별도 저장 버튼 없이</strong> 구글 드라이브와 자동 동기화됩니다.
+        </div>
+        <div id="syncStatusBox" style="font-size: 12px; color: var(--accent); padding: 8px 12px; background: var(--accent-bg); border-radius: 10px; border: 1px solid rgba(163,230,53,0.3);">
+          동기화 준비 완료
+        </div>
+        <div class="grid-2">
+          <button id="pushDriveBtn" type="button" class="btn-tap btn-primary" style="height: 40px; font-size: 13px;">☁️ 지금 드라이브 저장</button>
+          <button id="pullDriveBtn" type="button" class="btn-tap btn-secondary" style="height: 40px; font-size: 13px;">📥 드라이브 불러오기</button>
+        </div>
+        <div class="row-between" style="padding-top: 4px; border-top: 1px solid var(--border);">
+          <span style="font-size: 12.5px; font-weight: 700; color: var(--text-soft);">🔔 휴식 타이머 완료 알림음</span>
+          <button id="soundToggleBtn" type="button" class="btn-tap badge badge-lime" style="padding: 5px 12px; font-size: 11.5px;">켜짐 (ON)</button>
+        </div>
+      </div>
+
+      <!-- Apps Script Deployment URL -->
+      <div class="card-surface stack-2">
+        <strong style="color: #ffffff; font-size: 14px;">Apps Script 웹앱 배포 URL</strong>
+        <input id="gasUrlInput" type="text" class="input-dark" placeholder="https://script.google.com/macros/s/.../exec">
+        <button id="saveGasUrlBtn" type="button" class="btn-tap btn-secondary" style="height: 36px; align-self: flex-end;">URL 저장</button>
+      </div>
+
+      <!-- JSON Import / Export -->
+      <div class="card-surface stack-2">
+        <strong style="color: #ffffff; font-size: 14px;">데이터 백업 & 복원</strong>
+        <div class="grid-2">
+          <button id="exportJsonBtn" type="button" class="btn-tap btn-secondary" style="height: 38px;">📤 전체 백업 내보내기</button>
+          <label class="btn-tap btn-secondary" style="height: 38px; cursor: pointer;">
+            📥 JSON 가져오기
+            <input id="importJsonInput" type="file" accept=".json" style="display:none;">
+          </label>
+        </div>
+      </div>
+
+      <!-- Recent Sessions History -->
+      <div class="card-surface stack-2">
+        <div class="row-between">
+          <strong style="color: #ffffff; font-size: 14px;">최근 운동 세션 기록</strong>
+          <span id="historyCountBadge" class="badge badge-muted">0건</span>
+        </div>
+        <div id="historyListWrap" class="stack-2"></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Floating Running Rest Timer Pill (Shown when active away from focused timer card) -->
+  <button id="floatingRestPill" type="button" class="btn-tap floating-rest-pill hidden">
+    <span style="color: var(--accent);">⏱</span>
+    <span id="floatingRestText" class="tabular-nums">00:45 · 휴식 중</span>
+  </button>
+
+  <!-- Floating 3-Tab Bottom Bar -->
+  <nav class="floating-nav">
+    <button id="navTodayBtn" type="button" class="nav-item active" data-tab="today">
+      <span class="nav-icon">🎯</span>
+      <span class="nav-label">오늘 운동</span>
+    </button>
+    <button id="navCatalogBtn" type="button" class="nav-item" data-tab="catalog">
+      <span class="nav-icon">📋</span>
+      <span class="nav-label">전체 종목</span>
+    </button>
+    <button id="navSyncBtn" type="button" class="nav-item" data-tab="sync">
+      <span class="nav-icon">☁️</span>
+      <span class="nav-label">동기화·기록</span>
+    </button>
+  </nav>
+
+  <!-- 1-Second RPE Auto-Proceed Bottom Sheet -->
+  <div id="rpeBottomSheet" class="modal-backdrop hidden" style="align-items: flex-end; padding: 0;">
+    <div style="width: 100%; max-width: 540px; background: #141416; border-top: 1px solid var(--border); border-radius: 24px 24px 0 0; padding: 18px 18px calc(24px + env(safe-area-inset-bottom, 0px));" class="stack-3">
+      <div class="row-between">
+        <div>
+          <span class="badge badge-lime">종목 완료</span>
+          <div id="rpeExTitle" style="font-size: 17px; font-weight: 900; color: #fff; margin-top: 4px;">운동 완료!</div>
+        </div>
+        <button id="rpeSkipBtn" type="button" class="btn-tap badge badge-muted" style="font-size: 11.5px; padding: 6px 12px;">건너뛰기</button>
+      </div>
+      <div style="font-size: 12px; color: var(--text-muted);">오늘 수행한 세트의 체감 운동 강도(RPE)를 선택해 주세요:</div>
+      <div class="grid-2" style="grid-template-columns: repeat(5, 1fr); gap: 6px;">
+        <button type="button" class="btn-tap rpe-btn" data-rpe="1" style="height:44px; border-radius:10px; background:var(--card-2); border:1px solid var(--border); color:#fff; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px;"><strong style="font-size:14px; color:var(--accent);">1</strong><span style="font-size:9px; color:var(--text-muted);">매우쉬움</span></button>
+        <button type="button" class="btn-tap rpe-btn" data-rpe="2" style="height:44px; border-radius:10px; background:var(--card-2); border:1px solid var(--border); color:#fff; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px;"><strong style="font-size:14px; color:var(--accent);">2</strong><span style="font-size:9px; color:var(--text-muted);">가벼움</span></button>
+        <button type="button" class="btn-tap rpe-btn" data-rpe="3" style="height:44px; border-radius:10px; background:var(--card-2); border:1px solid var(--border); color:#fff; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px;"><strong style="font-size:14px; color:var(--accent);">3</strong><span style="font-size:9px; color:var(--text-muted);">수월함</span></button>
+        <button type="button" class="btn-tap rpe-btn" data-rpe="4" style="height:44px; border-radius:10px; background:var(--card-2); border:1px solid var(--border); color:#fff; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px;"><strong style="font-size:14px; color:var(--accent);">4</strong><span style="font-size:9px; color:var(--text-muted);">약한자극</span></button>
+        <button type="button" class="btn-tap rpe-btn" data-rpe="5" style="height:44px; border-radius:10px; background:var(--card-2); border:1px solid var(--border); color:#fff; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px;"><strong style="font-size:14px; color:var(--accent);">5</strong><span style="font-size:9px; color:var(--text-muted);">보통</span></button>
+        <button type="button" class="btn-tap rpe-btn" data-rpe="6" style="height:44px; border-radius:10px; background:var(--card-2); border:1px solid var(--border); color:#fff; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px;"><strong style="font-size:14px; color:var(--amber);">6</strong><span style="font-size:9px; color:var(--text-muted);">약간힘듦</span></button>
+        <button type="button" class="btn-tap rpe-btn" data-rpe="7" style="height:44px; border-radius:10px; background:var(--card-2); border:1px solid var(--border); color:#fff; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px;"><strong style="font-size:14px; color:var(--amber);">7</strong><span style="font-size:9px; color:var(--text-muted);">적당함</span></button>
+        <button type="button" class="btn-tap rpe-btn" data-rpe="8" style="height:44px; border-radius:10px; background:var(--card-2); border:1px solid var(--border); color:#fff; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px;"><strong style="font-size:14px; color:var(--amber);">8</strong><span style="font-size:9px; color:var(--text-muted);">힘듦</span></button>
+        <button type="button" class="btn-tap rpe-btn" data-rpe="9" style="height:44px; border-radius:10px; background:var(--card-2); border:1px solid var(--border); color:#fff; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px;"><strong style="font-size:14px; color:var(--rose);">9</strong><span style="font-size:9px; color:var(--text-muted);">매우힘듦</span></button>
+        <button type="button" class="btn-tap rpe-btn" data-rpe="10" style="height:44px; border-radius:10px; background:var(--card-2); border:1px solid var(--border); color:#fff; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px;"><strong style="font-size:14px; color:var(--rose);">10</strong><span style="font-size:9px; color:var(--text-muted);">한계도달</span></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Rich Exercise Detail & 3-Step Frame Player Modal -->
+  <div id="zoomModal" class="modal-backdrop hidden">
+    <div style="width: 100%; max-width: 500px; max-height: 90vh; overflow-y: auto; background: #141416; border: 1px solid var(--border); border-radius: 20px;" class="stack-2">
+      <div class="row-between" style="padding: 12px 16px; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: #141416; z-index: 2;">
+        <strong id="zoomModalTitle" style="color: #fff; font-size: 14px;">동작 가이드</strong>
+        <button id="zoomModalCloseBtn" type="button" class="btn-tap badge badge-muted" style="padding: 6px 10px;">✕ 닫기</button>
+      </div>
+      <div id="zoomModalBody" class="stack-2" style="padding: 12px 14px 16px;"></div>
+    </div>
+  </div>
+
+  <!-- Add Custom Exercise Modal -->
+  <div id="addExModal" class="modal-backdrop hidden">
+    <div style="width: 100%; max-width: 440px; background: #141416; border: 1px solid var(--border); border-radius: 20px; padding: 18px;" class="stack-3">
+      <div class="row-between">
+        <strong style="color: #fff; font-size: 16px;">새 운동 종목 추가</strong>
+        <button id="addExModalCloseBtn" type="button" class="btn-tap badge badge-muted">✕</button>
+      </div>
+      <div class="stack-2">
+        <div>
+          <label style="font-size: 11.5px; color: var(--text-muted); font-weight: 700;">운동 이름</label>
+          <input id="newExName" type="text" class="input-dark" placeholder="예: 케틀벨 윈드밀" style="margin-top:4px;">
+        </div>
+        <div class="grid-2">
+          <div>
+            <label style="font-size: 11.5px; color: var(--text-muted); font-weight: 700;">모드</label>
+            <select id="newExMode" class="input-dark" style="margin-top:4px;">
+              <option value="home">🏠 홈트</option>
+              <option value="gym">🏋️ 헬스장</option>
+            </select>
+          </div>
+          <div>
+            <label style="font-size: 11.5px; color: var(--text-muted); font-weight: 700;">부위·분류 (회복도 연동)</label>
+            <select id="newExCat" class="input-dark" style="margin-top:4px;">
+              <option value="상체 밀기">상체 밀기 (가슴·어깨·삼두)</option>
+              <option value="상체 당기기">상체 당기기 (등·이두)</option>
+              <option value="하체">하체 (스쿼트·둔근)</option>
+              <option value="코어">코어 (복부·안정화)</option>
+              <option value="웜업·이완">웜업·이완 (스트레칭)</option>
+              <option value="유산소">유산소</option>
+            </select>
+          </div>
+        </div>
+        <div class="grid-2">
+          <div>
+            <label style="font-size: 11.5px; color: var(--text-muted); font-weight: 700;">장비/도구</label>
+            <input id="newExEquip" type="text" class="input-dark" value="맨몸/소도구" style="margin-top:4px;">
+          </div>
+          <div>
+            <label style="font-size: 11.5px; color: var(--text-muted); font-weight: 700;">타깃 근육</label>
+            <input id="newExTarget" type="text" class="input-dark" value="전신" style="margin-top:4px;">
+          </div>
+        </div>
+        <div class="grid-3">
+          <div>
+            <label style="font-size: 11.5px; color: var(--text-muted); font-weight: 700;">기본 중량(kg)</label>
+            <input id="newExWeight" type="number" class="input-dark" value="0" style="margin-top:4px;">
+          </div>
+          <div>
+            <label style="font-size: 11.5px; color: var(--text-muted); font-weight: 700;">기본 세트</label>
+            <input id="newExSets" type="number" class="input-dark" value="3" style="margin-top:4px;">
+          </div>
+          <div>
+            <label style="font-size: 11.5px; color: var(--text-muted); font-weight: 700;">횟수/시간</label>
+            <input id="newExReps" type="text" class="input-dark" value="10회" style="margin-top:4px;">
+          </div>
+        </div>
+      </div>
+      <button id="saveNewExBtn" type="button" class="btn-tap btn-primary" style="height: 42px; margin-top: 4px;">저장하기</button>
+    </div>
+  </div>
+
+  <script>
+/* __INLINE_JS__ */
+  </script>
+</body>
+</html>
