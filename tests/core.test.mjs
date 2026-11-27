@@ -106,6 +106,20 @@ test("Routine briefing overrides (sets, reps, weightKg, restSec, reason) & legac
   const lastPullup = store.getLastRecord("home_band_pullup");
   assert.ok(lastPullup);
   assert.equal(lastPullup.date, "2026-11-24");
+
+  // Tab switch safety: completed routine item with fewer sets than raw catalog defaultSets stays completed
+  const deepPushupRaw = EXERCISES.find(x => x.id === "home_deep_pushup");
+  store.state.todayRoutine.items.push({ id: "home_deep_pushup", sets: 3, reps: "10회" });
+  const pushupEffective = store.getTodayRoutineExercises().find(x => x.id === "home_deep_pushup");
+  const pushupRec = store.getRecord(pushupEffective, "2026-11-27");
+  pushupRec.sets.forEach(s => { s.done = true; });
+  pushupRec.isCompleted = true;
+  pushupRec.lastUpdatedDate = "2026-11-27";
+
+  const todayById = new Map(store.getTodayRoutineExercises().map(x => [x.id, x]));
+  const catalogViewRec = store.getRecord(todayById.get(deepPushupRaw.id) || deepPushupRaw, "2026-11-27");
+  assert.equal(catalogViewRec.sets.length, 3);
+  assert.equal(catalogViewRec.isCompleted, true);
 });
 
 test("Metrics calculation preserves cycling wellness & includes today sTSS in local EWMA", () => {

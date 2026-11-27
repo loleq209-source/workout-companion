@@ -208,6 +208,9 @@ export function createStore(storage = typeof localStorage !== "undefined" ? loca
       while (rec.sets.length > targetSets && !rec.sets[rec.sets.length - 1].done) {
         rec.sets.pop();
       }
+      if (rec.sets.length > 0 && rec.sets.every(s => s.done)) {
+        rec.isCompleted = true;
+      }
     }
 
     return rec;

@@ -54,13 +54,15 @@ export function renderCatalog({ store, sync, modals, onRenderAll, showToast }) {
     return;
   }
 
-  const todayIds = new Set(store.getTodayRoutineExercises().map(x => x.id));
+  const todayItems = store.getTodayRoutineExercises();
+  const todayById = new Map(todayItems.map(x => [x.id, x]));
 
   listContainer.innerHTML = items
     .map(ex => {
-      const rec = store.getRecord(ex);
+      const effectiveEx = todayById.get(ex.id) || ex;
+      const rec = store.getRecord(effectiveEx);
       const isDone = rec.isCompleted;
-      const isInToday = todayIds.has(ex.id);
+      const isInToday = todayById.has(ex.id);
       const isCustom = String(ex.id).startsWith("custom_");
       const last = store.getLastRecord(ex.id, ex.name);
       const pref = rec.preference;
@@ -109,7 +111,8 @@ export function renderCatalog({ store, sync, modals, onRenderAll, showToast }) {
       const id = btn.dataset.exId;
       const ex = allEx.find(x => x.id === id);
       if (!ex) return;
-      const rec = store.getRecord(ex);
+      const effectiveEx = todayById.get(ex.id) || ex;
+      const rec = store.getRecord(effectiveEx);
 
       if (act === "pref-like") {
         rec.preference = rec.preference === "like" ? null : "like";
