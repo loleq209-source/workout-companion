@@ -3,7 +3,7 @@
  * midnight rollover protection, and planned-sets reconciliation.
  */
 import { getTodayStr } from "./date.mjs";
-import { EXERCISES, getAllExercises, isWarmupOrStretch } from "./data.mjs";
+import { EXERCISES, getAllExercises, isWarmupOrStretch, resolveExerciseId, getLegacyAliasForNewId } from "./data.mjs";
 import { calculateWorkoutMetrics } from "./metrics.mjs";
 
 const STORAGE_KEY_V9 = "workout_companion_state_v9";
@@ -142,6 +142,25 @@ export function createStore(storage = typeof localStorage !== "undefined" ? loca
     const fallbackWeight = typeof ex.defaultWeightKg === "number" ? ex.defaultWeightKg : 0;
 
     let rec = state.records[ex.id];
+    if (!rec) {
+      const legacyId = getLegacyAliasForNewId(ex.id);
+      const legacyRec = legacyId && state.records[legacyId];
+      if (legacyRec && Array.isArray(legacyRec.sets) && legacyRec.sets.length > 0) {
+        rec = {
+          sets: legacyRec.sets.map(s => ({
+            weightKg: s.weightKg != null ? s.weightKg : fallbackWeight,
+            reps: s.reps || targetReps,
+            done: legacyRec.lastUpdatedDate === currentToday ? !!s.done : false
+          })),
+          isCompleted: legacyRec.lastUpdatedDate === currentToday ? !!legacyRec.isCompleted : false,
+          rpe: legacyRec.lastUpdatedDate === currentToday ? (legacyRec.rpe ?? null) : null,
+          preference: legacyRec.preference || null,
+          preferenceNote: legacyRec.preferenceNote || "",
+          lastUpdatedDate: legacyRec.lastUpdatedDate || ""
+        };
+        state.records[ex.id] = rec;
+      }
+    }
     if (!rec || !Array.isArray(rec.sets) || rec.sets.length === 0) {
       const sets = [];
       for (let i = 0; i < targetSets; i++) {
@@ -161,11 +180,13 @@ export function createStore(storage = typeof localStorage !== "undefined" ? loca
 
     const doneCount = rec.sets.filter(s => s && s.done).length;
 
-    // On a new untouched day, align target reps cleanly to today's prescription
+    // On a new untouched day, align target reps & routine-prescribed weight cleanly to today's prescription
     if (doneCount === 0 && !rec.isCompleted && rec.lastUpdatedDate !== currentToday) {
       rec.sets.forEach(s => {
         s.reps = targetReps;
-        if (s.weightKg == null || (s.weightKg === 0 && fallbackWeight > 0)) {
+        if (typeof ex.routineWeightKg === "number") {
+          s.weightKg = ex.routineWeightKg;
+        } else if (s.weightKg == null || (s.weightKg === 0 && fallbackWeight > 0)) {
           s.weightKg = fallbackWeight;
         }
       });
@@ -198,30 +219,37 @@ export function createStore(storage = typeof localStorage !== "undefined" ? loca
     const seen = new Set();
 
     const addItemFromSpec = (it) => {
-      if (!it || !it.id || seen.has(it.id)) return;
-      seen.add(it.id);
-      const found = all.find(x => x.id === it.id);
+      if (!it || !it.id) return;
+      const resolvedId = resolveExerciseId(it.id);
+      if (seen.has(resolvedId)) return;
+      seen.add(resolvedId);
+      const found = all.find(x => x.id === resolvedId);
+      const hasRoutineWeight = typeof it.weightKg === "number";
       if (found) {
         list.push(
           Object.assign({}, found, {
             defaultSets: it.sets || found.defaultSets,
             defaultReps: it.reps || found.defaultReps,
-            defaultWeightKg: typeof it.weightKg === "number" ? it.weightKg : found.defaultWeightKg,
-            restSec: it.restSec || found.restSec
+            defaultWeightKg: hasRoutineWeight ? it.weightKg : found.defaultWeightKg,
+            routineWeightKg: hasRoutineWeight ? it.weightKg : null,
+            restSec: it.restSec || found.restSec,
+            reason: it.reason || ""
           })
         );
       } else {
         list.push({
-          id: it.id,
-          name: it.label || it.name || it.id,
+          id: resolvedId,
+          name: it.label || it.name || resolvedId,
           mode: (state.todayRoutine && state.todayRoutine.mode) || "home",
           category: it.category || "근력",
           equipment: it.equipment || "맨몸/소도구",
           targetMuscle: it.targetMuscle || "전신",
           defaultSets: it.sets || 3,
           defaultReps: it.reps || "10회",
-          defaultWeightKg: typeof it.weightKg === "number" ? it.weightKg : 0,
-          restSec: it.restSec || 60
+          defaultWeightKg: hasRoutineWeight ? it.weightKg : 0,
+          routineWeightKg: hasRoutineWeight ? it.weightKg : null,
+          restSec: it.restSec || 60,
+          reason: it.reason || ""
         });
       }
     };
@@ -371,12 +399,15 @@ export function createStore(storage = typeof localStorage !== "undefined" ? loca
 
   function getLastRecord(exId, exName = "") {
     if (!Array.isArray(state.history) || state.history.length === 0) return null;
+    const legacyId = getLegacyAliasForNewId(exId);
     for (let i = state.history.length - 1; i >= 0; i--) {
       const sess = state.history[i];
       if (!sess) continue;
       const exArr = sess.exercises || sess.items || [];
       const found = exArr.find(
-        item => (item.id === exId || (exName && item.name === exName)) && (item.isCompleted || (item.completedSets || 0) > 0)
+        item =>
+          (item.id === exId || (legacyId && item.id === legacyId) || (exName && item.name === exName)) &&
+          (item.isCompleted || (item.completedSets || 0) > 0)
       );
       if (found) return { date: sess.date, data: found };
     }

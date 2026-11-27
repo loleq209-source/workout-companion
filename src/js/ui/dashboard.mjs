@@ -50,6 +50,31 @@ export function renderDashboard({ store, onSelectExercise }) {
     }
   }
 
+  // Today AI Briefing Card (yesterdayRecap / cyclingGuide / bonusTip)
+  const briefingCard = document.getElementById("dashBriefingCard");
+  const briefingRows = document.getElementById("dashBriefingRows");
+  if (briefingCard && briefingRows && hero) {
+    const rows = [];
+    if (hero.yesterdayRecap) {
+      rows.push(`<div class="ai-briefing-row"><span class="ai-briefing-label">📌 전날 결산</span><span class="ai-briefing-val">${hero.yesterdayRecap}</span></div>`);
+    }
+    if (hero.cyclingGuide) {
+      rows.push(`<div class="ai-briefing-row"><span class="ai-briefing-label">🚴 오늘 라이딩 가이드</span><span class="ai-briefing-val">${hero.cyclingGuide}</span></div>`);
+    }
+    if (hero.bonusTip) {
+      rows.push(`<div class="ai-briefing-row"><span class="ai-briefing-label">💡 보조 팁</span><span class="ai-briefing-val">${hero.bonusTip}</span></div>`);
+    }
+    if (rows.length > 0) {
+      briefingRows.innerHTML = rows.join("");
+      briefingCard.classList.remove("hidden");
+    } else {
+      briefingRows.innerHTML = "";
+      briefingCard.classList.add("hidden");
+    }
+  } else if (briefingCard) {
+    briefingCard.classList.add("hidden");
+  }
+
   // CTA Button text
   const ctaBtn = document.getElementById("dashCtaBtn");
   if (ctaBtn) {
@@ -77,7 +102,8 @@ export function renderDashboard({ store, onSelectExercise }) {
       const totalSetCount = rec.sets.length;
       const w = (rec.sets[0] && rec.sets[0].weightKg) || ex.defaultWeightKg || 0;
       const r = (rec.sets[0] && rec.sets[0].reps) || ex.defaultReps || "10회";
-      const specMeta = `${w > 0 ? `${w}kg · ` : ""}${r} × ${totalSetCount}세트`;
+      const restSec = ex.restSec || 60;
+      const specMeta = `${w > 0 ? `${w}kg · ` : ""}${totalSetCount}세트 × ${r} · 휴식 ${restSec}초`;
 
       let badgeHtml = "";
       if (isDone) {
@@ -97,6 +123,7 @@ export function renderDashboard({ store, onSelectExercise }) {
               <div style="font-size:11px; color:var(--text-muted); margin-top:3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
                 <span style="color:var(--accent); font-weight:700;">${specMeta}</span> · ${ex.targetMuscle}
               </div>
+              ${ex.reason ? `<div class="dash-reason-line">🎯 ${ex.reason}</div>` : ""}
             </div>
           </div>
           <div style="flex-shrink:0; margin-left:6px;">${badgeHtml}</div>

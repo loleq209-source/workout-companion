@@ -258,6 +258,11 @@ export function createCardController({ store, timerCtrl, sync, modals, onRenderA
             <span class="badge badge-muted" style="font-size:10px; padding:1.5px 7px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:54%; flex-shrink:0;">${ex.equipment}</span>
             <span style="font-size:11px; font-weight:800; color:var(--accent); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; text-align:right; min-width:0; flex:1;">${ex.targetMuscle}</span>
           </div>
+          ${
+            ex.reason
+              ? `<div class="card-reason-pill">🎯 오늘 포인트: ${ex.reason}</div>`
+              : ""
+          }
 
           <!-- 4. Phases 1~3 Coaching Steps -->
           ${

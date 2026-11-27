@@ -24,22 +24,86 @@ test("Date helpers perform local arithmetic without UTC shift", () => {
   assert.equal(addDaysLocal("2026-11-25", -6), "2026-11-19");
 });
 
-test("Data mapping classifies all 43 exercises cleanly", () => {
-  assert.equal(EXERCISES.length, 43);
+test("Data mapping classifies all 48 exercises cleanly & preserves legacy aliases", () => {
+  assert.equal(EXERCISES.length, 48);
   const legPress = EXERCISES.find(x => x.id === "gym_leg_press");
   const legCurl = EXERCISES.find(x => x.id === "gym_leg_curl");
-  const pullup = EXERCISES.find(x => x.id === "home_pullup");
+  const bandPullup = EXERCISES.find(x => x.id === "home_band_pullup");
+  const bandChinup = EXERCISES.find(x => x.id === "home_band_chinup");
   const pushup = EXERCISES.find(x => x.id === "home_deep_pushup");
-  const smr = EXERCISES.find(x => x.id === "home_smr_back");
+  const smrGlute = EXERCISES.find(x => x.id === "home_smr_glute");
+  const hipStretch = EXERCISES.find(x => x.id === "home_hip_flexor_stretch");
+  const plank = EXERCISES.find(x => x.id === "home_forearm_plank");
+  const deadbug = EXERCISES.find(x => x.id === "home_deadbug");
 
   assert.equal(getMuscleGroup(legPress), "legs");
   assert.equal(getMuscleGroup(legCurl), "legs");
-  assert.equal(getMuscleGroup(pullup), "pull");
+  assert.equal(getMuscleGroup(bandPullup), "pull");
+  assert.equal(getMuscleGroup(bandChinup), "pull");
   assert.equal(getMuscleGroup(pushup), "push");
-  assert.equal(getMuscleGroup(smr), null);
-  assert.equal(isWarmupOrStretch(smr), true);
+  assert.equal(getMuscleGroup(plank), "core");
+  assert.equal(getMuscleGroup(deadbug), "core");
+  assert.equal(getMuscleGroup(smrGlute), null);
+  assert.equal(isWarmupOrStretch(smrGlute), true);
+  assert.equal(isWarmupOrStretch(hipStretch), true);
   assert.equal(getMuscleGroup({ id: "custom_1", category: "상체 밀기" }), "push");
   assert.equal(getMuscleGroup({ id: "custom_2", category: "하체" }), "legs");
+  // Legacy history IDs remain classified accurately
+  assert.equal(getMuscleGroup({ id: "home_pullup", category: "상체 당기기" }), "pull");
+  assert.equal(isWarmupOrStretch({ id: "home_smr_back", category: "웜업·이완" }), true);
+});
+
+test("Routine briefing overrides (sets, reps, weightKg, restSec, reason) & legacy alias resolution", () => {
+  const store = createStore(makeMemoryStorage({
+    sessionDate: "2026-11-27",
+    todayRoutine: {
+      date: "2026-11-27",
+      title: "AI 브리핑 테스트 루틴",
+      yesterdayRecap: "11/26 라이딩 45km 회복 필요",
+      cyclingGuide: "존2 40분 가벼운 회전",
+      bonusTip: "수분·전해질 보충",
+      items: [
+        { id: "home_band_pullup", sets: 4, reps: "8회", restSec: 75, reason: "11/24 RPE 6 달성 → 8회 증량" },
+        { id: "home_kb_row", sets: 3, reps: "12회", weightKg: 16, restSec: 60, reason: "증량 테스트" },
+        { id: "home_hip_calf", sets: 2, reps: "35초", restSec: 30 }
+      ]
+    },
+    records: {
+      home_kb_row: {
+        sets: [{ weightKg: 14, reps: "10회", done: false }],
+        isCompleted: false,
+        lastUpdatedDate: "2026-11-26"
+      }
+    },
+    history: [
+      {
+        date: "2026-11-24",
+        exercises: [{ id: "home_pullup", name: "치닝디핑 밴드 풀업 & 친업", completedSets: 3, rpe: 6, isCompleted: true }]
+      }
+    ]
+  }));
+
+  const items = store.getTodayRoutineExercises();
+  assert.equal(items.length, 3);
+  assert.equal(items[0].id, "home_band_pullup");
+  assert.equal(items[0].defaultSets, 4);
+  assert.equal(items[0].defaultReps, "8회");
+  assert.equal(items[0].restSec, 75);
+  assert.equal(items[0].reason, "11/24 RPE 6 달성 → 8회 증량");
+
+  // Routine weightKg overrides stale previous-day weight on untouched day
+  const rowRec = store.getRecord(items[1], "2026-11-27");
+  assert.equal(rowRec.sets.length, 3);
+  assert.equal(rowRec.sets[0].weightKg, 16);
+  assert.equal(rowRec.sets[0].reps, "12회");
+
+  // Legacy routine ID resolves cleanly without breaking
+  assert.equal(items[2].id, "home_hip_flexor_stretch");
+
+  // Legacy history lookup works for split IDs
+  const lastPullup = store.getLastRecord("home_band_pullup");
+  assert.ok(lastPullup);
+  assert.equal(lastPullup.date, "2026-11-24");
 });
 
 test("Metrics calculation preserves cycling wellness & includes today sTSS in local EWMA", () => {
@@ -88,10 +152,10 @@ test("Midnight rollover & Drive sync never leak yesterday done flags into today"
         date: yesterday,
         title: "Yesterday Routine",
         mode: "home",
-        items: [{ id: "home_pullup", sets: 3, reps: "2회" }]
+        items: [{ id: "home_band_pullup", sets: 3, reps: "2회" }]
       },
       records: {
-        home_pullup: {
+        home_band_pullup: {
           sets: [
             { weightKg: 0, reps: "2회", done: true },
             { weightKg: 0, reps: "2회", done: true },
@@ -108,10 +172,10 @@ test("Midnight rollover & Drive sync never leak yesterday done flags into today"
 
   // Upon creation for `today`, completion flags must reset while weight & preference persist
   assert.equal(store.state.sessionDate, today);
-  assert.equal(store.state.records.home_pullup.isCompleted, false);
-  assert.equal(store.state.records.home_pullup.rpe, null);
-  assert.equal(store.state.records.home_pullup.preference, "like");
-  assert.ok(store.state.records.home_pullup.sets.every(s => s.done === false));
+  assert.equal(store.state.records.home_band_pullup.isCompleted, false);
+  assert.equal(store.state.records.home_band_pullup.rpe, null);
+  assert.equal(store.state.records.home_band_pullup.preference, "like");
+  assert.ok(store.state.records.home_band_pullup.sets.every(s => s.done === false));
 
   // Before today's routine arrives or user taps sets, upsertTodayHistory must NOT fabricate today's history from yesterday's routine
   upsertTodayHistory(store, today);
@@ -127,11 +191,11 @@ test("Midnight rollover & Drive sync never leak yesterday done flags into today"
         title: "Today New Routine",
         note: "Test note",
         mode: "home",
-        items: [{ id: "home_pullup", sets: 2, reps: "5회" }]
+        items: [{ id: "home_band_pullup", sets: 2, reps: "5회" }]
       },
-      history: [{ date: yesterday, exercises: [{ id: "home_pullup", completedSets: 3, isCompleted: true, rpe: 7 }] }],
+      history: [{ date: yesterday, exercises: [{ id: "home_band_pullup", completedSets: 3, isCompleted: true, rpe: 7 }] }],
       records: {
-        home_pullup: {
+        home_band_pullup: {
           sets: [
             { weightKg: 5, reps: "2회", done: true },
             { weightKg: 5, reps: "2회", done: true },

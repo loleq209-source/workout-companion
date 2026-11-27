@@ -48,10 +48,41 @@ const STRETCH_IDS = new Set([
   "home_smr",
   "home_thoracic_rot",
   "home_hip_calf",
+  "home_hip_flexor_stretch",
+  "home_calf_stretch",
   "home_smr_neck",
+  "home_smr_suboccipital",
+  "home_smr_chest_open",
   "home_smr_back",
+  "home_smr_glute",
+  "home_smr_thoracic",
   "home_dead_hang"
 ]);
+
+/**
+ * Legacy bundled exercise IDs mapped to their split single-action IDs
+ * so historical workout_history.json lookups and legacy routine specs remain intact.
+ */
+export const LEGACY_EXERCISE_ALIASES = {
+  home_plank_deadbug: ["home_forearm_plank", "home_deadbug"],
+  home_hip_calf: ["home_hip_flexor_stretch", "home_calf_stretch"],
+  home_pullup: ["home_band_pullup", "home_band_chinup"],
+  home_smr_back: ["home_smr_glute", "home_smr_thoracic"],
+  home_smr_neck: ["home_smr_suboccipital", "home_smr_chest_open"]
+};
+
+export function resolveExerciseId(exId) {
+  if (!exId) return exId;
+  const mapped = LEGACY_EXERCISE_ALIASES[exId];
+  return mapped ? mapped[0] : exId;
+}
+
+export function getLegacyAliasForNewId(newId) {
+  for (const [oldId, targets] of Object.entries(LEGACY_EXERCISE_ALIASES)) {
+    if (targets.includes(newId)) return oldId;
+  }
+  return null;
+}
 
 export function isWarmupOrStretch(ex) {
   if (!ex) return false;
@@ -107,10 +138,11 @@ export function getMuscleGroup(ex) {
     return "push";
   }
 
-  // Pull: 상체 당기기, pullups, rows, curls, gyro ball
+  // Pull: 상체 당기기, pullups, chinups, rows, curls, gyro ball
   if (
     cat.includes("당기기") ||
     id.includes("pull") ||
+    id.includes("chinup") ||
     id.includes("row") ||
     id.includes("curl") ||
     id === "home_gyro_ball"
