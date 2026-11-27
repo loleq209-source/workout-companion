@@ -279,7 +279,7 @@ body {
   opacity: 1;
 }
 
-/* Modal Backdrop */
+/* Modal Backdrop & Scrollable Panel */
 .modal-backdrop {
   position: fixed;
   inset: 0;
@@ -291,6 +291,16 @@ body {
   align-items: center;
   justify-content: center;
   padding: 14px;
+  overflow-y: auto;
+}
+.modal-panel {
+  width: 100%;
+  max-height: calc(100dvh - 28px);
+  overflow-y: auto;
+  background: #141416;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 16px;
 }
 
 /* Stepper Controls */
@@ -565,7 +575,7 @@ body {
 }
 .heatmap-svg {
   width: 100%;
-  max-width: 136px;
+  max-width: 120px;
   height: auto;
   display: block;
 }
