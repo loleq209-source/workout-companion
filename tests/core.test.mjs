@@ -24,8 +24,8 @@ test("Date helpers perform local arithmetic without UTC shift", () => {
   assert.equal(addDaysLocal("2026-11-25", -6), "2026-11-19");
 });
 
-test("Data mapping classifies all 44 exercises cleanly", () => {
-  assert.equal(EXERCISES.length, 44);
+test("Data mapping classifies all 43 exercises cleanly", () => {
+  assert.equal(EXERCISES.length, 43);
   const legPress = EXERCISES.find(x => x.id === "gym_leg_press");
   const legCurl = EXERCISES.find(x => x.id === "gym_leg_curl");
   const pullup = EXERCISES.find(x => x.id === "home_pullup");

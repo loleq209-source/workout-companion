@@ -1,7 +1,7 @@
 {
   "version": "8.1",
-  "updatedAt": "2026-11-24",
-  "totalExercises": 44,
+  "updatedAt": "2026-11-27T19:16:00+09:00",
+  "totalExercises": 43,
   "exercises": {
     "home_smr": {
       "tempo": "왕복 4초 · 정지 3~5초",
@@ -1375,8 +1375,8 @@
     "home_gyro_ball": {
       "tempo": "회전 가속 유지",
       "unilateral": true,
-      "doCue": "손목 스냅으로 부드럽게 원을 그리며 회전수 높이고 팔꿈치 고정",
-      "dontCue": "팔 전체를 크게 휘두르거나 손목을 과도하게 꺾기",
+      "doCue": "손목 스트랩 필수 착용 후 손목 스냅으로 부드럽게 원을 그리며 회전수 높이고 팔꿈치 고정",
+      "dontCue": "팔 전체를 크게 휘두르거나 손목을 과도하게 꺾기, 종료 시 손으로 억지로 멈추지 않고 자연 감속",
       "phases": [
         {
           "step": 1,
@@ -1406,43 +1406,6 @@
           "altId": "home_kb_curl",
           "altName": "14kg 케틀벨 양손 바이셉 컬",
           "reason": "회전 부하 대신 중립 그립 컬로 안전하게 전완·상완 자극"
-        }
-      ]
-    },
-    "home_band_pull_apart": {
-      "tempo": "2-1-2",
-      "unilateral": false,
-      "doCue": "팔을 가슴 높이로 뻗어 밴드를 좌우로 찢으며 날개뼈 모으기",
-      "dontCue": "어깨가 으쓱 올라가 승모근 상부로 당기거나 허리 꺾기",
-      "phases": [
-        {
-          "step": 1,
-          "title": "가슴 앞 셋업",
-          "breath": "복압 채워 들이마시기",
-          "tempo": "1초 고정",
-          "cue": "어시스트 밴드를 어깨너비로 잡고 팔을 가슴 정면으로 곧게 뻗습니다."
-        },
-        {
-          "step": 2,
-          "title": "수평 벌리기",
-          "breath": "벌리며 힘차게 내쉬기",
-          "tempo": "1초 정점 수축",
-          "cue": "팔꿈치를 살짝만 굽힌 채 밴드가 가슴에 닿을 때까지 양옆으로 당깁니다."
-        },
-        {
-          "step": 3,
-          "title": "통제 복귀",
-          "breath": "돌아오며 들이마시기",
-          "tempo": "2초 천천히",
-          "cue": "밴드 탄성을 버티며 2초 동안 천천히 시작 자세로 모아줍니다."
-        }
-      ],
-      "painAlternatives": [
-        {
-          "area": "어깨",
-          "altId": "home_kb_halo",
-          "altName": "14kg 케틀벨 헤일로",
-          "reason": "수평 벌리기 통증 시 원형 궤도로 회전근개 부드럽게 활성화"
         }
       ]
     },
@@ -1588,9 +1551,9 @@
       "painAlternatives": [
         {
           "area": "허리",
-          "altId": "home_goblet_squat",
-          "altName": "14kg 케틀벨 고블릿 스쿼트",
-          "reason": "누운 자세 골반 거치 부담 시 서서 척추 중립 스쿼트로 둔근 강화"
+          "altId": "home_plank_deadbug",
+          "altName": "포어암 플랭크 & 데드버그",
+          "reason": "골반 리프트 부담 시 허리를 바닥에 밀착한 코어 안정화로 대체"
         }
       ]
     },

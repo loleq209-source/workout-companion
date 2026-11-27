@@ -1,4 +1,4 @@
-// Auto-extracted canonical 44-exercise catalog
+// Auto-extracted canonical 43-exercise catalog
 export const EXERCISES = [
   {
     "id": "home_smr",
@@ -948,32 +948,7 @@ export const EXERCISES = [
       "정점 부하 유지: 강한 원심력을 버티며 전완근 전체에 일정한 텐션을 45초간 유지합니다. (좌우 교대)"
     ],
     "breathing": "팔꿈치를 몸통에 고정한 채 일정한 리듬으로 호흡을 유지합니다.",
-    "tips": "팔 전체를 크게 휘두르지 말고 손목 스냅의 회전 반경을 일정하게 유지하세요."
-  },
-  {
-    "id": "home_band_pull_apart",
-    "mode": "home",
-    "category": "상체 당기기",
-    "presets": [
-      "all",
-      "upper_core"
-    ],
-    "name": "어시스트 밴드 풀 어파트 & 페이스풀",
-    "equipment": "어시스트 밴드",
-    "targetMuscle": "후면 삼각근·능형근·하부 승모근",
-    "defaultWeightKg": null,
-    "defaultSets": 3,
-    "defaultReps": "15회",
-    "restSec": 60,
-    "pairName": "팩덱 리버스 플라이",
-    "prep": "어시스트 밴드를 어깨너비로 잡고 팔을 가슴 정면으로 곧게 뻗습니다.",
-    "steps": [
-      "가슴 앞 셋업: 어시스트 밴드를 어깨너비로 잡고 팔을 가슴 정면으로 곧게 뻗습니다.",
-      "수평 벌리기 (풀 어파트): 팔꿈치를 살짝만 굽힌 채 밴드가 가슴에 닿을 때까지 양옆으로 당깁니다.",
-      "통제 복귀: 밴드 탄성을 버티며 2초 동안 천천히 시작 자세로 모아줍니다."
-    ],
-    "breathing": "밴드를 벌려 날개뼈를 모을 때 힘차게 내쉬고, 돌아올 때 들이마십니다.",
-    "tips": "어깨가 으쓱 올라가 승모근 상부로 당기거나 허리를 뒤로 꺾지 마세요."
+    "tips": "손목 스트랩을 반드시 착용하세요. 팔 전체를 크게 휘두르지 말고 손목 스냅을 유지하며, 종료 시 손으로 억지로 멈추지 않고 자연 감속시키세요."
   },
   {
     "id": "home_dips",

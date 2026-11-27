@@ -107,14 +107,13 @@ export function getMuscleGroup(ex) {
     return "push";
   }
 
-  // Pull: 상체 당기기, pullups, rows, curls, gyro ball, pull apart
+  // Pull: 상체 당기기, pullups, rows, curls, gyro ball
   if (
     cat.includes("당기기") ||
     id.includes("pull") ||
     id.includes("row") ||
     id.includes("curl") ||
-    id === "home_gyro_ball" ||
-    id === "home_band_pull_apart"
+    id === "home_gyro_ball"
   ) {
     return "pull";
   }
