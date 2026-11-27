@@ -1,4 +1,4 @@
-const CACHE_NAME = "workout-companion-v10.6";
+const CACHE_NAME = "workout-companion-v10.7";
 const STATIC_ASSETS = [
   "./",
   "./index.html",

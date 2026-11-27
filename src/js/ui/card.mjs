@@ -326,10 +326,13 @@ export function createCardController({ store, timerCtrl, workTimerCtrl, sync, mo
         }
 
         <div class="unified-coach-body">
-          <!-- 2. Exercise Title Row (No Truncation) + Unilateral Badge -->
+          <!-- 2. Exercise Title Row (No Truncation) + Unilateral Badge + Undo Swap -->
           <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:6px;">
             <span style="font-size:16.5px; font-weight:900; color:#ffffff; word-break:keep-all; line-height:1.25; letter-spacing:-0.3px;">${ex.name}</span>
-            ${enriched && enriched.unilateral ? `<span class="badge badge-purple" style="font-size:9.5px; padding:1px 6px; flex-shrink:0; white-space:nowrap; margin-top:1px;">↔ 양쪽</span>` : ""}
+            <div style="display:flex; align-items:center; gap:4px; flex-shrink:0; margin-top:1px;">
+              ${ex.swappedFrom ? `<button type="button" data-card-action="undo-swap" class="btn-tap card-undo-swap-btn">↩ 원래 종목 복구</button>` : ""}
+              ${enriched && enriched.unilateral ? `<span class="badge badge-purple" style="font-size:9.5px; padding:1px 6px; white-space:nowrap;">↔ 양쪽</span>` : ""}
+            </div>
           </div>
 
           <!-- 3. Meta Row: Equipment Capsule + Neon Lime Target Muscle -->
@@ -392,13 +395,17 @@ export function createCardController({ store, timerCtrl, workTimerCtrl, sync, mo
               ${enriched && enriched.unilateral ? `<span class="badge badge-purple" style="font-size:9.5px; padding:1px 5px; flex-shrink:0;">좌우 각각</span>` : ""}
             </div>
             ${
-              firstAlt
+              alertAlt
                 ? `
-              <button type="button" data-card-action="switch-alt" data-alt-id="${firstAlt.altId}" class="btn-tap" style="font-size:10.5px; font-weight:800; color:${alertAlt ? "#fde047" : "var(--amber-bright)"}; background:${alertAlt ? "rgba(250,204,21,0.18)" : "rgba(250,204,21,0.1)"}; border:1px solid ${alertAlt ? "rgba(250,204,21,0.55)" : "rgba(250,204,21,0.3)"}; border-radius:7px; height:24px; padding:0 7px; display:flex; align-items:center; gap:3px; white-space:nowrap; max-width:65%; overflow:hidden; text-overflow:ellipsis; flex-shrink:0;">
-                <span style="overflow:hidden; text-overflow:ellipsis;">🩹 ${alertAlt ? `${alertAlt.matchedArea} 주의 · 원탭 대체` : `${firstAlt.area} 불편 시`} → ${firstAlt.altName.replace(/^[0-9]+kg\s*/, "")}</span>
+              <button type="button" data-card-action="open-swap-sheet" class="btn-tap" style="font-size:10.5px; font-weight:800; color:#fde047; background:rgba(250,204,21,0.18); border:1px solid rgba(250,204,21,0.55); border-radius:7px; height:24px; padding:0 8px; display:flex; align-items:center; gap:3px; white-space:nowrap; max-width:65%; overflow:hidden; text-overflow:ellipsis; flex-shrink:0;">
+                <span style="overflow:hidden; text-overflow:ellipsis;">🩹 ${alertAlt.matchedArea} 주의 · 종목 교체</span>
               </button>
             `
-                : `<span style="font-size:10px; color:var(--text-muted); flex-shrink:0;">표준 자세 권장</span>`
+                : `
+              <button type="button" data-card-action="open-swap-sheet" class="btn-tap" style="font-size:10.5px; font-weight:800; color:var(--accent); background:var(--accent-bg); border:1px solid rgba(163,230,53,0.35); border-radius:7px; height:24px; padding:0 8px; display:flex; align-items:center; gap:3px; white-space:nowrap; flex-shrink:0;">
+                🔄 종목 교체 · 대체
+              </button>
+            `
             }
           </div>
         </div>
@@ -497,6 +504,17 @@ export function createCardController({ store, timerCtrl, workTimerCtrl, sync, mo
           const curReps = (rec.sets[0] && rec.sets[0].reps) || ex.defaultReps || "30초";
           const targetSec = parseTimedSeconds(curReps) || 30;
           workTimerCtrl.reset(targetSec, ex.id);
+        } else if (act === "open-swap-sheet") {
+          if (modals && typeof modals.openSwapModal === "function") {
+            modals.openSwapModal(store.state.todayCardIndex);
+          }
+        } else if (act === "undo-swap") {
+          if (store.undoRoutineSwap(store.state.todayCardIndex)) {
+            sync.scheduleAutoPush(300);
+            onRenderAll();
+            const reverted = store.getTodayRoutineExercises()[store.state.todayCardIndex];
+            showToast(`↩ [${(reverted && reverted.name) || "원래 종목"}]으로 복구되었습니다.`);
+          }
         } else if (act === "switch-alt") {
           const altId = el.dataset.altId;
           const items = store.getTodayRoutineExercises();
@@ -506,7 +524,7 @@ export function createCardController({ store, timerCtrl, workTimerCtrl, sync, mo
             onRenderAll();
             showToast(`🩹 ${items[targetIdx].name}(으)로 이동했습니다.`);
           } else {
-            const ok = store.replaceTodayRoutineExercise(store.state.todayCardIndex, altId);
+            const ok = store.replaceTodayRoutineExercise(store.state.todayCardIndex, altId, "pain");
             if (ok) {
               sync.scheduleAutoPush(500);
               onRenderAll();
@@ -644,7 +662,8 @@ export function createCardController({ store, timerCtrl, workTimerCtrl, sync, mo
         const addOpen = !document.getElementById("addExModal")?.classList.contains("hidden");
         const quickAddOpen = !document.getElementById("quickAddModal")?.classList.contains("hidden");
         const reportOpen = !document.getElementById("reportModal")?.classList.contains("hidden");
-        if (rpeOpen || zoomOpen || addOpen || quickAddOpen || reportOpen) {
+        const swapOpen = !document.getElementById("swapModal")?.classList.contains("hidden");
+        if (rpeOpen || zoomOpen || addOpen || quickAddOpen || reportOpen || swapOpen) {
           cancelled = true;
           return;
         }

@@ -11,6 +11,7 @@ const MODULE_ORDER = [
   "js/date.mjs",
   "js/exercisesData.mjs",
   "js/data.mjs",
+  "js/swapEngine.mjs",
   "js/bridge.mjs",
   "js/metrics.mjs",
   "js/muscleMap.mjs",

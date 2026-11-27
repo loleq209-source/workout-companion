@@ -41,6 +41,7 @@ export function buildWorkoutLogPayload(store, targetDate = getWorkoutDateStr()) 
       isCompleted: isComp,
       preference: rec.preference || "neutral",
       preferenceNote: rec.preferenceNote || "",
+      ...(ex.swappedFrom ? { swappedFrom: ex.swappedFrom, swapReason: ex.swapReason || "variation" } : {}),
       setLogs: setsArr.map((s, idx) => ({
         set: idx + 1,
         weightKg: s.weightKg != null ? s.weightKg : w,

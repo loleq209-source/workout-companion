@@ -187,6 +187,19 @@ document.addEventListener("DOMContentLoaded", () => {
     modals.openQuickAddModal();
   });
 
+  document.getElementById("dashModeSwapBtn")?.addEventListener("click", () => {
+    const res = store.toggleRoutineMode();
+    renderAll();
+    sync.scheduleAutoPush(400);
+    if (res.reverted) {
+      showToast(`🔄 ${res.targetMode === "gym" ? "헬스 기구" : "홈트"} 루틴 원래 상태로 복구했습니다!`);
+    } else if (res.convertedCount > 0) {
+      showToast(`🔄 ${res.convertedCount}개 종목을 ${res.targetMode === "gym" ? "🏋️ 헬스 기구" : "🏠 홈트"}로 일괄 변환했습니다!`);
+    } else {
+      showToast("변환할 미완료 종목이 없습니다.");
+    }
+  });
+
   document.getElementById("dashReportBtn")?.addEventListener("click", () => {
     modals.openCompletionReportModal();
   });

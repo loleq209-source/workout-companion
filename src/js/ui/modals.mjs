@@ -1,8 +1,9 @@
 /**
  * Modals controller: RPE Bottom Sheet, Rich 3-Step Guide & Frame Player Modal, and Custom Exercise Modal.
  */
-import { ENRICHED_DB, getGuideMedia, isWarmupOrStretch, getAllExercises } from "../data.mjs";
-import { getTodayStr } from "../date.mjs";
+import { ENRICHED_DB, getGuideMedia, isWarmupOrStretch, getAllExercises, findPainAlertAlternative } from "../data.mjs";
+import { getTodayStr, getWorkoutDateStr } from "../date.mjs";
+import { getSwapCandidates } from "../swapEngine.mjs";
 import { renderCompletionReportModal } from "./report.mjs";
 
 export function createModalController({ store, sync, onRenderAll, showToast }) {
@@ -12,6 +13,10 @@ export function createModalController({ store, sync, onRenderAll, showToast }) {
   let guideFrameIdx = 0; // 0 | 1 | 2
   let guidePlaying = false;
   let activeGuideEx = null;
+  let swapTargetIdx = 0;
+  let swapTabMode = "home";
+  let swapReason = "variation";
+  let swapReasonManual = false;
 
   function stopGuideAutoPlay() {
     if (guidePlayTimer) {
@@ -270,6 +275,104 @@ export function createModalController({ store, sync, onRenderAll, showToast }) {
     document.getElementById("quickAddModal")?.classList.add("hidden");
   }
 
+  function closeSwapModal() {
+    document.getElementById("swapModal")?.classList.add("hidden");
+  }
+
+  function renderSwapModalBody() {
+    const items = store.getTodayRoutineExercises();
+    const ex = items[swapTargetIdx];
+    if (!ex) return;
+
+    const titleEl = document.getElementById("swapModalTitle");
+    if (titleEl) titleEl.textContent = `${ex.name} 대체 선택`;
+
+    // Update reason chip active classes
+    document.querySelectorAll("#swapReasonChips [data-swap-reason]").forEach(btn => {
+      const r = btn.dataset.swapReason;
+      btn.classList.remove("active-ok", "active-pain");
+      if (r === swapReason) {
+        btn.classList.add(r === "pain" ? "active-pain" : "active-ok");
+      }
+    });
+
+    // Update Home vs Gym filter tab active classes
+    const homeBtn = document.getElementById("swapTabHomeBtn");
+    const gymBtn = document.getElementById("swapTabGymBtn");
+    if (homeBtn) homeBtn.classList.toggle("active", swapTabMode === "home");
+    if (gymBtn) gymBtn.classList.toggle("active", swapTabMode === "gym");
+
+    const painAreas =
+      store.state.bodyCondition && Array.isArray(store.state.bodyCondition.painAreas)
+        ? store.state.bodyCondition.painAreas
+        : [];
+    const cands = getSwapCandidates(ex, swapTabMode, painAreas, store.state.customExercises);
+    const listWrap = document.getElementById("swapCandidateList");
+    if (!listWrap) return;
+
+    if (!cands.length) {
+      listWrap.innerHTML = `<div style="font-size:12px; color:var(--text-muted); text-align:center; padding:16px;">해당 모드에 대응하는 추천 종목이 없습니다.</div>`;
+      return;
+    }
+
+    const todayDate = getWorkoutDateStr();
+    listWrap.innerHTML = cands
+      .map(c => {
+        const cand = c.ex;
+        const isPain = c.badgeType === "pain_active" || c.badgeType === "pain_alt";
+        const badgeCls = isPain ? "badge-amber" : "badge-lime";
+        const prev = store.getLastRecord(cand.id, cand.name, todayDate);
+        const w = prev && prev.data && (prev.data.actualWeightKg ?? prev.data.plannedWeightKg) > 0
+          ? `${prev.data.actualWeightKg ?? prev.data.plannedWeightKg}kg (최근기록)`
+          : cand.defaultWeightKg > 0
+            ? `${cand.defaultWeightKg}kg`
+            : "맨몸/소도구";
+        return `
+          <button type="button" class="btn-tap swap-cand-card ${c.badgeType === "pain_active" ? "is-pain-safe" : ""}" data-swap-pick="${cand.id}">
+            <div class="row-between" style="width:100%; gap:6px;">
+              <span class="badge ${badgeCls}" style="font-size:10px;">${c.tagText}</span>
+              <span style="font-size:10.5px; color:var(--text-muted); font-weight:700;">${cand.defaultSets}세트 × ${cand.defaultReps} · ${w}</span>
+            </div>
+            <div style="font-size:14.5px; font-weight:900; color:#ffffff;">${cand.name}</div>
+            <div style="font-size:11px; color:var(--accent); font-weight:700;">${cand.targetMuscle}</div>
+            ${c.reasonText ? `<div style="font-size:10.5px; color:var(--text-soft); line-height:1.35;">💡 ${c.reasonText}</div>` : ""}
+          </button>
+        `;
+      })
+      .join("");
+
+    listWrap.querySelectorAll("[data-swap-pick]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const altId = btn.dataset.swapPick;
+        const ok = store.replaceTodayRoutineExercise(swapTargetIdx, altId, swapReason);
+        closeSwapModal();
+        if (ok) {
+          sync.scheduleAutoPush(300);
+          onRenderAll();
+          const updated = store.getTodayRoutineExercises()[swapTargetIdx];
+          showToast(`🔄 [${(updated && updated.name) || altId}](으)로 교체되었습니다.`);
+        }
+      });
+    });
+  }
+
+  function openSwapModal(cardIdx) {
+    const items = store.getTodayRoutineExercises();
+    const ex = items[cardIdx];
+    if (!ex) return;
+    swapTargetIdx = cardIdx;
+    swapTabMode = ex.mode === "gym" ? "gym" : "home";
+    const painAreas =
+      store.state.bodyCondition && Array.isArray(store.state.bodyCondition.painAreas)
+        ? store.state.bodyCondition.painAreas
+        : [];
+    const alertAlt = findPainAlertAlternative(ex, painAreas);
+    swapReason = alertAlt ? "pain" : "variation";
+    swapReasonManual = false;
+    renderSwapModalBody();
+    document.getElementById("swapModal")?.classList.remove("hidden");
+  }
+
   function openRpeBottomSheet(ex, rec) {
     if (!ex) return;
     if (isWarmupOrStretch(ex)) {
@@ -351,6 +454,28 @@ export function createModalController({ store, sync, onRenderAll, showToast }) {
       }
     });
 
+    document.getElementById("swapModalCloseBtn")?.addEventListener("click", closeSwapModal);
+    document.getElementById("swapModal")?.addEventListener("click", e => {
+      if (e.target.id === "swapModal") closeSwapModal();
+    });
+    document.querySelectorAll("#swapReasonChips [data-swap-reason]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        swapReason = btn.dataset.swapReason;
+        swapReasonManual = true;
+        renderSwapModalBody();
+      });
+    });
+    document.querySelectorAll("#swapModal [data-swap-mode]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        swapTabMode = btn.dataset.swapMode;
+        const ex = store.getTodayRoutineExercises()[swapTargetIdx];
+        if (!swapReasonManual && ex && ex.mode !== swapTabMode && swapReason !== "pain") {
+          swapReason = "gym_switch";
+        }
+        renderSwapModalBody();
+      });
+    });
+
     document.getElementById("addCustomExBtn")?.addEventListener("click", () => {
       document.getElementById("addExModal")?.classList.remove("hidden");
     });
@@ -393,6 +518,8 @@ export function createModalController({ store, sync, onRenderAll, showToast }) {
     closeCompletionReportModal,
     openQuickAddModal,
     closeQuickAddModal,
+    openSwapModal,
+    closeSwapModal,
     directFinishExercise,
     openRpeBottomSheet,
     finalizeFinishWithRpe,

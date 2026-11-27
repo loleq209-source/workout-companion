@@ -1,13 +1,21 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 
 import { formatLocalDate, addDaysLocal, parseLocalDateNoon, getWorkoutDateStr } from "../src/js/date.mjs";
-import { EXERCISES, getMuscleGroup, isWarmupOrStretch, resolveAssetBase } from "../src/js/data.mjs";
+import { EXERCISES, ENRICHED_DB, getMuscleGroup, isWarmupOrStretch, resolveAssetBase } from "../src/js/data.mjs";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const enrichedJson = JSON.parse(fs.readFileSync(path.resolve(__dirname, "../data/exercises_enriched_34.json"), "utf8"));
+Object.assign(ENRICHED_DB, enrichedJson.exercises || {});
 import { calculateWorkoutMetrics, computeSessionStss } from "../src/js/metrics.mjs";
 import { createStore } from "../src/js/store.mjs";
 import { upsertTodayHistory, applyLoadedDriveData } from "../src/js/sync.mjs";
 import { createTimerController } from "../src/js/timer.mjs";
 import { mapExerciseToMuscleRegions, buildTodayReportData } from "../src/js/muscleMap.mjs";
+import { getSwapCandidates } from "../src/js/swapEngine.mjs";
 
 function makeMemoryStorage(initial = null) {
   const map = new Map();
@@ -370,4 +378,97 @@ test("Quick-add exercise & bodyCondition check-in sync into history, sTSS, and h
   assert.equal(report.totalSetsDone, 10);
   assert.ok(report.todayStss > 0);
   assert.equal(report.regionStats.glutes.level, "primary");
+});
+
+test("Smart swap, 1:1 Home<->Gym conversion, partial set preservation, Undo & bulk pain replace", () => {
+  const today = getWorkoutDateStr();
+  const prevDate = addDaysLocal(today, -3);
+  const store = createStore(makeMemoryStorage({
+    sessionDate: today,
+    todayRoutine: {
+      date: today,
+      title: "홈트 루틴",
+      mode: "home",
+      items: [
+        { id: "home_smr_glute", sets: 2, reps: "45초" },
+        { id: "home_deep_pushup", sets: 3, reps: "13회" },
+        { id: "home_kb_row", sets: 3, reps: "10회", weightKg: 14 },
+        { id: "home_kb_swing", sets: 3, reps: "15회", weightKg: 14 },
+        { id: "home_forearm_plank", sets: 3, reps: "50초" }
+      ]
+    },
+    history: [
+      {
+        date: prevDate,
+        exercises: [
+          { id: "gym_chest_press", name: "시티드 체스트프레스", completedSets: 3, plannedSets: 3, plannedReps: "12회", actualWeightKg: 45, rpe: 6, isCompleted: true },
+          { id: "gym_long_pull", name: "롱 풀 (시티드 로우)", completedSets: 3, plannedSets: 3, plannedReps: "12회", actualWeightKg: 40, rpe: 6, isCompleted: true }
+        ]
+      }
+    ],
+    records: {
+      // Simulate 1st warmup item already completed before conversion
+      home_smr_glute: { sets: [{ done: true }, { done: true }], isCompleted: true, lastUpdatedDate: today },
+      // Simulate 1 set already done on home_kb_row before swapping
+      home_kb_row: { sets: [{ weightKg: 14, reps: "10회", done: true }, { weightKg: 14, reps: "10회", done: false }, { weightKg: 14, reps: "10회", done: false }], isCompleted: false, lastUpdatedDate: today }
+    }
+  }));
+
+  // 1. Partial set preservation when swapping home_kb_row mid-exercise -> gym_long_pull
+  assert.equal(store.replaceTodayRoutineExercise(2, "gym_long_pull", "variation"), true);
+  let items = store.getTodayRoutineExercises();
+  assert.equal(items[2].id, "gym_long_pull");
+  assert.equal(items[2].swappedFrom, "home_kb_row");
+  assert.equal(items[2].swapReason, "variation");
+  // Old 1 completed set preserved in state.records.home_kb_row, remaining sets = 3 - 1 = 2!
+  assert.equal(store.state.records.home_kb_row.sets.filter(s => s.done).length, 1);
+  assert.equal(items[2].defaultSets, 2);
+  assert.equal(items[2].defaultWeightKg, 40); // inherited from prev gym_long_pull history!
+
+  // Check payload includes swappedFrom & swapReason
+  const logPayload = upsertTodayHistory(store, today);
+  assert.equal(logPayload.exercises[2].swappedFrom, "home_kb_row");
+  assert.equal(logPayload.exercises[2].swapReason, "variation");
+
+  // 2. Undo restores home_kb_row & clears swappedFrom
+  assert.equal(store.undoRoutineSwap(2), true);
+  items = store.getTodayRoutineExercises();
+  assert.equal(items[2].id, "home_kb_row");
+  assert.equal(items[2].swappedFrom, null);
+
+  // 3. Home -> Gym batch toggle (preserves warmup/completed, sets previous weights, converts rest)
+  const convRes = store.toggleRoutineMode();
+  assert.equal(convRes.targetMode, "gym");
+  assert.equal(convRes.convertedCount, 4);
+  items = store.getTodayRoutineExercises();
+  assert.equal(items[0].id, "home_smr_glute"); // warmup untouched
+  assert.equal(items[1].id, "gym_chest_press");
+  assert.equal(items[1].defaultWeightKg, 45); // inherited from prev gym_chest_press history!
+  assert.equal(items[2].id, "gym_long_pull");
+  assert.equal(items[3].id, "gym_leg_curl");
+  assert.equal(items[4].id, "gym_plank");
+
+  // Toggle back Gym -> Home restores original home exercises
+  const revertRes = store.toggleRoutineMode();
+  assert.equal(revertRes.targetMode, "home");
+  assert.equal(revertRes.reverted, true);
+  items = store.getTodayRoutineExercises();
+  assert.equal(items[1].id, "home_deep_pushup");
+  assert.equal(items[2].id, "home_kb_row");
+
+  // 4. Pain candidates prioritization & 1-tap bulk pain switch ("허리" on home_kb_swing)
+  const swingEx = items[3];
+  const homeCands = getSwapCandidates(swingEx, "home", ["허리"]);
+  assert.ok(homeCands.length >= 2);
+  assert.equal(homeCands[0].ex.id, "home_kickstand_rdl");
+  assert.equal(homeCands[0].badgeType, "pain_active");
+  const gymCands = getSwapCandidates(swingEx, "gym", ["허리"]);
+  assert.ok(gymCands.some(c => c.ex.id === "gym_leg_curl"));
+
+  const bulkCount = store.bulkReplacePainExercises(["허리"]);
+  assert.equal(bulkCount, 2);
+  items = store.getTodayRoutineExercises();
+  assert.equal(items[2].swapReason, "pain");
+  assert.equal(items[3].id, "home_kickstand_rdl");
+  assert.equal(items[3].swapReason, "pain");
 });

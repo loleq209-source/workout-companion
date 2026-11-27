@@ -776,6 +776,50 @@ body {
   font-weight: 800;
 }
 
+/* Smart Swap Sheet & Undo / Mode Toggle Controls */
+.swap-bulk-pain-btn {
+  width: 100%;
+  height: 32px;
+  border-radius: 9px;
+  border: 1px solid rgba(250, 204, 21, 0.55);
+  background: rgba(250, 204, 21, 0.14);
+  color: #fde047;
+  font-size: 11px;
+  font-weight: 900;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 0 10px;
+}
+.swap-cand-card {
+  width: 100%;
+  text-align: left;
+  background: var(--card-2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.swap-cand-card.is-pain-safe {
+  border-color: rgba(250, 204, 21, 0.45);
+  background: rgba(250, 204, 21, 0.06);
+}
+.card-undo-swap-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  color: var(--text-soft);
+  border-radius: 7px;
+  padding: 2px 8px;
+  font-size: 10px;
+  font-weight: 800;
+}
+
   </style>
 </head>
 <body>
@@ -837,6 +881,7 @@ body {
             <button type="button" class="btn-tap condition-chip" data-cond="무릎">무릎</button>
             <button type="button" class="btn-tap condition-chip" data-cond="손목">손목</button>
           </div>
+          <button id="dashBulkPainBtn" type="button" class="btn-tap swap-bulk-pain-btn hidden"></button>
         </div>
 
         <!-- Today AI Briefing Card (renders when yesterdayRecap / cyclingGuide / bonusTip exist) -->
@@ -850,9 +895,10 @@ body {
 
         <!-- Today Routine Items List -->
         <div class="stack-2" style="margin-top: 4px;">
-          <div class="row-between" style="padding: 0 4px;">
+          <div class="row-between" style="padding: 0 4px; gap: 6px; flex-wrap: wrap;">
             <span style="font-size: 13px; font-weight: 900; color: var(--text-soft);">루틴 종목</span>
-            <div class="row-gap" style="gap: 6px;">
+            <div class="row-gap" style="gap: 5px; flex-wrap: wrap;">
+              <button id="dashModeSwapBtn" type="button" class="btn-tap badge badge-muted" style="font-size: 10.5px;">🔄 헬스 기구로 변환</button>
               <button id="dashReportBtn" type="button" class="btn-tap badge badge-lime hidden" style="font-size: 10.5px;">📊 완료 리포트 보기</button>
               <button id="dashQuickAddBtn" type="button" class="btn-tap badge badge-muted" style="font-size: 10.5px;">+ 종목 추가</button>
               <span id="dashStatusSummary" class="badge badge-lime tabular-nums" style="font-size: 10.5px;">0 / 7 완료</span>
@@ -1140,6 +1186,38 @@ body {
         </div>
       </div>
       <button id="quickAddConfirmBtn" type="button" class="btn-tap btn-primary" style="height: 44px; font-size: 14px;">오늘 루틴에 추가하고 시작하기</button>
+    </div>
+  </div>
+
+  <!-- Smart Exercise Swap Bottom Sheet (2 Tabs: Home / Gym + Pain & Reason Chips) -->
+  <div id="swapModal" class="modal-backdrop hidden" style="align-items: flex-end; padding: 0;">
+    <div class="modal-panel stack-3" style="max-width: 540px; border-radius: 24px 24px 0 0; padding: 18px 18px calc(24px + env(safe-area-inset-bottom, 0px));">
+      <div class="row-between">
+        <div>
+          <span class="badge badge-lime">🔄 스마트 종목 교체</span>
+          <div id="swapModalTitle" style="font-size: 16px; font-weight: 900; color: #fff; margin-top: 4px;">대체 종목 선택</div>
+        </div>
+        <button id="swapModalCloseBtn" type="button" class="btn-tap badge badge-muted" style="padding: 5px 10px; font-size: 11.5px;">닫기 ✕</button>
+      </div>
+
+      <!-- Swap Reason 1-Tap Chips -->
+      <div class="stack-1">
+        <div style="font-size: 10.5px; color: var(--text-muted); font-weight: 700;">교체 사유 (AI 학습 연동)</div>
+        <div id="swapReasonChips" class="row-gap" style="gap: 6px; flex-wrap: wrap;">
+          <button type="button" class="btn-tap condition-chip" data-swap-reason="pain">🩹 통증·불편</button>
+          <button type="button" class="btn-tap condition-chip" data-swap-reason="gym_switch">🔄 장소/기구 전환</button>
+          <button type="button" class="btn-tap condition-chip" data-swap-reason="variation">✨ 다른 자극</button>
+        </div>
+      </div>
+
+      <!-- 2 Filter Tabs: Home vs Gym -->
+      <div class="grid-2" style="gap: 6px;">
+        <button id="swapTabHomeBtn" type="button" class="btn-tap mode-btn active" data-swap-mode="home" style="padding: 8px 4px; font-size: 12px;">🏠 홈트 대체</button>
+        <button id="swapTabGymBtn" type="button" class="btn-tap mode-btn" data-swap-mode="gym" style="padding: 8px 4px; font-size: 12px;">🏋️ 헬스 기구 대체</button>
+      </div>
+
+      <!-- Ranked Candidate Cards -->
+      <div id="swapCandidateList" class="stack-2" style="max-height: 46dvh; overflow-y: auto;"></div>
     </div>
   </div>
 
@@ -2187,7 +2265,8 @@ body {
           "뭉친 지점에서 3초간 정지해 호흡한 뒤 45초 동안 부드럽게 반복합니다."
         ],
         "breathing": "고개를 돌릴 때 길게 내쉬며 목과 어깨의 힘을 완전히 뺍니다.",
-        "tips": "턱을 천장으로 치켜들거나 목을 빠르게 꺾지 않도록 아주 천천히 움직이세요."
+        "tips": "턱을 천장으로 치켜들거나 목을 빠르게 꺾지 않도록 아주 천천히 움직이세요.",
+        "category": "웜업·이완"
       },
       {
         "id": "home_smr_chest_open",
@@ -2212,7 +2291,8 @@ body {
           "중력에 맡겨 가슴 앞쪽과 어깨 전면이 시원하게 열리는 상태로 45초간 호흡합니다."
         ],
         "breathing": "코로 깊게 들이마시며 흉곽을 넓히고, 입으로 내쉬며 팔과 어깨를 바닥에 맡깁니다.",
-        "tips": "어깨가 귀 쪽으로 으쓱 올라가지 않도록 날개뼈를 아래로 내려 유지하세요."
+        "tips": "어깨가 귀 쪽으로 으쓱 올라가지 않도록 날개뼈를 아래로 내려 유지하세요.",
+        "category": "웜업·이완"
       },
       {
         "id": "home_smr_glute",
@@ -2237,7 +2317,8 @@ body {
           "자극이 큰 부위에서 잠시 멈춰 호흡을 내쉬며 45초간 풀어준 뒤 반대쪽을 진행합니다."
         ],
         "breathing": "통증 부위에서 숨을 참지 말고 길게 내쉬며 힘을 뺍니다.",
-        "tips": "꼬리뼈나 요추를 직접 누르지 말고 엉덩이 바깥쪽 근육 부위에만 체중을 실으세요."
+        "tips": "꼬리뼈나 요추를 직접 누르지 말고 엉덩이 바깥쪽 근육 부위에만 체중을 실으세요.",
+        "category": "웜업·이완"
       },
       {
         "id": "home_smr_thoracic",
@@ -2262,7 +2343,8 @@ body {
           "양팔을 머리 위로 만세 자세(Y자)로 뻗어 2~3초 머문 뒤 천천히 돌아옵니다."
         ],
         "breathing": "등을 뒤로 젖혀 가슴을 열 때 길게 내쉬고, 돌아올 때 들이마십니다.",
-        "tips": "허리(요추)에 폼롤러를 대거나 과도하게 꺾지 않도록 주의하세요."
+        "tips": "허리(요추)에 폼롤러를 대거나 과도하게 꺾지 않도록 주의하세요.",
+        "category": "웜업·이완"
       },
       {
         "id": "home_dead_hang",
@@ -2654,6 +2736,209 @@ body {
     __exp.ENRICHED_DB = ENRICHED_DB;
     __exp.PRESETS = PRESETS;
     __exp.LEGACY_EXERCISE_ALIASES = LEGACY_EXERCISE_ALIASES;
+    
+  };
+
+  __mods["js/swapEngine.mjs"] = function(__req, __exp) {
+    /**
+     * Smart Exercise Swap & 1:1 Home <-> Gym Machine Conversion Engine.
+     */
+    const { ENRICHED_DB, getAllExercises, getMuscleGroup, isWarmupOrStretch, findPainAlertAlternative } = __req("js/data.mjs");
+    
+    const HOME_TO_GYM_MAP = {
+      // 상체 밀기 (가슴)
+      home_deep_pushup: ["gym_chest_press", "gym_bench_press"],
+      home_decline_pushup: ["gym_bench_press", "gym_chest_press"],
+      home_kb_floor_2arm: ["gym_chest_press", "gym_bench_press"],
+      home_kb_floor_1arm: ["gym_chest_press", "gym_bench_press"],
+      home_close_pushup: ["gym_pec_deck", "gym_chest_press"],
+      home_dips: ["gym_chest_press", "gym_pec_deck"],
+      home_kb_triceps: ["gym_pec_deck", "gym_chest_press"],
+    
+      // 상체 밀기 (어깨)
+      home_kb_press: ["gym_shoulder_press"],
+      home_pike_pushup: ["gym_shoulder_press"],
+      home_kb_halo: ["gym_shoulder_press"],
+    
+      // 상체 당기기 (수직)
+      home_band_pullup: ["gym_high_pulley", "gym_long_pull"],
+      home_band_chinup: ["gym_high_pulley", "gym_long_pull"],
+      home_scapular_pullup: ["gym_high_pulley", "gym_long_pull"],
+      home_pullup: ["gym_high_pulley"],
+    
+      // 상체 당기기 (수평)
+      home_kb_row: ["gym_long_pull", "gym_high_pulley"],
+    
+      // 팔 (이두·악력)
+      home_kb_curl: ["gym_arm_curl"],
+      home_gyro_ball: ["gym_arm_curl"],
+    
+      // 하체 (전면·복합)
+      home_goblet_squat: ["gym_leg_press", "gym_leg_ext"],
+      home_bulgarian: ["gym_leg_press", "gym_leg_ext"],
+    
+      // 하체 (후면·둔근)
+      home_kickstand_rdl: ["gym_leg_curl", "gym_inner_thigh"],
+      home_kb_glute_bridge: ["gym_leg_curl", "gym_inner_thigh"],
+      home_kb_swing: ["gym_leg_curl", "gym_leg_press"],
+    
+      // 코어
+      home_forearm_plank: ["gym_plank"],
+      home_deadbug: ["gym_plank"],
+      home_hanging_knee: ["gym_plank"],
+      home_side_bend: ["gym_plank"],
+      home_core_twist: ["gym_plank"],
+      home_kb_suitcase_carry: ["gym_plank"]
+    };
+    
+    const GYM_TO_HOME_MAP = {
+      gym_chest_press: ["home_deep_pushup", "home_kb_floor_2arm", "home_dips"],
+      gym_bench_press: ["home_decline_pushup", "home_deep_pushup", "home_kb_floor_2arm"],
+      gym_pec_deck: ["home_close_pushup", "home_kb_floor_2arm"],
+      gym_shoulder_press: ["home_kb_press", "home_pike_pushup", "home_kb_halo"],
+      gym_high_pulley: ["home_band_pullup", "home_band_chinup", "home_scapular_pullup"],
+      gym_long_pull: ["home_kb_row", "home_band_pullup"],
+      gym_arm_curl: ["home_kb_curl"],
+      gym_leg_press: ["home_goblet_squat", "home_bulgarian"],
+      gym_leg_ext: ["home_bulgarian", "home_goblet_squat"],
+      gym_leg_curl: ["home_kickstand_rdl", "home_kb_glute_bridge", "home_kb_swing"],
+      gym_inner_thigh: ["home_kb_glute_bridge", "home_goblet_squat"],
+      gym_plank: ["home_forearm_plank", "home_deadbug", "home_hanging_knee"]
+    };
+    
+    function pickModeConversionTarget(ex, targetMode, usedIds, customExercises = []) {
+      if (!ex || !ex.id) return null;
+      if (isWarmupOrStretch(ex)) return null; // Warmup & foam roller stretches stay untouched
+      if (ex.mode === targetMode) return null;
+    
+      const allEx = getAllExercises(customExercises);
+      const directList = targetMode === "gym" ? HOME_TO_GYM_MAP[ex.id] : GYM_TO_HOME_MAP[ex.id];
+      if (Array.isArray(directList) && directList.length > 0) {
+        const unused = directList.find(id => !usedIds.has(id) && allEx.some(x => x.id === id));
+        if (unused) return allEx.find(x => x.id === unused) || null;
+        const firstValid = directList.find(id => allEx.some(x => x.id === id));
+        if (firstValid) return allEx.find(x => x.id === firstValid) || null;
+      }
+    
+      // Fallback by muscle group
+      const grp = getMuscleGroup(ex);
+      const sameGrp = allEx.filter(
+        x => x.mode === targetMode && !isWarmupOrStretch(x) && getMuscleGroup(x) === grp && !usedIds.has(x.id)
+      );
+      if (sameGrp.length > 0) return sameGrp[0];
+    
+      const anySameGrp = allEx.filter(x => x.mode === targetMode && !isWarmupOrStretch(x) && getMuscleGroup(x) === grp);
+      return anySameGrp[0] || null;
+    }
+    
+    /**
+     * Returns ranked swap candidates (max 5) for a given exercise & targetMode ("home" | "gym"):
+     * 1) Pain-safe recommendations (matching active painAreas first, then other painAlternatives)
+     * 2) Target-matched equivalents (1:1 mode counterparts + same muscle group alternatives)
+     */
+    function getSwapCandidates(ex, targetMode, painAreas = [], customExercises = []) {
+      if (!ex) return [];
+      const allEx = getAllExercises(customExercises);
+      const byId = new Map(allEx.map(x => [x.id, x]));
+      const seen = new Set([ex.id]);
+      const results = [];
+    
+      const pushCandidate = (candEx, badgeType, tagText, reasonText = "") => {
+        if (!candEx || seen.has(candEx.id)) return;
+        if (candEx.mode !== targetMode) return;
+        seen.add(candEx.id);
+        results.push({
+          ex: candEx,
+          badgeType, // "pain_active" | "pain_alt" | "target"
+          tagText,
+          reasonText
+        });
+      };
+    
+      // 1a. Active pain-area match first
+      const activeAlert = findPainAlertAlternative(ex, painAreas);
+      if (activeAlert && byId.has(activeAlert.altId)) {
+        const c = byId.get(activeAlert.altId);
+        if (c.mode === targetMode) {
+          pushCandidate(c, "pain_active", `🩹 ${activeAlert.matchedArea} 안전 추천`, activeAlert.reason || "");
+        }
+      }
+    
+      // 1b. Other painAlternatives defined in ENRICHED_DB for targetMode
+      const enriched = ENRICHED_DB[ex.id];
+      const painAlts = enriched && Array.isArray(enriched.painAlternatives) ? enriched.painAlternatives : [];
+      for (const alt of painAlts) {
+        if (!alt || !alt.altId || !byId.has(alt.altId)) continue;
+        const c = byId.get(alt.altId);
+        if (c.mode !== targetMode) continue;
+        const isActivePain = Array.isArray(painAreas) && painAreas.some(p => alt.area.includes(p) || p.includes(alt.area));
+        pushCandidate(
+          c,
+          isActivePain ? "pain_active" : "pain_alt",
+          isActivePain ? `🩹 ${alt.area} 안전 추천` : `🩹 ${alt.area} 불편 시`,
+          alt.reason || ""
+        );
+      }
+    
+      // 2a. Direct 1:1 Home<->Gym mapped equivalents (when converting to opposite mode)
+      const directList = targetMode === "gym" ? HOME_TO_GYM_MAP[ex.id] : GYM_TO_HOME_MAP[ex.id];
+      if (Array.isArray(directList)) {
+        for (const tid of directList) {
+          if (byId.has(tid)) {
+            pushCandidate(byId.get(tid), "target", "🎯 1:1 기구/홈트 대응");
+          }
+        }
+      }
+    
+      // 2b. Exercises in targetMode sharing muscle group & overlapping targetMuscle keywords
+      const grp = getMuscleGroup(ex);
+      const srcStretch = isWarmupOrStretch(ex);
+      const srcTokens = String(ex.targetMuscle || "")
+        .split(/[·,\s()]+/)
+        .filter(t => t.length >= 2);
+    
+      const pool = allEx
+        .filter(x => x.mode === targetMode && !seen.has(x.id))
+        .map(x => {
+          let score = 0;
+          if (srcStretch && isWarmupOrStretch(x)) score += 10;
+          else if (!srcStretch && !isWarmupOrStretch(x) && getMuscleGroup(x) === grp) score += 10;
+          else if (!srcStretch && getMuscleGroup(x) !== grp) score -= 5;
+          for (const tok of srcTokens) {
+            if ((x.targetMuscle || "").includes(tok)) score += 3;
+          }
+          if (x.category === ex.category) score += 2;
+          return { ex: x, score };
+        })
+        .filter(item => item.score > 0)
+        .sort((a, b) => b.score - a.score);
+    
+      for (const item of pool) {
+        if (results.length >= 5) break;
+        pushCandidate(item.ex, "target", "🎯 동일 타깃 부위");
+      }
+    
+      // If pain_active existed only in opposite mode, allow showing it cleanly if targetMode has few candidates
+      if (activeAlert && !results.some(r => r.badgeType === "pain_active") && byId.has(activeAlert.altId)) {
+        const opp = byId.get(activeAlert.altId);
+        if (!seen.has(opp.id)) {
+          seen.add(opp.id);
+          results.unshift({
+            ex: opp,
+            badgeType: "pain_active",
+            tagText: `🩹 ${activeAlert.matchedArea} 안전 추천 (${opp.mode === "gym" ? "기구" : "홈트"})`,
+            reasonText: activeAlert.reason || ""
+          });
+        }
+      }
+    
+      return results.slice(0, 5);
+    }
+    
+    __exp.pickModeConversionTarget = pickModeConversionTarget;
+    __exp.getSwapCandidates = getSwapCandidates;
+    __exp.HOME_TO_GYM_MAP = HOME_TO_GYM_MAP;
+    __exp.GYM_TO_HOME_MAP = GYM_TO_HOME_MAP;
     
   };
 
@@ -3240,7 +3525,8 @@ body {
      * midnight rollover protection, and planned-sets reconciliation.
      */
     const { getTodayStr, getWorkoutDateStr } = __req("js/date.mjs");
-    const { EXERCISES, getAllExercises, isWarmupOrStretch, resolveExerciseId, getLegacyAliasForNewId } = __req("js/data.mjs");
+    const { EXERCISES, getAllExercises, isWarmupOrStretch, resolveExerciseId, getLegacyAliasForNewId, findPainAlertAlternative } = __req("js/data.mjs");
+    const { pickModeConversionTarget } = __req("js/swapEngine.mjs");
     const { calculateWorkoutMetrics } = __req("js/metrics.mjs");
     
     const STORAGE_KEY_V9 = "workout_companion_state_v9";
@@ -3495,7 +3781,11 @@ body {
                 defaultWeightKg: hasRoutineWeight ? it.weightKg : found.defaultWeightKg,
                 routineWeightKg: hasRoutineWeight ? it.weightKg : null,
                 restSec: it.restSec || found.restSec,
-                reason: it.reason || ""
+                reason: it.reason || "",
+                swappedFrom: it.swappedFrom || null,
+                swapReason: it.swapReason || null,
+                undoItem: it.undoItem || null,
+                doneOffsetSets: it.doneOffsetSets || 0
               })
             );
           } else {
@@ -3511,7 +3801,11 @@ body {
               defaultWeightKg: hasRoutineWeight ? it.weightKg : 0,
               routineWeightKg: hasRoutineWeight ? it.weightKg : null,
               restSec: it.restSec || 60,
-              reason: it.reason || ""
+              reason: it.reason || "",
+              swappedFrom: it.swappedFrom || null,
+              swapReason: it.swapReason || null,
+              undoItem: it.undoItem || null,
+              doneOffsetSets: it.doneOffsetSets || 0
             });
           }
         };
@@ -3611,33 +3905,227 @@ body {
         return getTodayRoutineExercises().findIndex(x => x.id === ex.id);
       }
     
-      function replaceTodayRoutineExercise(idx, altId) {
+      function ensureMaterializedRoutine() {
+        const cur = getTodayRoutineExercises();
+        if (!state.todayRoutine || !Array.isArray(state.todayRoutine.items) || state.todayRoutine.items.length === 0) {
+          state.todayRoutine = {
+            date: getWorkoutDateStr(),
+            title: (state.todayRoutine && state.todayRoutine.title) || "오늘의 맞춤 운동 루틴",
+            note: (state.todayRoutine && state.todayRoutine.note) || "",
+            mode: (state.todayRoutine && state.todayRoutine.mode) || (cur[0] && cur[0].mode) || "home",
+            items: cur.map(x => ({
+              id: x.id,
+              label: x.name,
+              sets: x.defaultSets,
+              reps: x.defaultReps,
+              weightKg: typeof x.defaultWeightKg === "number" ? x.defaultWeightKg : undefined,
+              restSec: x.restSec || 60,
+              reason: x.reason || ""
+            }))
+          };
+          state.extraTodayIds = [];
+        } else if (Array.isArray(state.extraTodayIds) && state.extraTodayIds.length > 0) {
+          const existing = new Set(state.todayRoutine.items.map(it => resolveExerciseId(it && it.id)));
+          const all = getAllExercises(state.customExercises);
+          state.extraTodayIds.forEach(eid => {
+            const resId = resolveExerciseId(eid);
+            if (existing.has(resId)) return;
+            const found = all.find(x => x.id === resId);
+            if (found) {
+              existing.add(resId);
+              state.todayRoutine.items.push({
+                id: found.id,
+                label: found.name,
+                sets: found.defaultSets,
+                reps: found.defaultReps,
+                weightKg: typeof found.defaultWeightKg === "number" ? found.defaultWeightKg : undefined,
+                restSec: found.restSec || 60
+              });
+            }
+          });
+          state.extraTodayIds = [];
+        }
+        return state.todayRoutine.items;
+      }
+    
+      function replaceTodayRoutineExercise(idx, altId, swapReason = "variation") {
         const all = getAllExercises(state.customExercises);
-        const altEx = all.find(x => x.id === altId);
+        const resolvedAlt = resolveExerciseId(altId);
+        const altEx = all.find(x => x.id === resolvedAlt);
         if (!altEx) return false;
+    
         const current = getTodayRoutineExercises();
         if (idx < 0 || idx >= current.length) return false;
+        const oldEx = current[idx];
+        if (oldEx && oldEx.id === altEx.id) return false;
     
-        const spec = {
+        const itemsArr = ensureMaterializedRoutine();
+        const prevItem = itemsArr[idx] || { id: oldEx.id, label: oldEx.name };
+    
+        // 1. Check partial set completion on old exercise & preserve it in state.records
+        const todayDate = getWorkoutDateStr();
+        const oldRec = getRecord(oldEx, todayDate);
+        const oldDoneCount = Array.isArray(oldRec.sets) ? oldRec.sets.filter(s => s && s.done).length : 0;
+    
+        // 2. Determine optimal weight from prior history (or altEx defaults)
+        const prevHist = getLastRecord(altEx.id, altEx.name, todayDate);
+        let targetWeight = typeof altEx.defaultWeightKg === "number" ? altEx.defaultWeightKg : null;
+        if (prevHist && prevHist.data) {
+          const histW = prevHist.data.actualWeightKg ?? prevHist.data.plannedWeightKg;
+          if (typeof histW === "number" && histW > 0) targetWeight = histW;
+        }
+    
+        const baseSets = altEx.defaultSets || 3;
+        const remainingSets = oldDoneCount > 0 ? Math.max(1, baseSets - oldDoneCount) : baseSets;
+        const targetReps = (prevHist && prevHist.data && prevHist.data.plannedReps) || altEx.defaultReps || "10회";
+        const originalId = prevItem.swappedFrom || prevItem.id;
+        const undoItem = prevItem.undoItem ? Object.assign({}, prevItem.undoItem) : Object.assign({}, prevItem);
+        const reasonTag =
+          swapReason === "pain" ? "통증 안전 대체" : swapReason === "gym_switch" ? "장소·기구 전환" : "다른 자극 교체";
+    
+        itemsArr[idx] = {
           id: altEx.id,
           label: altEx.name,
-          sets: altEx.defaultSets,
-          reps: altEx.defaultReps,
-          weightKg: altEx.defaultWeightKg,
-          restSec: altEx.restSec || 60
+          sets: remainingSets,
+          reps: targetReps,
+          weightKg: typeof targetWeight === "number" ? targetWeight : undefined,
+          restSec: altEx.restSec || 60,
+          reason: reasonTag,
+          swappedFrom: originalId,
+          swapReason,
+          undoItem,
+          doneOffsetSets: oldDoneCount
         };
     
-        if (state.todayRoutine && Array.isArray(state.todayRoutine.items) && idx < state.todayRoutine.items.length) {
-          state.todayRoutine.items[idx] = spec;
-        } else {
-          const extraIdx = idx - ((state.todayRoutine && Array.isArray(state.todayRoutine.items) && state.todayRoutine.items.length) || 0);
-          if (Array.isArray(state.extraTodayIds) && extraIdx >= 0 && extraIdx < state.extraTodayIds.length) {
-            state.extraTodayIds[extraIdx] = altEx.id;
+        // Reconcile replacement record cleanly if not yet done today
+        const curAltRec = state.records[altEx.id];
+        const altAlreadyHasDoneToday = curAltRec && curAltRec.lastUpdatedDate === todayDate && curAltRec.sets && curAltRec.sets.some(s => s.done);
+        if (!altAlreadyHasDoneToday) {
+          const setsArr = [];
+          for (let i = 0; i < remainingSets; i++) {
+            setsArr.push({ weightKg: typeof targetWeight === "number" ? targetWeight : 0, reps: targetReps, done: false });
           }
+          state.records[altEx.id] = {
+            sets: setsArr,
+            isCompleted: false,
+            rpe: null,
+            preference: (curAltRec && curAltRec.preference) || null,
+            preferenceNote: (curAltRec && curAltRec.preferenceNote) || "",
+            lastUpdatedDate: curAltRec && curAltRec.lastUpdatedDate ? curAltRec.lastUpdatedDate : ""
+          };
         }
+    
         markUserInteractedToday();
         persistState();
         return true;
+      }
+    
+      function undoRoutineSwap(idx) {
+        if (!state.todayRoutine || !Array.isArray(state.todayRoutine.items)) return false;
+        const item = state.todayRoutine.items[idx];
+        if (!item || !item.undoItem) return false;
+        const restored = Object.assign({}, item.undoItem);
+        delete restored.swappedFrom;
+        delete restored.swapReason;
+        delete restored.undoItem;
+        delete restored.doneOffsetSets;
+        state.todayRoutine.items[idx] = restored;
+        markUserInteractedToday();
+        persistState();
+        return true;
+      }
+    
+      function getRoutineEffectiveMode() {
+        const items = getTodayRoutineExercises();
+        let gymCount = 0;
+        let homeCount = 0;
+        for (const ex of items) {
+          if (isWarmupOrStretch(ex)) continue;
+          if (ex.mode === "gym") gymCount++;
+          else homeCount++;
+        }
+        if (gymCount > homeCount) return "gym";
+        if (homeCount > gymCount) return "home";
+        return (state.todayRoutine && state.todayRoutine.mode === "gym") ? "gym" : "home";
+      }
+    
+      function toggleRoutineMode() {
+        ensureMaterializedRoutine();
+        const current = getTodayRoutineExercises();
+        const curMode = getRoutineEffectiveMode();
+        const targetMode = curMode === "gym" ? "home" : "gym";
+        const todayDate = getWorkoutDateStr();
+    
+        // Check if we can cleanly revert a prior mode conversion
+        const backup = state.todayRoutine && state.todayRoutine.modeBackup;
+        if (backup && backup.targetMode === curMode && backup.fromMode === targetMode && Array.isArray(backup.items)) {
+          let revertedCount = 0;
+          for (let i = 0; i < current.length; i++) {
+            const rec = getRecord(current[i], todayDate);
+            if (rec.isCompleted) continue;
+            const spec = state.todayRoutine.items[i];
+            if (spec && spec.swapReason === "gym_switch" && spec.undoItem) {
+              undoRoutineSwap(i);
+              revertedCount++;
+            }
+          }
+          state.todayRoutine.mode = targetMode;
+          delete state.todayRoutine.modeBackup;
+          markUserInteractedToday();
+          persistState();
+          return { convertedCount: revertedCount, targetMode, reverted: true };
+        }
+    
+        state.todayRoutine.modeBackup = {
+          fromMode: curMode,
+          targetMode,
+          items: state.todayRoutine.items.map(it => Object.assign({}, it))
+        };
+    
+        const usedIds = new Set();
+        current.forEach(ex => {
+          const rec = getRecord(ex, todayDate);
+          if (rec.isCompleted || isWarmupOrStretch(ex) || ex.mode === targetMode) {
+            usedIds.add(ex.id);
+          }
+        });
+    
+        let convertedCount = 0;
+        for (let i = 0; i < current.length; i++) {
+          const ex = current[i];
+          const rec = getRecord(ex, todayDate);
+          if (rec.isCompleted || isWarmupOrStretch(ex) || ex.mode === targetMode) continue;
+          const targetEx = pickModeConversionTarget(ex, targetMode, usedIds, state.customExercises);
+          if (targetEx) {
+            usedIds.add(targetEx.id);
+            if (replaceTodayRoutineExercise(i, targetEx.id, "gym_switch")) {
+              convertedCount++;
+            }
+          }
+        }
+    
+        state.todayRoutine.mode = targetMode;
+        markUserInteractedToday();
+        persistState();
+        return { convertedCount, targetMode, reverted: false };
+      }
+    
+      function bulkReplacePainExercises(painAreas = []) {
+        if (!Array.isArray(painAreas) || painAreas.length === 0) return 0;
+        ensureMaterializedRoutine();
+        const current = getTodayRoutineExercises();
+        const todayDate = getWorkoutDateStr();
+        let count = 0;
+        for (let i = 0; i < current.length; i++) {
+          const ex = current[i];
+          const rec = getRecord(ex, todayDate);
+          if (rec.isCompleted) continue;
+          const alt = findPainAlertAlternative(ex, painAreas);
+          if (alt && replaceTodayRoutineExercise(i, alt.altId, "pain")) {
+            count++;
+          }
+        }
+        return count;
       }
     
       function getFilteredCatalogExercises() {
@@ -3736,6 +4224,10 @@ body {
         getTodayRoutineExercises,
         addExerciseToTodayRoutine,
         replaceTodayRoutineExercise,
+        undoRoutineSwap,
+        getRoutineEffectiveMode,
+        toggleRoutineMode,
+        bulkReplacePainExercises,
         getFilteredCatalogExercises,
         getLastRecord,
         refreshMetrics
@@ -4088,6 +4580,7 @@ body {
           isCompleted: isComp,
           preference: rec.preference || "neutral",
           preferenceNote: rec.preferenceNote || "",
+          ...(ex.swappedFrom ? { swappedFrom: ex.swappedFrom, swapReason: ex.swapReason || "variation" } : {}),
           setLogs: setsArr.map((s, idx) => ({
             set: idx + 1,
             weightKg: s.weightKg != null ? s.weightKg : w,
@@ -4769,8 +5262,9 @@ body {
     /**
      * Modals controller: RPE Bottom Sheet, Rich 3-Step Guide & Frame Player Modal, and Custom Exercise Modal.
      */
-    const { ENRICHED_DB, getGuideMedia, isWarmupOrStretch, getAllExercises } = __req("js/data.mjs");
-    const { getTodayStr } = __req("js/date.mjs");
+    const { ENRICHED_DB, getGuideMedia, isWarmupOrStretch, getAllExercises, findPainAlertAlternative } = __req("js/data.mjs");
+    const { getTodayStr, getWorkoutDateStr } = __req("js/date.mjs");
+    const { getSwapCandidates } = __req("js/swapEngine.mjs");
     const { renderCompletionReportModal } = __req("js/ui/report.mjs");
     
     function createModalController({ store, sync, onRenderAll, showToast }) {
@@ -4780,6 +5274,10 @@ body {
       let guideFrameIdx = 0; // 0 | 1 | 2
       let guidePlaying = false;
       let activeGuideEx = null;
+      let swapTargetIdx = 0;
+      let swapTabMode = "home";
+      let swapReason = "variation";
+      let swapReasonManual = false;
     
       function stopGuideAutoPlay() {
         if (guidePlayTimer) {
@@ -5038,6 +5536,104 @@ body {
         document.getElementById("quickAddModal")?.classList.add("hidden");
       }
     
+      function closeSwapModal() {
+        document.getElementById("swapModal")?.classList.add("hidden");
+      }
+    
+      function renderSwapModalBody() {
+        const items = store.getTodayRoutineExercises();
+        const ex = items[swapTargetIdx];
+        if (!ex) return;
+    
+        const titleEl = document.getElementById("swapModalTitle");
+        if (titleEl) titleEl.textContent = `${ex.name} 대체 선택`;
+    
+        // Update reason chip active classes
+        document.querySelectorAll("#swapReasonChips [data-swap-reason]").forEach(btn => {
+          const r = btn.dataset.swapReason;
+          btn.classList.remove("active-ok", "active-pain");
+          if (r === swapReason) {
+            btn.classList.add(r === "pain" ? "active-pain" : "active-ok");
+          }
+        });
+    
+        // Update Home vs Gym filter tab active classes
+        const homeBtn = document.getElementById("swapTabHomeBtn");
+        const gymBtn = document.getElementById("swapTabGymBtn");
+        if (homeBtn) homeBtn.classList.toggle("active", swapTabMode === "home");
+        if (gymBtn) gymBtn.classList.toggle("active", swapTabMode === "gym");
+    
+        const painAreas =
+          store.state.bodyCondition && Array.isArray(store.state.bodyCondition.painAreas)
+            ? store.state.bodyCondition.painAreas
+            : [];
+        const cands = getSwapCandidates(ex, swapTabMode, painAreas, store.state.customExercises);
+        const listWrap = document.getElementById("swapCandidateList");
+        if (!listWrap) return;
+    
+        if (!cands.length) {
+          listWrap.innerHTML = `<div style="font-size:12px; color:var(--text-muted); text-align:center; padding:16px;">해당 모드에 대응하는 추천 종목이 없습니다.</div>`;
+          return;
+        }
+    
+        const todayDate = getWorkoutDateStr();
+        listWrap.innerHTML = cands
+          .map(c => {
+            const cand = c.ex;
+            const isPain = c.badgeType === "pain_active" || c.badgeType === "pain_alt";
+            const badgeCls = isPain ? "badge-amber" : "badge-lime";
+            const prev = store.getLastRecord(cand.id, cand.name, todayDate);
+            const w = prev && prev.data && (prev.data.actualWeightKg ?? prev.data.plannedWeightKg) > 0
+              ? `${prev.data.actualWeightKg ?? prev.data.plannedWeightKg}kg (최근기록)`
+              : cand.defaultWeightKg > 0
+                ? `${cand.defaultWeightKg}kg`
+                : "맨몸/소도구";
+            return `
+              <button type="button" class="btn-tap swap-cand-card ${c.badgeType === "pain_active" ? "is-pain-safe" : ""}" data-swap-pick="${cand.id}">
+                <div class="row-between" style="width:100%; gap:6px;">
+                  <span class="badge ${badgeCls}" style="font-size:10px;">${c.tagText}</span>
+                  <span style="font-size:10.5px; color:var(--text-muted); font-weight:700;">${cand.defaultSets}세트 × ${cand.defaultReps} · ${w}</span>
+                </div>
+                <div style="font-size:14.5px; font-weight:900; color:#ffffff;">${cand.name}</div>
+                <div style="font-size:11px; color:var(--accent); font-weight:700;">${cand.targetMuscle}</div>
+                ${c.reasonText ? `<div style="font-size:10.5px; color:var(--text-soft); line-height:1.35;">💡 ${c.reasonText}</div>` : ""}
+              </button>
+            `;
+          })
+          .join("");
+    
+        listWrap.querySelectorAll("[data-swap-pick]").forEach(btn => {
+          btn.addEventListener("click", () => {
+            const altId = btn.dataset.swapPick;
+            const ok = store.replaceTodayRoutineExercise(swapTargetIdx, altId, swapReason);
+            closeSwapModal();
+            if (ok) {
+              sync.scheduleAutoPush(300);
+              onRenderAll();
+              const updated = store.getTodayRoutineExercises()[swapTargetIdx];
+              showToast(`🔄 [${(updated && updated.name) || altId}](으)로 교체되었습니다.`);
+            }
+          });
+        });
+      }
+    
+      function openSwapModal(cardIdx) {
+        const items = store.getTodayRoutineExercises();
+        const ex = items[cardIdx];
+        if (!ex) return;
+        swapTargetIdx = cardIdx;
+        swapTabMode = ex.mode === "gym" ? "gym" : "home";
+        const painAreas =
+          store.state.bodyCondition && Array.isArray(store.state.bodyCondition.painAreas)
+            ? store.state.bodyCondition.painAreas
+            : [];
+        const alertAlt = findPainAlertAlternative(ex, painAreas);
+        swapReason = alertAlt ? "pain" : "variation";
+        swapReasonManual = false;
+        renderSwapModalBody();
+        document.getElementById("swapModal")?.classList.remove("hidden");
+      }
+    
       function openRpeBottomSheet(ex, rec) {
         if (!ex) return;
         if (isWarmupOrStretch(ex)) {
@@ -5119,6 +5715,28 @@ body {
           }
         });
     
+        document.getElementById("swapModalCloseBtn")?.addEventListener("click", closeSwapModal);
+        document.getElementById("swapModal")?.addEventListener("click", e => {
+          if (e.target.id === "swapModal") closeSwapModal();
+        });
+        document.querySelectorAll("#swapReasonChips [data-swap-reason]").forEach(btn => {
+          btn.addEventListener("click", () => {
+            swapReason = btn.dataset.swapReason;
+            swapReasonManual = true;
+            renderSwapModalBody();
+          });
+        });
+        document.querySelectorAll("#swapModal [data-swap-mode]").forEach(btn => {
+          btn.addEventListener("click", () => {
+            swapTabMode = btn.dataset.swapMode;
+            const ex = store.getTodayRoutineExercises()[swapTargetIdx];
+            if (!swapReasonManual && ex && ex.mode !== swapTabMode && swapReason !== "pain") {
+              swapReason = "gym_switch";
+            }
+            renderSwapModalBody();
+          });
+        });
+    
         document.getElementById("addCustomExBtn")?.addEventListener("click", () => {
           document.getElementById("addExModal")?.classList.remove("hidden");
         });
@@ -5161,6 +5779,8 @@ body {
         closeCompletionReportModal,
         openQuickAddModal,
         closeQuickAddModal,
+        openSwapModal,
+        closeSwapModal,
         directFinishExercise,
         openRpeBottomSheet,
         finalizeFinishWithRpe,
@@ -5292,6 +5912,38 @@ body {
             if (sync) sync.pushToGoogleDrive(true);
           };
         });
+      }
+    
+      // Bulk Pain Replacement Button ("🩹 허리 부담 종목 N개 한 번에 대체하기")
+      const bulkPainBtn = document.getElementById("dashBulkPainBtn");
+      if (bulkPainBtn) {
+        const painMatchCount = painAreas.length > 0
+          ? items.filter(ex => !store.getRecord(ex).isCompleted && Boolean(findPainAlertAlternative(ex, painAreas))).length
+          : 0;
+        if (painMatchCount > 0) {
+          bulkPainBtn.textContent = `🩹 ${painAreas.join("·")} 부담 종목 ${painMatchCount}개 한 번에 대체하기`;
+          bulkPainBtn.classList.remove("hidden");
+          bulkPainBtn.onclick = () => {
+            const replaced = store.bulkReplacePainExercises(painAreas);
+            if (replaced > 0) {
+              if (sync) sync.scheduleAutoPush(300);
+              if (onRenderAll) onRenderAll();
+              if (showToast) showToast(`🩹 ${replaced}개 종목을 안전한 대체 운동으로 일괄 전환했습니다!`);
+            }
+          };
+        } else {
+          bulkPainBtn.classList.add("hidden");
+        }
+      }
+    
+      // Screen 1 Routine Mode Conversion Toggle ("🔄 헬스 기구로 변환" / "🔄 홈트로 변환")
+      const modeSwapBtn = document.getElementById("dashModeSwapBtn");
+      if (modeSwapBtn) {
+        const curEffMode = store.getRoutineEffectiveMode ? store.getRoutineEffectiveMode() : "home";
+        const isGymMode = curEffMode === "gym";
+        modeSwapBtn.textContent = isGymMode ? "🔄 홈트로 변환" : "🔄 헬스 기구로 변환";
+        modeSwapBtn.classList.toggle("badge-lime", isGymMode);
+        modeSwapBtn.classList.toggle("badge-muted", !isGymMode);
       }
     
       // CTA Button text
@@ -5713,10 +6365,13 @@ body {
             }
     
             <div class="unified-coach-body">
-              <!-- 2. Exercise Title Row (No Truncation) + Unilateral Badge -->
+              <!-- 2. Exercise Title Row (No Truncation) + Unilateral Badge + Undo Swap -->
               <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:6px;">
                 <span style="font-size:16.5px; font-weight:900; color:#ffffff; word-break:keep-all; line-height:1.25; letter-spacing:-0.3px;">${ex.name}</span>
-                ${enriched && enriched.unilateral ? `<span class="badge badge-purple" style="font-size:9.5px; padding:1px 6px; flex-shrink:0; white-space:nowrap; margin-top:1px;">↔ 양쪽</span>` : ""}
+                <div style="display:flex; align-items:center; gap:4px; flex-shrink:0; margin-top:1px;">
+                  ${ex.swappedFrom ? `<button type="button" data-card-action="undo-swap" class="btn-tap card-undo-swap-btn">↩ 원래 종목 복구</button>` : ""}
+                  ${enriched && enriched.unilateral ? `<span class="badge badge-purple" style="font-size:9.5px; padding:1px 6px; white-space:nowrap;">↔ 양쪽</span>` : ""}
+                </div>
               </div>
     
               <!-- 3. Meta Row: Equipment Capsule + Neon Lime Target Muscle -->
@@ -5779,13 +6434,17 @@ body {
                   ${enriched && enriched.unilateral ? `<span class="badge badge-purple" style="font-size:9.5px; padding:1px 5px; flex-shrink:0;">좌우 각각</span>` : ""}
                 </div>
                 ${
-                  firstAlt
+                  alertAlt
                     ? `
-                  <button type="button" data-card-action="switch-alt" data-alt-id="${firstAlt.altId}" class="btn-tap" style="font-size:10.5px; font-weight:800; color:${alertAlt ? "#fde047" : "var(--amber-bright)"}; background:${alertAlt ? "rgba(250,204,21,0.18)" : "rgba(250,204,21,0.1)"}; border:1px solid ${alertAlt ? "rgba(250,204,21,0.55)" : "rgba(250,204,21,0.3)"}; border-radius:7px; height:24px; padding:0 7px; display:flex; align-items:center; gap:3px; white-space:nowrap; max-width:65%; overflow:hidden; text-overflow:ellipsis; flex-shrink:0;">
-                    <span style="overflow:hidden; text-overflow:ellipsis;">🩹 ${alertAlt ? `${alertAlt.matchedArea} 주의 · 원탭 대체` : `${firstAlt.area} 불편 시`} → ${firstAlt.altName.replace(/^[0-9]+kg\s*/, "")}</span>
+                  <button type="button" data-card-action="open-swap-sheet" class="btn-tap" style="font-size:10.5px; font-weight:800; color:#fde047; background:rgba(250,204,21,0.18); border:1px solid rgba(250,204,21,0.55); border-radius:7px; height:24px; padding:0 8px; display:flex; align-items:center; gap:3px; white-space:nowrap; max-width:65%; overflow:hidden; text-overflow:ellipsis; flex-shrink:0;">
+                    <span style="overflow:hidden; text-overflow:ellipsis;">🩹 ${alertAlt.matchedArea} 주의 · 종목 교체</span>
                   </button>
                 `
-                    : `<span style="font-size:10px; color:var(--text-muted); flex-shrink:0;">표준 자세 권장</span>`
+                    : `
+                  <button type="button" data-card-action="open-swap-sheet" class="btn-tap" style="font-size:10.5px; font-weight:800; color:var(--accent); background:var(--accent-bg); border:1px solid rgba(163,230,53,0.35); border-radius:7px; height:24px; padding:0 8px; display:flex; align-items:center; gap:3px; white-space:nowrap; flex-shrink:0;">
+                    🔄 종목 교체 · 대체
+                  </button>
+                `
                 }
               </div>
             </div>
@@ -5884,6 +6543,17 @@ body {
               const curReps = (rec.sets[0] && rec.sets[0].reps) || ex.defaultReps || "30초";
               const targetSec = parseTimedSeconds(curReps) || 30;
               workTimerCtrl.reset(targetSec, ex.id);
+            } else if (act === "open-swap-sheet") {
+              if (modals && typeof modals.openSwapModal === "function") {
+                modals.openSwapModal(store.state.todayCardIndex);
+              }
+            } else if (act === "undo-swap") {
+              if (store.undoRoutineSwap(store.state.todayCardIndex)) {
+                sync.scheduleAutoPush(300);
+                onRenderAll();
+                const reverted = store.getTodayRoutineExercises()[store.state.todayCardIndex];
+                showToast(`↩ [${(reverted && reverted.name) || "원래 종목"}]으로 복구되었습니다.`);
+              }
             } else if (act === "switch-alt") {
               const altId = el.dataset.altId;
               const items = store.getTodayRoutineExercises();
@@ -5893,7 +6563,7 @@ body {
                 onRenderAll();
                 showToast(`🩹 ${items[targetIdx].name}(으)로 이동했습니다.`);
               } else {
-                const ok = store.replaceTodayRoutineExercise(store.state.todayCardIndex, altId);
+                const ok = store.replaceTodayRoutineExercise(store.state.todayCardIndex, altId, "pain");
                 if (ok) {
                   sync.scheduleAutoPush(500);
                   onRenderAll();
@@ -6031,7 +6701,8 @@ body {
             const addOpen = !document.getElementById("addExModal")?.classList.contains("hidden");
             const quickAddOpen = !document.getElementById("quickAddModal")?.classList.contains("hidden");
             const reportOpen = !document.getElementById("reportModal")?.classList.contains("hidden");
-            if (rpeOpen || zoomOpen || addOpen || quickAddOpen || reportOpen) {
+            const swapOpen = !document.getElementById("swapModal")?.classList.contains("hidden");
+            if (rpeOpen || zoomOpen || addOpen || quickAddOpen || reportOpen || swapOpen) {
               cancelled = true;
               return;
             }
@@ -6650,6 +7321,19 @@ body {
     
       document.getElementById("dashBottomAddBtn")?.addEventListener("click", () => {
         modals.openQuickAddModal();
+      });
+    
+      document.getElementById("dashModeSwapBtn")?.addEventListener("click", () => {
+        const res = store.toggleRoutineMode();
+        renderAll();
+        sync.scheduleAutoPush(400);
+        if (res.reverted) {
+          showToast(`🔄 ${res.targetMode === "gym" ? "헬스 기구" : "홈트"} 루틴 원래 상태로 복구했습니다!`);
+        } else if (res.convertedCount > 0) {
+          showToast(`🔄 ${res.convertedCount}개 종목을 ${res.targetMode === "gym" ? "🏋️ 헬스 기구" : "🏠 홈트"}로 일괄 변환했습니다!`);
+        } else {
+          showToast("변환할 미완료 종목이 없습니다.");
+        }
       });
     
       document.getElementById("dashReportBtn")?.addEventListener("click", () => {

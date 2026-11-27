@@ -118,6 +118,38 @@ export function renderDashboard({ store, sync, onRenderAll, onSelectExercise, sh
     });
   }
 
+  // Bulk Pain Replacement Button ("🩹 허리 부담 종목 N개 한 번에 대체하기")
+  const bulkPainBtn = document.getElementById("dashBulkPainBtn");
+  if (bulkPainBtn) {
+    const painMatchCount = painAreas.length > 0
+      ? items.filter(ex => !store.getRecord(ex).isCompleted && Boolean(findPainAlertAlternative(ex, painAreas))).length
+      : 0;
+    if (painMatchCount > 0) {
+      bulkPainBtn.textContent = `🩹 ${painAreas.join("·")} 부담 종목 ${painMatchCount}개 한 번에 대체하기`;
+      bulkPainBtn.classList.remove("hidden");
+      bulkPainBtn.onclick = () => {
+        const replaced = store.bulkReplacePainExercises(painAreas);
+        if (replaced > 0) {
+          if (sync) sync.scheduleAutoPush(300);
+          if (onRenderAll) onRenderAll();
+          if (showToast) showToast(`🩹 ${replaced}개 종목을 안전한 대체 운동으로 일괄 전환했습니다!`);
+        }
+      };
+    } else {
+      bulkPainBtn.classList.add("hidden");
+    }
+  }
+
+  // Screen 1 Routine Mode Conversion Toggle ("🔄 헬스 기구로 변환" / "🔄 홈트로 변환")
+  const modeSwapBtn = document.getElementById("dashModeSwapBtn");
+  if (modeSwapBtn) {
+    const curEffMode = store.getRoutineEffectiveMode ? store.getRoutineEffectiveMode() : "home";
+    const isGymMode = curEffMode === "gym";
+    modeSwapBtn.textContent = isGymMode ? "🔄 홈트로 변환" : "🔄 헬스 기구로 변환";
+    modeSwapBtn.classList.toggle("badge-lime", isGymMode);
+    modeSwapBtn.classList.toggle("badge-muted", !isGymMode);
+  }
+
   // CTA Button text
   const ctaBtn = document.getElementById("dashCtaBtn");
   if (ctaBtn) {
