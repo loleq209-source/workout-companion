@@ -42,7 +42,7 @@ body {
   display: flex;
   flex-direction: column;
   overflow-x: hidden;
-  padding-bottom: calc(var(--nav-height) + 16px + env(safe-area-inset-bottom, 0px));
+  padding-bottom: calc(var(--nav-height) + 40px + env(safe-area-inset-bottom, 0px));
   letter-spacing: -0.2px;
 }
 
@@ -394,6 +394,60 @@ body {
   height: 100%;
   border-radius: 3px;
   transition: width 0.4s ease;
+}
+
+/* Scheme 1: Unified Coaching Card & Slim Controls */
+.unified-coach-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+}
+.unified-hero-media {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  height: auto;
+  overflow: hidden;
+  background: #000000;
+  cursor: zoom-in;
+  border-bottom: 1px solid var(--border);
+}
+.unified-hero-media img {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+.unified-hero-media img.img-cover {
+  object-fit: cover;
+}
+.unified-hero-media img.img-contain {
+  object-fit: contain;
+}
+.unified-coach-body {
+  padding: 11px 13px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.slim-control-box {
+  background: #0e0e11;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 8px 10px;
+}
+.auto-sync-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 9999px;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--accent);
+  background: var(--accent-bg);
+  border: 1px solid rgba(163, 230, 53, 0.28);
 }
 
 /* Card Swipe Transitions */

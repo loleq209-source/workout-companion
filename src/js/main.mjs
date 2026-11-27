@@ -105,18 +105,20 @@ modals = createModalController({ store, sync, onRenderAll: renderAll, showToast 
 cardCtrl = createCardController({ store, timerCtrl, sync, modals, onRenderAll: renderAll, showToast });
 
 // Hook called by Android MainActivity.onResume() when returning to WebView
-let lastResumeCheckAt = 0;
+let lastAutoSyncAt = 0;
+function triggerThrottledAutoSync() {
+  timerCtrl.syncWithClock();
+  const rolled = store.ensureCurrentSessionDate();
+  if (rolled) renderAll();
+  const now = Date.now();
+  if (now - lastAutoSyncAt >= 30000 && (hasGasBridge() || store.state.gasUrl)) {
+    lastAutoSyncAt = now;
+    sync.runAutoSync();
+  }
+}
+
 if (typeof window !== "undefined") {
-  window.onNativeResume = () => {
-    timerCtrl.syncWithClock();
-    const rolled = store.ensureCurrentSessionDate();
-    if (rolled) renderAll();
-    const now = Date.now();
-    if (now - lastResumeCheckAt >= 45000 && (hasGasBridge() || store.state.gasUrl)) {
-      lastResumeCheckAt = now;
-      sync.pullFromGoogleDrive(true);
-    }
-  };
+  window.onNativeResume = triggerThrottledAutoSync;
 }
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -210,9 +212,6 @@ document.addEventListener("DOMContentLoaded", () => {
     showToast("Apps Script URL이 저장되었습니다.");
   });
 
-  document.getElementById("pushDriveBtn")?.addEventListener("click", () => sync.pushToGoogleDrive(false));
-  document.getElementById("pullDriveBtn")?.addEventListener("click", () => sync.pullFromGoogleDrive(false));
-
   // Full Backup JSON Export / Import
   document.getElementById("exportJsonBtn")?.addEventListener("click", () => {
     const backup = {
@@ -255,27 +254,22 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   if (store.state.lastSyncAt) {
-    updateSyncBadge(`동기화 ${store.state.lastSyncAt}`);
+    updateSyncBadge(`자동 동기화 ${store.state.lastSyncAt}`);
   }
   renderAll();
 
   if (hasGasBridge() || store.state.gasUrl) {
-    sync.pullFromGoogleDrive(true);
+    lastAutoSyncAt = Date.now();
+    sync.runAutoSync();
   }
 });
 
-let lastVisibilityPullAt = Date.now();
 document.addEventListener("visibilitychange", () => {
   if (document.visibilityState === "visible") {
-    timerCtrl.syncWithClock();
-    const rolled = store.ensureCurrentSessionDate();
-    if (rolled) renderAll();
-    const now = Date.now();
-    if (now - lastVisibilityPullAt >= 60000) {
-      lastVisibilityPullAt = now;
-      if (hasGasBridge() || store.state.gasUrl) {
-        sync.pullFromGoogleDrive(true);
-      }
-    }
+    triggerThrottledAutoSync();
   }
+});
+
+window.addEventListener("pageshow", () => {
+  triggerThrottledAutoSync();
 });

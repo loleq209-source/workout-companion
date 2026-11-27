@@ -1,9 +1,10 @@
 /**
  * Bidirectional Google Drive Sync, Payload Builder, and Anti-Midnight Contamination Guard.
  */
-import { getTodayStr, formatTimeDisplayKR } from "./date.mjs";
+import { getTodayStr, formatLocalTimeHHMM } from "./date.mjs";
 import { hasGasBridge } from "./bridge.mjs";
 import { calculateWorkoutMetrics } from "./metrics.mjs";
+import { ENRICHED_DB } from "./data.mjs";
 
 export function buildWorkoutLogPayload(store, targetDate = getTodayStr()) {
   const state = store.state;
@@ -240,15 +241,18 @@ export function applyLoadedDriveData(store, data, options = {}) {
 
   if (data.workoutExtra !== undefined) state.workoutExtra = data.workoutExtra;
   if (data.wellness) state.wellness = data.wellness;
+  if (data.enrichedExercises && data.enrichedExercises.exercises && typeof data.enrichedExercises.exercises === "object") {
+    Object.assign(ENRICHED_DB, data.enrichedExercises.exercises);
+  }
 
   // Always compute crisp metrics locally from reconciled history + preserved cycling wellness
   state.metrics = calculateWorkoutMetrics(state.history, state.wellness, { today });
-  state.lastSyncAt = formatTimeDisplayKR(new Date());
+  const hhmm = formatLocalTimeHHMM(new Date());
+  state.lastSyncAt = hhmm;
   store.persistState();
 
-  if (onBadge) onBadge(`동기화 ${state.lastSyncAt}`);
-  const routineTitle = (state.todayRoutine && state.todayRoutine.title) || "오늘의 추천 루틴";
-  if (onStatus) onStatus(`✅ 드라이브 동기화 완료: ${routineTitle} (${state.lastSyncAt})`, false);
+  if (onBadge) onBadge(`자동 동기화 ${hhmm}`);
+  if (onStatus) onStatus(`☁️ Google Drive 자동 동기화됨 · ${hhmm}`, false);
   if (!silent && onToast) {
     onToast(`📥 ${(state.todayRoutine && state.todayRoutine.date) || "오늘"} 루틴 및 기록 불러오기 완료!`);
   }
@@ -258,8 +262,9 @@ export function applyLoadedDriveData(store, data, options = {}) {
 
 export function createSyncService(store, uiHooks = {}) {
   let autoPushTimer = null;
+  let activeAutoSyncPromise = null;
 
-  async function pushToGoogleDrive(silent = false) {
+  async function pushToGoogleDrive(silent = true) {
     store.ensureCurrentSessionDate();
     const state = store.state;
     const payloadLog = upsertTodayHistory(store);
@@ -289,11 +294,11 @@ export function createSyncService(store, uiHooks = {}) {
     if (uiHooks.onBadge) uiHooks.onBadge("동기화 중...");
 
     const markSuccess = () => {
-      state.lastSyncAt = formatTimeDisplayKR(new Date());
-      store.persistState();
-      if (uiHooks.onBadge) uiHooks.onBadge(`동기화 ${state.lastSyncAt}`);
-      if (uiHooks.onStatus) uiHooks.onStatus(`✅ 드라이브 동기화 완료 (${state.lastSyncAt})`, false);
-      if (!silent && uiHooks.onToast) uiHooks.onToast("☁️ 구글 드라이브에 저장되었습니다!");
+      const hhmm = formatLocalTimeHHMM(new Date());
+      state.lastSyncAt = hhmm;
+      store.clearPendingSync();
+      if (uiHooks.onBadge) uiHooks.onBadge(`자동 동기화 ${hhmm}`);
+      if (uiHooks.onStatus) uiHooks.onStatus(`☁️ Google Drive 자동 동기화됨 · ${hhmm}`, false);
     };
 
     if (hasGasBridge()) {
@@ -343,11 +348,33 @@ export function createSyncService(store, uiHooks = {}) {
   }
 
   function scheduleAutoPush(delay = 800) {
+    store.markPendingSync();
     if (autoPushTimer) clearTimeout(autoPushTimer);
     autoPushTimer = setTimeout(() => {
       autoPushTimer = null;
       pushToGoogleDrive(true);
     }, delay);
+  }
+
+  /**
+   * Silent 2-way auto-sync on app launch and foreground resume:
+   * 1) Upload any unsynced local changes first if `pendingSync` is set.
+   * 2) Pull latest Drive state (todayRoutine, history, wellness, enrichedExercises).
+   */
+  async function runAutoSync() {
+    if (activeAutoSyncPromise) return activeAutoSyncPromise;
+    activeAutoSyncPromise = (async () => {
+      try {
+        store.ensureCurrentSessionDate();
+        if (store.state.pendingSync) {
+          await pushToGoogleDrive(true);
+        }
+        return await pullFromGoogleDrive(true);
+      } finally {
+        activeAutoSyncPromise = null;
+      }
+    })();
+    return activeAutoSyncPromise;
   }
 
   async function pullFromGoogleDrive(silent = false) {
@@ -403,6 +430,7 @@ export function createSyncService(store, uiHooks = {}) {
   return {
     pushToGoogleDrive,
     scheduleAutoPush,
-    pullFromGoogleDrive
+    pullFromGoogleDrive,
+    runAutoSync
   };
 }

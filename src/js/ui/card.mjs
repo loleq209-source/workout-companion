@@ -123,8 +123,8 @@ export function createCardController({ store, timerCtrl, sync, modals, onRenderA
     let middleControlsHtml = "";
     if (isStretch) {
       middleControlsHtml = `
-        <div style="background:var(--card-2); border:1px solid var(--border); border-radius:10px; padding:6px 10px; display:flex; align-items:center; justify-content:space-between; margin-top:2px;">
-          <span style="font-size:11.5px; font-weight:800; color:var(--text-soft);">
+        <div class="slim-control-box" style="display:flex; align-items:center; justify-content:space-between; padding:8px 12px;">
+          <span style="font-size:12px; font-weight:800; color:var(--text-soft);">
             ${curSetNum} / ${rec.sets.length}세트 · 목표 ${currentReps}
           </span>
           <div class="row-gap" style="gap:2px;">${setDotsHtml}</div>
@@ -132,18 +132,18 @@ export function createCardController({ store, timerCtrl, sync, modals, onRenderA
       `;
     } else {
       middleControlsHtml = `
-        <div style="margin-top:2px; background:#0e0e11; border:1px solid var(--border); border-radius:12px; padding:6px 10px; display:flex; align-items:center; gap:8px;">
-          <!-- Left: Compact Circular Rest Timer (62x62) -->
-          <div style="flex:0 0 74px; display:flex; flex-direction:column; align-items:center; gap:2px;">
-            <div style="position:relative; width:62px; height:62px; display:flex; align-items:center; justify-content:center;">
-              <svg width="62" height="62" viewBox="0 0 68 68" style="transform: rotate(-90deg);">
+        <div class="slim-control-box" style="display:flex; align-items:center; gap:8px;">
+          <!-- Left: Compact Circular Rest Timer (60x60) -->
+          <div style="flex:0 0 72px; display:flex; flex-direction:column; align-items:center; gap:3px;">
+            <div style="position:relative; width:58px; height:58px; display:flex; align-items:center; justify-content:center;">
+              <svg width="58" height="58" viewBox="0 0 68 68" style="transform: rotate(-90deg);">
                 <circle cx="34" cy="34" r="28" fill="none" stroke="#222226" stroke-width="5" />
                 <circle id="timerRingProgress" cx="34" cy="34" r="28" fill="none" stroke="#a3e635" stroke-width="5" stroke-linecap="round"
                   style="stroke-dasharray:${circum.toFixed(1)}; stroke-dashoffset:${(circum * (1 - ratio)).toFixed(1)}; transition: stroke-dashoffset 0.3s linear;" />
               </svg>
               <div style="position:absolute; text-align:center;">
-                <div id="timerRingTime" class="tabular-nums" style="font-size:14px; font-weight:900; color:#ffffff;">${min}:${sec}</div>
-                <div id="timerRingLabel" style="font-size:8px; font-weight:800; color:var(--text-muted); max-width:48px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${t.running ? "휴식 중" : "휴식"}</div>
+                <div id="timerRingTime" class="tabular-nums" style="font-size:13.5px; font-weight:900; color:#ffffff;">${min}:${sec}</div>
+                <div id="timerRingLabel" style="font-size:8px; font-weight:800; color:var(--text-muted); max-width:44px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${t.running ? "휴식 중" : "휴식"}</div>
               </div>
             </div>
             <div class="row-gap" style="gap:3px; width:100%;">
@@ -194,27 +194,27 @@ export function createCardController({ store, timerCtrl, sync, modals, onRenderA
       if (!allDone) {
         const btnText = isLastRemainingSet ? "✅ 종목 완료" : `✅ ${curSetNum}세트 완료`;
         ctaButtonHtml = `
-          <button id="cardSetCompleteBtn" type="button" class="btn-tap btn-primary" style="margin-top:4px; height:42px; border-radius:12px; font-size:13.5px;">
+          <button id="cardSetCompleteBtn" type="button" class="btn-tap btn-primary" style="height:44px; border-radius:14px; font-size:14px;">
             ${btnText}
           </button>
         `;
       } else {
         ctaButtonHtml = `
-          <button id="cardSetCompleteBtn" type="button" class="btn-tap btn-primary" style="margin-top:4px; height:42px; border-radius:12px; font-size:13.5px; background:var(--amber-bright); color:#050507;">
+          <button id="cardSetCompleteBtn" type="button" class="btn-tap btn-primary" style="height:44px; border-radius:14px; font-size:14px; background:var(--amber-bright); color:#050507;">
             ✅ 종목 완료 (다음 종목 이동)
           </button>
         `;
       }
     } else if (!allDone) {
       ctaButtonHtml = `
-        <button id="cardSetCompleteBtn" type="button" class="btn-tap btn-primary" style="margin-top:4px; height:42px; border-radius:12px; font-size:13.5px;">
+        <button id="cardSetCompleteBtn" type="button" class="btn-tap btn-primary" style="height:44px; border-radius:14px; font-size:14px;">
           ✅ ${curSetNum}세트 완료 · ${ex.restSec || 60}초 휴식 시작
         </button>
       `;
     } else {
       const rpeLabel = rec.rpe != null ? ` · 현재 RPE ${rec.rpe}` : "";
       ctaButtonHtml = `
-        <button id="cardSetCompleteBtn" type="button" class="btn-tap btn-primary" style="margin-top:4px; height:42px; border-radius:12px; font-size:13.5px; background:var(--amber-bright); color:#050507;">
+        <button id="cardSetCompleteBtn" type="button" class="btn-tap btn-primary" style="height:44px; border-radius:14px; font-size:14px; background:var(--amber-bright); color:#050507;">
           🎉 전 세트 완료 (RPE 강도 기록${rpeLabel})
         </button>
       `;
@@ -226,97 +226,105 @@ export function createCardController({ store, timerCtrl, sync, modals, onRenderA
     const tempo = enriched && enriched.tempo ? enriched.tempo : ex.tempo || "자연스러운 템포";
     const painAlts = enriched && Array.isArray(enriched.painAlternatives) ? enriched.painAlternatives : [];
     const firstAlt = painAlts.length > 0 ? painAlts[0] : null;
-
-    const guideCardHtml = `
-      <div class="card-surface" style="padding:8px 10px; display:flex; flex-direction:column; gap:5px; border-radius:14px; margin-top:4px;">
-        ${
-          phases.length > 0
-            ? `
-          <div style="display:flex; flex-direction:column; gap:4px;">
-            ${phases
-              .map(
-                (p, pIdx) => `
-              <div style="display:flex; align-items:flex-start; gap:5px; font-size:11.5px; line-height:1.35;">
-                <span style="display:inline-flex; align-items:center; justify-content:center; width:15px; height:15px; border-radius:50%; background:var(--accent-bg); color:var(--accent); font-size:9.5px; font-weight:900; flex-shrink:0; margin-top:1px;">
-                  ${p.step || pIdx + 1}
-                </span>
-                <div style="flex:1; min-width:0; color:var(--text-soft);">
-                  <strong style="color:#ffffff; font-weight:800;">[${p.title}]</strong>
-                  <span>${p.cue}</span>
-                  ${p.breath ? `<span style="color:var(--text-muted); font-size:10px; margin-left:3px; white-space:nowrap;">💨 ${p.breath}</span>` : ""}
-                </div>
-              </div>
-            `
-              )
-              .join("")}
-          </div>
-        `
-            : `
-          <div style="font-size:11.5px; color:var(--text-soft); line-height:1.35;">
-            <strong style="color:#ffffff;">[동작 요약]</strong> ${ex.prep || "올바른 자세를 유지하며 통제된 속도로 진행합니다."}
-          </div>
-        `
-        }
-
-        <div style="background:var(--card-2); border:1px solid var(--border); border-radius:9px; padding:5px 8px; display:flex; flex-direction:column; gap:3px;">
-          <div style="display:flex; align-items:flex-start; gap:5px; font-size:11px; line-height:1.35;">
-            <span style="color:var(--accent); font-weight:900; flex-shrink:0;">⭕</span>
-            <span style="color:var(--text-soft);">${doCue}</span>
-          </div>
-          <div style="display:flex; align-items:flex-start; gap:5px; font-size:11px; line-height:1.35;">
-            <span style="color:var(--rose); font-weight:900; flex-shrink:0;">❌</span>
-            <span style="color:var(--text-soft);">${dontCue}</span>
-          </div>
-        </div>
-
-        <div style="display:flex; align-items:center; justify-content:space-between; height:32px; background:var(--card-2); border:1px solid var(--border); border-radius:9px; padding:0 8px; gap:6px;">
-          <div style="display:flex; align-items:center; gap:5px; min-width:0; flex-shrink:1;">
-            <span style="font-size:11px; font-weight:800; color:var(--text-soft); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">⏱ ${tempo}</span>
-            ${enriched && enriched.unilateral ? `<span class="badge badge-purple" style="font-size:9.5px; padding:1px 5px; flex-shrink:0;">좌우 각각</span>` : ""}
-          </div>
-          ${
-            firstAlt
-              ? `
-            <button type="button" data-card-action="switch-alt" data-alt-id="${firstAlt.altId}" class="btn-tap" style="font-size:10.5px; font-weight:800; color:var(--amber-bright); background:rgba(250,204,21,0.1); border:1px solid rgba(250,204,21,0.3); border-radius:7px; height:24px; padding:0 7px; display:flex; align-items:center; gap:3px; white-space:nowrap; max-width:62%; overflow:hidden; text-overflow:ellipsis; flex-shrink:0;">
-              <span style="overflow:hidden; text-overflow:ellipsis;">🩹 ${firstAlt.area} 불편 시 → ${firstAlt.altName.replace(/^[0-9]+kg\s*/, "")}</span>
-            </button>
-          `
-              : `<span style="font-size:10px; color:var(--text-muted); flex-shrink:0;">표준 자세 권장</span>`
-          }
-        </div>
-      </div>
-    `;
+    const isGym = ex.mode === "gym" || String(ex.id).startsWith("gym_");
 
     const cardContainer = document.getElementById("cardMainContent");
     if (!cardContainer) return;
 
     cardContainer.innerHTML = `
-      ${
-        media
-          ? `
-        <div id="card3CutImgBox" style="position:relative; width:100%; height:124px; background:#000000; border-radius:12px; overflow:hidden; border:1px solid var(--border); display:flex; align-items:center; justify-content:center; cursor:zoom-in;">
-          <img src="${media.full}" alt="${ex.name} 3컷 동작" loading="eager" style="width:100%; height:100%; object-fit:contain; display:block;">
-          <span style="position:absolute; right:8px; bottom:6px; font-size:9px; font-weight:800; background:rgba(0,0,0,0.78); color:var(--accent); border:1px solid rgba(163,230,53,0.3); border-radius:5px; padding:1px 6px;">🔍 단계별 재생·확대</span>
-        </div>
-      `
-          : ""
-      }
+      <!-- Scheme 1: Unified Coaching Card (#141416) -->
+      <div class="unified-coach-card">
+        <!-- 1. Full-Width 16:9 3-Cut Illustration (cover for home_*, contain for gym_*) -->
+        ${
+          media
+            ? `
+          <div id="card3CutImgBox" class="unified-hero-media">
+            <img src="${media.full}" alt="${ex.name} 3컷 동작" loading="eager" class="${isGym ? "img-contain" : "img-cover"}">
+            <span style="position:absolute; right:8px; bottom:8px; font-size:10px; font-weight:800; background:rgba(0,0,0,0.8); color:var(--accent); border:1px solid rgba(163,230,53,0.35); border-radius:6px; padding:2px 7px;">🔍 단계별 재생·확대</span>
+          </div>
+        `
+            : ""
+        }
 
-      <!-- 2-Row Non-Truncated Title Header -->
-      <div style="display:flex; flex-direction:column; gap:2px; margin-top:2px;">
-        <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:6px;">
-          <span style="font-size:16px; font-weight:900; color:#ffffff; word-break:keep-all; line-height:1.25; letter-spacing:-0.3px;">${ex.name}</span>
-          ${enriched && enriched.unilateral ? `<span class="badge badge-purple" style="font-size:9.5px; padding:1px 5px; flex-shrink:0; white-space:nowrap; margin-top:1px;">↔ 양쪽</span>` : ""}
-        </div>
-        <div style="display:flex; align-items:center; justify-content:space-between; gap:6px; font-size:11px;">
-          <span class="badge badge-muted" style="font-size:9.5px; padding:1px 5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:55%; flex-shrink:0;">${ex.equipment}</span>
-          <span style="font-size:11px; font-weight:800; color:var(--accent); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; text-align:right; min-width:0; flex:1;">${ex.targetMuscle}</span>
+        <div class="unified-coach-body">
+          <!-- 2. Exercise Title Row (No Truncation) + Unilateral Badge -->
+          <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:6px;">
+            <span style="font-size:16.5px; font-weight:900; color:#ffffff; word-break:keep-all; line-height:1.25; letter-spacing:-0.3px;">${ex.name}</span>
+            ${enriched && enriched.unilateral ? `<span class="badge badge-purple" style="font-size:9.5px; padding:1px 6px; flex-shrink:0; white-space:nowrap; margin-top:1px;">↔ 양쪽</span>` : ""}
+          </div>
+
+          <!-- 3. Meta Row: Equipment Capsule + Neon Lime Target Muscle -->
+          <div style="display:flex; align-items:center; justify-content:space-between; gap:6px; font-size:11px; padding-bottom:4px; border-bottom:1px solid var(--border);">
+            <span class="badge badge-muted" style="font-size:10px; padding:1.5px 7px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:54%; flex-shrink:0;">${ex.equipment}</span>
+            <span style="font-size:11px; font-weight:800; color:var(--accent); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; text-align:right; min-width:0; flex:1;">${ex.targetMuscle}</span>
+          </div>
+
+          <!-- 4. Phases 1~3 Coaching Steps -->
+          ${
+            phases.length > 0
+              ? `
+            <div style="display:flex; flex-direction:column; gap:5px;">
+              ${phases
+                .map(
+                  (p, pIdx) => `
+                <div style="display:flex; align-items:flex-start; gap:6px; font-size:11.5px; line-height:1.38;">
+                  <span style="display:inline-flex; align-items:center; justify-content:center; width:16px; height:16px; border-radius:50%; background:var(--accent-bg); color:var(--accent); font-size:10px; font-weight:900; flex-shrink:0; margin-top:1px;">
+                    ${p.step || pIdx + 1}
+                  </span>
+                  <div style="flex:1; min-width:0; color:var(--text-soft);">
+                    <strong style="color:#ffffff; font-weight:800;">[${p.title}]</strong>
+                    <span>${p.cue}</span>
+                    ${p.breath ? `<span style="color:var(--text-muted); font-size:10px; margin-left:3px; white-space:nowrap;">💨 ${p.breath}</span>` : ""}
+                  </div>
+                </div>
+              `
+                )
+                .join("")}
+            </div>
+          `
+              : `
+            <div style="font-size:11.5px; color:var(--text-soft); line-height:1.38;">
+              <strong style="color:#ffffff;">[동작 요약]</strong> ${ex.prep || "올바른 자세를 유지하며 통제된 속도로 진행합니다."}
+            </div>
+          `
+          }
+
+          <!-- 5. Posture Check Box (#1c1c1f) -->
+          <div style="background:var(--card-2); border:1px solid var(--border); border-radius:10px; padding:6px 9px; display:flex; flex-direction:column; gap:3.5px;">
+            <div style="display:flex; align-items:flex-start; gap:5px; font-size:11px; line-height:1.35;">
+              <span style="color:var(--accent); font-weight:900; flex-shrink:0;">⭕</span>
+              <span style="color:var(--text-soft);">${doCue}</span>
+            </div>
+            <div style="display:flex; align-items:flex-start; gap:5px; font-size:11px; line-height:1.35;">
+              <span style="color:var(--rose); font-weight:900; flex-shrink:0;">❌</span>
+              <span style="color:var(--text-soft);">${dontCue}</span>
+            </div>
+          </div>
+
+          <!-- 6. Bottom Utility Bar: Tempo (Left) + Pain Alternative Switch (Right) -->
+          <div style="display:flex; align-items:center; justify-content:space-between; min-height:30px; background:var(--card-2); border:1px solid var(--border); border-radius:9px; padding:3px 8px; gap:6px;">
+            <div style="display:flex; align-items:center; gap:5px; min-width:0; flex-shrink:1;">
+              <span style="font-size:11px; font-weight:800; color:var(--text-soft); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">⏱ ${tempo}</span>
+              ${enriched && enriched.unilateral ? `<span class="badge badge-purple" style="font-size:9.5px; padding:1px 5px; flex-shrink:0;">좌우 각각</span>` : ""}
+            </div>
+            ${
+              firstAlt
+                ? `
+              <button type="button" data-card-action="switch-alt" data-alt-id="${firstAlt.altId}" class="btn-tap" style="font-size:10.5px; font-weight:800; color:var(--amber-bright); background:rgba(250,204,21,0.1); border:1px solid rgba(250,204,21,0.3); border-radius:7px; height:24px; padding:0 7px; display:flex; align-items:center; gap:3px; white-space:nowrap; max-width:62%; overflow:hidden; text-overflow:ellipsis; flex-shrink:0;">
+                <span style="overflow:hidden; text-overflow:ellipsis;">🩹 ${firstAlt.area} 불편 시 → ${firstAlt.altName.replace(/^[0-9]+kg\s*/, "")}</span>
+              </button>
+            `
+                : `<span style="font-size:10px; color:var(--text-muted); flex-shrink:0;">표준 자세 권장</span>`
+            }
+          </div>
         </div>
       </div>
 
-      ${middleControlsHtml}
-      ${ctaButtonHtml}
-      ${guideCardHtml}
+      <!-- 7. Set Controls & Primary CTA Directly Below Unified Card -->
+      <div class="stack-2" style="margin-top:2px;">
+        ${middleControlsHtml}
+        ${ctaButtonHtml}
+      </div>
     `;
 
     bindCardActions(ex, rec);

@@ -184,4 +184,9 @@ export function renderSyncTab(store) {
     soundBtn.textContent = on ? "켜짐 (ON)" : "꺼짐 (OFF)";
     soundBtn.className = `btn-tap badge ${on ? "badge-lime" : "badge-muted"}`;
   }
+
+  const syncBox = document.getElementById("syncStatusBox");
+  if (syncBox && store.state.lastSyncAt) {
+    syncBox.textContent = `☁️ Google Drive 자동 동기화됨 · ${store.state.lastSyncAt}`;
+  }
 }

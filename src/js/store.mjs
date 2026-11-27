@@ -44,6 +44,7 @@ export function createStore(storage = typeof localStorage !== "undefined" ? loca
     history: Array.isArray(saved && saved.history) ? saved.history : [],
     gasUrl: (saved && saved.gasUrl) || DEFAULT_GAS_URL,
     lastSyncAt: (saved && saved.lastSyncAt) || "",
+    pendingSync: Boolean(saved && saved.pendingSync),
     records: (saved && saved.records && typeof saved.records === "object") ? saved.records : {},
     sessionDate: (saved && saved.sessionDate) || today,
     interactedDate: (saved && saved.interactedDate) || ""
@@ -67,6 +68,7 @@ export function createStore(storage = typeof localStorage !== "undefined" ? loca
           soundEnabled: state.soundEnabled,
           gasUrl: state.gasUrl,
           lastSyncAt: state.lastSyncAt,
+          pendingSync: state.pendingSync,
           records: state.records,
           sessionDate: state.sessionDate,
           interactedDate: state.interactedDate,
@@ -116,6 +118,17 @@ export function createStore(storage = typeof localStorage !== "undefined" ? loca
   function markUserInteractedToday(currentToday = getTodayStr()) {
     state.sessionDate = currentToday;
     state.interactedDate = currentToday;
+    state.pendingSync = true;
+  }
+
+  function markPendingSync() {
+    state.pendingSync = true;
+    persistState();
+  }
+
+  function clearPendingSync() {
+    state.pendingSync = false;
+    persistState();
   }
 
   /**
@@ -384,6 +397,8 @@ export function createStore(storage = typeof localStorage !== "undefined" ? loca
     resetExerciseCompletion,
     ensureCurrentSessionDate,
     markUserInteractedToday,
+    markPendingSync,
+    clearPendingSync,
     getRecord,
     getTodayRoutineExercises,
     addExerciseToTodayRoutine,

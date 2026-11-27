@@ -124,7 +124,10 @@
 
     <!-- TAB 3: ☁️ 동기화·기록 (Integrated Condition, Muscle Freshness, Sync & History) -->
     <div id="tabSync" class="stack-3 hidden" style="padding-top: 8px;">
-      <div class="title-large" style="padding: 4px 4px 0;">통합 피로도 & 동기화</div>
+      <div class="row-between" style="padding: 4px 4px 0; gap: 8px; flex-wrap: wrap;">
+        <div class="title-large">통합 피로도 & 기록</div>
+        <div id="syncStatusBox" class="auto-sync-pill">☁️ Google Drive 자동 동기화 대기</div>
+      </div>
 
       <!-- Card 1: [통합 컨디션 & 피로도] -->
       <div id="cardIntegratedCondition" class="card-surface stack-2"></div>
@@ -132,25 +135,14 @@
       <!-- Card 2: [부위별 회복도 & 주간 볼륨] -->
       <div id="cardMuscleFreshness" class="card-surface stack-2"></div>
 
-      <!-- Live Sync Status & Preferences Card -->
-      <div class="card-surface stack-3">
+      <!-- Auto Sync Info & Sound Preference Card (Manual Push/Pull Removed) -->
+      <div class="card-surface stack-2">
         <div class="row-between">
-          <strong style="color: #ffffff; font-size: 14px;">⚡ 실시간 자동 동기화</strong>
-          <span class="badge badge-lime">활성화됨</span>
-        </div>
-        <div style="font-size: 12px; color: var(--text-muted); line-height: 1.5;">
-          세트 체크, 중량·횟수 조절, 종목 완료, RPE 입력 시 <strong>별도 저장 버튼 없이</strong> 구글 드라이브와 자동 동기화됩니다.
-        </div>
-        <div id="syncStatusBox" style="font-size: 12px; color: var(--accent); padding: 8px 12px; background: var(--accent-bg); border-radius: 10px; border: 1px solid rgba(163,230,53,0.3);">
-          동기화 준비 완료
-        </div>
-        <div class="grid-2">
-          <button id="pushDriveBtn" type="button" class="btn-tap btn-primary" style="height: 40px; font-size: 13px;">☁️ 지금 드라이브 저장</button>
-          <button id="pullDriveBtn" type="button" class="btn-tap btn-secondary" style="height: 40px; font-size: 13px;">📥 드라이브 불러오기</button>
-        </div>
-        <div class="row-between" style="padding-top: 4px; border-top: 1px solid var(--border);">
           <span style="font-size: 12.5px; font-weight: 700; color: var(--text-soft);">🔔 휴식 타이머 완료 알림음</span>
           <button id="soundToggleBtn" type="button" class="btn-tap badge badge-lime" style="padding: 5px 12px; font-size: 11.5px;">켜짐 (ON)</button>
+        </div>
+        <div style="font-size: 11.5px; color: var(--text-muted); line-height: 1.45;">
+          앱 실행, 복귀 및 세트·RPE 기록 시 Google Drive와 자동으로 동기화됩니다.
         </div>
       </div>
 
