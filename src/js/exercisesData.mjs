@@ -931,7 +931,7 @@ export const EXERCISES = [
   },
   {
     "id": "home_smr_suboccipital",
-    "mode": "웜업·이완",
+    "mode": "home",
     "presets": [
       "all",
       "warmup",
@@ -956,7 +956,7 @@ export const EXERCISES = [
   },
   {
     "id": "home_smr_chest_open",
-    "mode": "웜업·이완",
+    "mode": "home",
     "presets": [
       "all",
       "warmup",
@@ -981,7 +981,7 @@ export const EXERCISES = [
   },
   {
     "id": "home_smr_glute",
-    "mode": "웜업·이완",
+    "mode": "home",
     "presets": [
       "all",
       "warmup",
@@ -1006,7 +1006,7 @@ export const EXERCISES = [
   },
   {
     "id": "home_smr_thoracic",
-    "mode": "웜업·이완",
+    "mode": "home",
     "presets": [
       "all",
       "warmup",

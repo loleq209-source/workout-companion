@@ -26,6 +26,8 @@ test("Date helpers perform local arithmetic without UTC shift", () => {
 
 test("Data mapping classifies all 48 exercises cleanly & preserves legacy aliases", () => {
   assert.equal(EXERCISES.length, 48);
+  assert.equal(EXERCISES.filter(x => x.mode === "home").length, 36);
+  assert.equal(EXERCISES.filter(x => x.mode === "gym").length, 12);
   const legPress = EXERCISES.find(x => x.id === "gym_leg_press");
   const legCurl = EXERCISES.find(x => x.id === "gym_leg_curl");
   const bandPullup = EXERCISES.find(x => x.id === "home_band_pullup");
