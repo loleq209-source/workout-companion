@@ -89,6 +89,10 @@ export function renderDashboard({ store, onSelectExercise }) {
 
   const summaryEl = document.getElementById("dashStatusSummary");
   if (summaryEl) summaryEl.textContent = `${doneExercises} / ${items.length} 완료`;
+  const reportBtn = document.getElementById("dashReportBtn");
+  if (reportBtn) {
+    reportBtn.classList.toggle("hidden", !(items.length > 0 && doneExercises === items.length));
+  }
 
   // Checklist Items
   const listContainer = document.getElementById("dashRoutineList");

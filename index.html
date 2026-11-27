@@ -547,6 +547,88 @@ body {
   word-break: keep-all;
 }
 
+/* Completion Report & Muscle Heatmap SVG */
+.report-heatmap-box {
+  background: #000000;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 10px 10px 9px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.report-heatmap-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  align-items: center;
+}
+.heatmap-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+.heatmap-side-label {
+  font-size: 9.5px;
+  font-weight: 800;
+  color: var(--text-muted);
+  letter-spacing: 0.6px;
+}
+.heatmap-svg {
+  width: 100%;
+  max-width: 136px;
+  height: auto;
+  display: block;
+}
+.heatmap-legend {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-soft);
+  padding-top: 6px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+.heatmap-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.legend-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+.report-cyan-pill {
+  display: inline-flex;
+  align-items: center;
+  background: rgba(56, 189, 248, 0.14);
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  color: #38bdf8;
+  border-radius: 999px;
+  padding: 3px 9px;
+  font-size: 10.5px;
+  font-weight: 800;
+  line-height: 1.3;
+  word-break: keep-all;
+}
+.report-recovery-banner {
+  background: rgba(163, 230, 53, 0.09);
+  border: 1px solid rgba(163, 230, 53, 0.28);
+  border-radius: 10px;
+  padding: 8px 10px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-soft);
+  line-height: 1.4;
+  word-break: keep-all;
+}
+
   </style>
 </head>
 <body>
@@ -607,7 +689,8 @@ body {
         <div class="stack-2" style="margin-top: 4px;">
           <div class="row-between" style="padding: 0 4px;">
             <span style="font-size: 13px; font-weight: 900; color: var(--text-soft);">루틴 종목</span>
-            <div class="row-gap" style="gap: 8px;">
+            <div class="row-gap" style="gap: 6px;">
+              <button id="dashReportBtn" type="button" class="btn-tap badge badge-lime hidden" style="font-size: 10.5px;">📊 완료 리포트 보기</button>
               <button id="dashQuickAddBtn" type="button" class="btn-tap badge badge-muted" style="font-size: 10.5px;">+ 종목 추가</button>
               <span id="dashStatusSummary" class="badge badge-lime tabular-nums" style="font-size: 10.5px;">0 / 7 완료</span>
             </div>
@@ -673,6 +756,10 @@ body {
         <div class="title-large">통합 피로도 & 기록</div>
         <div id="syncStatusBox" class="auto-sync-pill">☁️ Google Drive 자동 동기화 대기</div>
       </div>
+
+      <button id="syncReportBtn" type="button" class="btn-tap btn-secondary" style="height: 36px; width: 100%; border-color: rgba(163,230,53,0.35); color: var(--accent); font-size: 12.5px;">
+        📊 오늘 운동 완료 리포트 보기 (근육 히트맵)
+      </button>
 
       <!-- Card 1: [통합 컨디션 & 피로도] -->
       <div id="cardIntegratedCondition" class="card-surface stack-2"></div>
@@ -839,6 +926,20 @@ body {
         </div>
       </div>
       <button id="saveNewExBtn" type="button" class="btn-tap btn-primary" style="height: 42px; margin-top: 4px;">저장하기</button>
+    </div>
+  </div>
+
+  <!-- Today Workout Completion Report Modal (Front/Back Muscle Heatmap + Breakdown) -->
+  <div id="reportModal" class="modal-backdrop hidden">
+    <div class="modal-panel stack-3" style="max-width: 460px;">
+      <div class="row-between">
+        <div style="display:flex; align-items:center; gap:6px;">
+          <span style="font-size: 17px;">🎉</span>
+          <strong style="font-size: 16px; font-weight: 900; color: #ffffff;">오늘 운동 완료 리포트</strong>
+        </div>
+        <button id="reportModalCloseBtn" type="button" class="btn-tap badge badge-muted" style="padding: 5px 10px; font-size: 11.5px;">닫기 ✕</button>
+      </div>
+      <div id="reportModalBody" class="stack-3"></div>
     </div>
   </div>
 
@@ -2578,6 +2679,301 @@ body {
     
   };
 
+  __mods["js/muscleMap.mjs"] = function(__req, __exp) {
+    /**
+     * Maps all 48+ exercises to Front (6) & Back (7) anatomical muscle regions,
+     * aggregates today's completion data, and computes heatmap intensity & recovery guidance.
+     */
+    const { isWarmupOrStretch, getMuscleGroup } = __req("js/data.mjs");
+    const { computeExerciseLoad, computeSessionStss, calculateWorkoutMetrics } = __req("js/metrics.mjs");
+    
+    const MUSCLE_REGIONS = {
+      // Front (6)
+      chest: { id: "chest", side: "front", label: "가슴 (대흉근)", short: "가슴", group: "push" },
+      front_delts: { id: "front_delts", side: "front", label: "어깨 (전·측면)", short: "어깨", group: "push" },
+      biceps: { id: "biceps", side: "front", label: "이두근", short: "이두", group: "pull" },
+      forearms: { id: "forearms", side: "front", label: "전완·악력", short: "전완", group: "pull" },
+      core: { id: "core", side: "front", label: "코어 (복직·복사근)", short: "코어", group: "core" },
+      quads_hip: { id: "quads_hip", side: "front", label: "대퇴사두·장요근", short: "대퇴·장요근", group: "legs" },
+      // Back (7)
+      traps_rear_delts: { id: "traps_rear_delts", side: "back", label: "승모·후면어깨·능형근", short: "승모·후면", group: "pull" },
+      lats: { id: "lats", side: "back", label: "등·광배근", short: "등·광배", group: "pull" },
+      triceps: { id: "triceps", side: "back", label: "삼두근", short: "삼두", group: "push" },
+      lower_back: { id: "lower_back", side: "back", label: "척추기립근·허리", short: "기립근", group: "core" },
+      glutes: { id: "glutes", side: "back", label: "둔근·이상근", short: "둔근", group: "legs" },
+      hamstrings: { id: "hamstrings", side: "back", label: "햄스트링", short: "햄스트링", group: "legs" },
+      calves: { id: "calves", side: "back", label: "종아리", short: "종아리", group: "legs" }
+    };
+    
+    const EXACT_MAP = {
+      // Warmup / Stretch
+      home_smr: { stretch: ["traps_rear_delts", "quads_hip", "hamstrings", "glutes"] },
+      home_thoracic_rot: { stretch: ["traps_rear_delts", "lower_back"] },
+      home_hip_flexor_stretch: { stretch: ["quads_hip"] },
+      home_calf_stretch: { stretch: ["calves"] },
+      home_hip_calf: { stretch: ["quads_hip", "calves"] },
+      home_smr_glute: { stretch: ["glutes"] },
+      home_smr_thoracic: { stretch: ["traps_rear_delts", "lats"] },
+      home_smr_back: { stretch: ["glutes", "traps_rear_delts"] },
+      home_smr_suboccipital: { stretch: ["traps_rear_delts"] },
+      home_smr_chest_open: { stretch: ["chest", "front_delts"] },
+      home_smr_neck: { stretch: ["traps_rear_delts", "chest"] },
+      home_dead_hang: { stretch: ["lats", "forearms"] },
+    
+      // Pull
+      home_band_pullup: { primary: ["lats", "traps_rear_delts"], secondary: ["biceps", "forearms"] },
+      home_band_chinup: { primary: ["lats", "biceps"], secondary: ["traps_rear_delts", "forearms"] },
+      home_pullup: { primary: ["lats", "traps_rear_delts"], secondary: ["biceps", "forearms"] },
+      home_kb_row: { primary: ["lats", "traps_rear_delts"], secondary: ["biceps", "forearms", "lower_back"] },
+      home_kb_curl: { primary: ["biceps"], secondary: ["forearms"] },
+      home_gyro_ball: { primary: ["forearms"], secondary: [] },
+      gym_high_pulley: { primary: ["lats"], secondary: ["traps_rear_delts", "biceps"] },
+      gym_long_pull: { primary: ["lats", "traps_rear_delts"], secondary: ["biceps", "forearms"] },
+      gym_arm_curl: { primary: ["biceps"], secondary: ["forearms"] },
+    
+      // Push
+      home_deep_pushup: { primary: ["chest"], secondary: ["front_delts", "triceps"] },
+      home_close_pushup: { primary: ["triceps", "chest"], secondary: ["front_delts"] },
+      home_dips: { primary: ["chest", "triceps"], secondary: ["front_delts"] },
+      home_kb_floor_1arm: { primary: ["chest"], secondary: ["front_delts", "triceps", "core"] },
+      home_kb_floor_2arm: { primary: ["chest"], secondary: ["front_delts", "triceps"] },
+      home_kb_press: { primary: ["front_delts"], secondary: ["triceps", "traps_rear_delts"] },
+      home_kb_halo: { primary: ["front_delts", "traps_rear_delts"], secondary: ["core"] },
+      home_kb_triceps: { primary: ["triceps"], secondary: ["front_delts"] },
+      gym_chest_press: { primary: ["chest"], secondary: ["front_delts", "triceps"] },
+      gym_bench_press: { primary: ["chest"], secondary: ["front_delts", "triceps"] },
+      gym_pec_deck: { primary: ["chest"], secondary: ["front_delts"] },
+      gym_shoulder_press: { primary: ["front_delts"], secondary: ["triceps", "traps_rear_delts"] },
+    
+      // Legs
+      home_goblet_squat: { primary: ["quads_hip", "glutes"], secondary: ["hamstrings", "core"] },
+      home_bulgarian: { primary: ["quads_hip", "glutes"], secondary: ["hamstrings", "calves"] },
+      home_kb_rdl: { primary: ["hamstrings", "glutes"], secondary: ["lower_back", "forearms"] },
+      home_kb_swing: { primary: ["glutes", "hamstrings"], secondary: ["lower_back", "core", "forearms"] },
+      home_kb_glute_bridge: { primary: ["glutes"], secondary: ["hamstrings", "lower_back"] },
+      gym_leg_press: { primary: ["quads_hip", "glutes"], secondary: ["hamstrings", "calves"] },
+      gym_leg_ext: { primary: ["quads_hip"], secondary: [] },
+      gym_leg_curl: { primary: ["hamstrings"], secondary: ["calves"] },
+      gym_inner_thigh: { primary: ["quads_hip"], secondary: [] },
+    
+      // Core
+      home_forearm_plank: { primary: ["core"], secondary: ["front_delts", "lower_back"] },
+      home_deadbug: { primary: ["core"], secondary: [] },
+      home_plank_deadbug: { primary: ["core"], secondary: ["lower_back"] },
+      home_hanging_knee: { primary: ["core", "quads_hip"], secondary: ["forearms"] },
+      home_core_twist: { primary: ["core"], secondary: [] },
+      home_side_bend: { primary: ["core"], secondary: ["lower_back"] },
+      home_kb_suitcase_carry: { primary: ["core", "forearms"], secondary: ["traps_rear_delts", "lower_back"] },
+      gym_plank: { primary: ["core"], secondary: ["front_delts", "lower_back"] }
+    };
+    
+    function mapExerciseToMuscleRegions(ex) {
+      if (!ex) return { primary: [], secondary: [], stretch: [] };
+      const id = ex.id || "";
+      if (EXACT_MAP[id]) {
+        return {
+          primary: EXACT_MAP[id].primary || [],
+          secondary: EXACT_MAP[id].secondary || [],
+          stretch: EXACT_MAP[id].stretch || []
+        };
+      }
+    
+      const text = `${ex.targetMuscle || ""} ${ex.category || ""} ${ex.name || ""}`;
+      const matched = [];
+      if (/가슴|흉근|벤치|푸시업|딥스|펙덱/.test(text)) matched.push("chest");
+      if (/삼각근|어깨|프레스|숄더/.test(text)) matched.push("front_delts");
+      if (/이두|바이셉|컬/.test(text)) matched.push("biceps");
+      if (/전완|악력|자이로/.test(text)) matched.push("forearms");
+      if (/복직|복횡|복사|코어|플랭크|데드버그/.test(text)) matched.push("core");
+      if (/대퇴|사두|장요근|스쿼트|런지|레그프레스|내전/.test(text)) matched.push("quads_hip");
+      if (/승모|후면|능형|흉추|후두/.test(text)) matched.push("traps_rear_delts");
+      if (/광배|대원근|풀업|친업|로우|랫/.test(text)) matched.push("lats");
+      if (/삼두|트라이셉/.test(text)) matched.push("triceps");
+      if (/기립근|요방|허리|요추/.test(text)) matched.push("lower_back");
+      if (/둔근|이상근|엉덩이|힙/.test(text)) matched.push("glutes");
+      if (/햄스트링|데드|스윙|레그컬/.test(text)) matched.push("hamstrings");
+      if (/종아리|비복근|가자미/.test(text)) matched.push("calves");
+    
+      const unique = [...new Set(matched)];
+      if (isWarmupOrStretch(ex)) {
+        return { primary: [], secondary: [], stretch: unique.length ? unique : ["traps_rear_delts", "glutes"] };
+      }
+      if (unique.length === 0) {
+        const grp = getMuscleGroup(ex);
+        if (grp === "push") return { primary: ["chest", "front_delts"], secondary: ["triceps"], stretch: [] };
+        if (grp === "pull") return { primary: ["lats", "traps_rear_delts"], secondary: ["biceps"], stretch: [] };
+        if (grp === "legs") return { primary: ["quads_hip", "glutes"], secondary: ["hamstrings"], stretch: [] };
+        if (grp === "core") return { primary: ["core"], secondary: [], stretch: [] };
+      }
+      return { primary: unique.slice(0, 2), secondary: unique.slice(2), stretch: [] };
+    }
+    
+    /**
+     * Builds complete today report data from current routine & records.
+     */
+    function buildTodayReportData(store) {
+      const items = store.getTodayRoutineExercises();
+      const regionStats = {};
+      for (const key of Object.keys(MUSCLE_REGIONS)) {
+        regionStats[key] = {
+          id: key,
+          ...MUSCLE_REGIONS[key],
+          primarySets: 0,
+          secondarySets: 0,
+          totalSets: 0,
+          load: 0,
+          rpeWeightedSum: 0,
+          rpeWeight: 0,
+          stretched: false
+        };
+      }
+    
+      let completedExercises = 0;
+      let totalSetsDone = 0;
+      let totalVolumeKg = 0;
+      let rpeSum = 0;
+      let rpeCount = 0;
+      const sessionExercises = [];
+    
+      for (const ex of items) {
+        const rec = store.getRecord(ex);
+        const setsArr = Array.isArray(rec.sets) ? rec.sets : [];
+        const doneSets = setsArr.filter(s => s && s.done);
+        const doneCount = doneSets.length;
+        const isDone = !!rec.isCompleted || (doneCount >= setsArr.length && setsArr.length > 0);
+        if (isDone) completedExercises++;
+        totalSetsDone += doneCount;
+    
+        const isStretch = isWarmupOrStretch(ex);
+        const rpe = rec.rpe != null ? Number(rec.rpe) : null;
+        if (!isStretch && rpe != null && rpe > 0) {
+          rpeSum += rpe;
+          rpeCount++;
+        }
+    
+        for (const s of doneSets) {
+          const w = Number(s.weightKg) || 0;
+          const repsMatch = String(s.reps || "").match(/(\d+)/);
+          const repsNum = repsMatch ? parseInt(repsMatch[1], 10) : 1;
+          if (w > 0 && !String(s.reps || "").includes("초")) {
+            totalVolumeKg += w * repsNum;
+          }
+        }
+    
+        sessionExercises.push({
+          id: ex.id,
+          category: ex.category,
+          completedSets: doneCount,
+          rpe
+        });
+    
+        if (doneCount === 0 && !isDone) continue;
+        const effectiveSets = doneCount > 0 ? doneCount : setsArr.length || 1;
+        const mapped = mapExerciseToMuscleRegions(ex);
+    
+        if (isStretch) {
+          for (const rId of mapped.stretch) {
+            if (regionStats[rId]) regionStats[rId].stretched = true;
+          }
+          continue;
+        }
+    
+        const effRpe = rpe != null && rpe > 0 ? rpe : 5;
+        const exLoad = computeExerciseLoad(effectiveSets, effRpe);
+    
+        for (const rId of mapped.primary) {
+          const st = regionStats[rId];
+          if (!st) continue;
+          st.primarySets += effectiveSets;
+          st.totalSets += effectiveSets;
+          st.load += exLoad;
+          if (rpe != null && rpe > 0) {
+            st.rpeWeightedSum += rpe * effectiveSets;
+            st.rpeWeight += effectiveSets;
+          }
+        }
+        for (const rId of mapped.secondary) {
+          const st = regionStats[rId];
+          if (!st) continue;
+          st.secondarySets += effectiveSets;
+          st.totalSets += Math.max(1, Math.round(effectiveSets * 0.5));
+          st.load += exLoad * 0.45;
+          if (rpe != null && rpe > 0) {
+            st.rpeWeightedSum += rpe * (effectiveSets * 0.5);
+            st.rpeWeight += effectiveSets * 0.5;
+          }
+        }
+      }
+    
+      const todayStss = computeSessionStss({ exercises: sessionExercises });
+      const metrics = calculateWorkoutMetrics(store.state.history, store.state.wellness);
+    
+      // Assign heatmap levels: primary (#a3e635), secondary (#4d7c0f), stretch (#38bdf8), rest (#26262a)
+      const activeStrengthRegions = Object.values(regionStats).filter(r => r.totalSets > 0);
+      const maxLoad = activeStrengthRegions.reduce((m, r) => Math.max(m, r.load), 0);
+    
+      for (const r of Object.values(regionStats)) {
+        if (r.totalSets > 0) {
+          const isTopLoad = maxLoad > 0 && r.load >= maxLoad * 0.65 && r.primarySets > 0;
+          if (r.primarySets >= 3 || isTopLoad) {
+            r.level = "primary";
+          } else {
+            r.level = "secondary";
+          }
+          r.avgRpe = r.rpeWeight > 0 ? Math.round((r.rpeWeightedSum / r.rpeWeight) * 10) / 10 : null;
+        } else if (r.stretched) {
+          r.level = "stretch";
+          r.avgRpe = null;
+        } else {
+          r.level = "rest";
+          r.avgRpe = null;
+        }
+      }
+    
+      const strengthBreakdown = activeStrengthRegions
+        .sort((a, b) => b.load - a.load || b.totalSets - a.totalSets);
+    
+      const stretchedOnly = Object.values(regionStats)
+        .filter(r => r.level === "stretch")
+        .map(r => r.short);
+    
+      // Recovery guide 1-liner
+      const RECOVERY_HOURS = { push: 48, pull: 72, legs: 72, core: 36 };
+      const GROUP_LABEL = { push: "밀기", pull: "당기기", legs: "하체", core: "코어" };
+      let recoveryGuide = "오늘 운동 자극이 균형 잡혀 있습니다. 수분·단백질 보충 후 충분한 수면을 취하세요.";
+      if (strengthBreakdown.length > 0) {
+        const topGroup = strengthBreakdown[0].group || "core";
+        const hours = RECOVERY_HOURS[topGroup] || 48;
+        const freshness = (metrics && metrics.muscleFreshness) || { push: 100, pull: 100, legs: 100, core: 100 };
+        const freshest = Object.entries(freshness)
+          .filter(([k]) => k !== topGroup)
+          .sort((a, b) => b[1] - a[1])[0];
+        const nextRec = freshest ? `${GROUP_LABEL[freshest[0]]}(회복도 ${freshest[1]}%)` : "가벼운 유산소·이완";
+        recoveryGuide = `오늘 주 자극(${GROUP_LABEL[topGroup]}) 권장 회복 ${hours}h · 다음 운동은 ${nextRec} 위주 추천`;
+      } else if (stretchedOnly.length > 0) {
+        recoveryGuide = "이완·가동성 중심 세션 완료! 근육 피로가 낮아 내일 본 운동을 쾌적하게 시작할 수 있습니다.";
+      }
+    
+      return {
+        totalExercises: items.length,
+        completedExercises,
+        totalSetsDone,
+        todayStss,
+        avgRpe: rpeCount > 0 ? Math.round((rpeSum / rpeCount) * 10) / 10 : null,
+        totalVolumeKg: Math.round(totalVolumeKg),
+        regionStats,
+        strengthBreakdown,
+        stretchedOnly,
+        recoveryGuide
+      };
+    }
+    
+    __exp.mapExerciseToMuscleRegions = mapExerciseToMuscleRegions;
+    __exp.buildTodayReportData = buildTodayReportData;
+    __exp.MUSCLE_REGIONS = MUSCLE_REGIONS;
+    
+  };
+
   __mods["js/store.mjs"] = function(__req, __exp) {
     /**
      * Central state store, localStorage v9 persistence (with v8 migration),
@@ -3655,12 +4051,255 @@ body {
     
   };
 
+  __mods["js/ui/report.mjs"] = function(__req, __exp) {
+    /**
+     * Today Workout Completion Report Modal Renderer:
+     * Front/Back Inline Muscle Heatmap SVG, 3-Column KPI, Region Breakdown Bars, & Recovery Guide.
+     */
+    const { buildTodayReportData } = __req("js/muscleMap.mjs");
+    
+    const LEVEL_COLORS = {
+      primary: "#a3e635",
+      secondary: "#4d7c0f",
+      stretch: "#38bdf8",
+      rest: "#26262a"
+    };
+    
+    function regionStyle(regionStats, id) {
+      const r = regionStats[id];
+      const level = r ? r.level : "rest";
+      const fill = LEVEL_COLORS[level] || LEVEL_COLORS.rest;
+      const filter = level === "primary" ? 'style="filter: drop-shadow(0 0 5px rgba(163,230,53,0.55));"' : "";
+      return `fill="${fill}" ${filter}`;
+    }
+    
+    function renderFrontSvg(regionStats) {
+      return `
+        <svg viewBox="0 0 160 300" class="heatmap-svg" aria-label="전면 근육 히트맵">
+          <!-- Head & Neck Silhouette -->
+          <circle cx="80" cy="22" r="13" fill="#1c1c1f" stroke="#323238" stroke-width="1.2" />
+          <rect x="73" y="34" width="14" height="10" rx="4" fill="#1c1c1f" />
+          <!-- Pelvis / Knee / Foot Silhouette -->
+          <path d="M58 148 L102 148 L95 166 L65 166 Z" fill="#1c1c1f" />
+          <ellipse cx="64" cy="224" rx="8" ry="6" fill="#1c1c1f" />
+          <ellipse cx="96" cy="224" rx="8" ry="6" fill="#1c1c1f" />
+          <path d="M57 232 L71 232 L68 278 L58 278 Z" fill="#1c1c1f" />
+          <path d="M89 232 L103 232 L102 278 L92 278 Z" fill="#1c1c1f" />
+          <ellipse cx="61" cy="285" rx="9" ry="5" fill="#1c1c1f" />
+          <ellipse cx="99" cy="285" rx="9" ry="5" fill="#1c1c1f" />
+    
+          <!-- Front/Lateral Delts -->
+          <g data-region="front_delts" ${regionStyle(regionStats, "front_delts")}>
+            <path d="M48 48 Q34 50 32 68 L44 74 L52 54 Z" />
+            <path d="M112 48 Q126 50 128 68 L116 74 L108 54 Z" />
+          </g>
+    
+          <!-- Chest (Pectorals) -->
+          <g data-region="chest" ${regionStyle(regionStats, "chest")}>
+            <path d="M53 50 L78 52 L78 82 Q60 84 48 73 Z" />
+            <path d="M107 50 L82 52 L82 82 Q100 84 112 73 Z" />
+          </g>
+    
+          <!-- Biceps -->
+          <g data-region="biceps" ${regionStyle(regionStats, "biceps")}>
+            <path d="M32 72 L43 76 L39 106 L28 102 Z" />
+            <path d="M128 72 L117 76 L121 106 L132 102 Z" />
+          </g>
+    
+          <!-- Forearms -->
+          <g data-region="forearms" ${regionStyle(regionStats, "forearms")}>
+            <path d="M27 106 L38 109 L31 144 L21 141 Z" />
+            <path d="M133 106 L122 109 L129 144 L139 141 Z" />
+          </g>
+    
+          <!-- Core (Rectus Abdominis & Obliques) -->
+          <g data-region="core" ${regionStyle(regionStats, "core")}>
+            <rect x="65" y="86" width="13" height="16" rx="3" />
+            <rect x="82" y="86" width="13" height="16" rx="3" />
+            <rect x="65" y="105" width="13" height="16" rx="3" />
+            <rect x="82" y="105" width="13" height="16" rx="3" />
+            <rect x="66" y="124" width="28" height="18" rx="5" />
+            <path d="M52 84 L62 88 L62 138 L55 134 Z" opacity="0.88" />
+            <path d="M108 84 L98 88 L98 138 L105 134 Z" opacity="0.88" />
+          </g>
+    
+          <!-- Quads & Hip Flexors -->
+          <g data-region="quads_hip" ${regionStyle(regionStats, "quads_hip")}>
+            <path d="M54 156 L77 166 L73 216 L55 214 Q50 185 54 156 Z" />
+            <path d="M106 156 L83 166 L87 216 L105 214 Q110 185 106 156 Z" />
+          </g>
+        </svg>
+      `;
+    }
+    
+    function renderBackSvg(regionStats) {
+      return `
+        <svg viewBox="0 0 160 300" class="heatmap-svg" aria-label="후면 근육 히트맵">
+          <!-- Head & Neck Silhouette -->
+          <circle cx="80" cy="22" r="13" fill="#1c1c1f" stroke="#323238" stroke-width="1.2" />
+          <rect x="73" y="34" width="14" height="10" rx="4" fill="#1c1c1f" />
+          <!-- Back Forearm / Heel Silhouette -->
+          <path d="M27 106 L38 109 L31 144 L21 141 Z" fill="#1c1c1f" />
+          <path d="M133 106 L122 109 L129 144 L139 141 Z" fill="#1c1c1f" />
+          <ellipse cx="61" cy="285" rx="9" ry="5" fill="#1c1c1f" />
+          <ellipse cx="99" cy="285" rx="9" ry="5" fill="#1c1c1f" />
+    
+          <!-- Traps, Rhomboids & Rear Delts -->
+          <g data-region="traps_rear_delts" ${regionStyle(regionStats, "traps_rear_delts")}>
+            <path d="M70 42 L90 42 L108 54 L80 80 L52 54 Z" />
+            <path d="M48 48 Q35 50 32 67 L44 72 L52 55 Z" />
+            <path d="M112 48 Q125 50 128 67 L116 72 L108 55 Z" />
+          </g>
+    
+          <!-- Lats & Teres Major -->
+          <g data-region="lats" ${regionStyle(regionStats, "lats")}>
+            <path d="M51 74 L76 84 L74 118 L55 112 Q47 92 51 74 Z" />
+            <path d="M109 74 L84 84 L86 118 L105 112 Q113 92 109 74 Z" />
+          </g>
+    
+          <!-- Triceps -->
+          <g data-region="triceps" ${regionStyle(regionStats, "triceps")}>
+            <path d="M32 71 L43 75 L39 105 L28 101 Z" />
+            <path d="M128 71 L117 75 L121 105 L132 101 Z" />
+          </g>
+    
+          <!-- Lower Back (Erector Spinae) -->
+          <g data-region="lower_back" ${regionStyle(regionStats, "lower_back")}>
+            <path d="M64 118 L96 118 L93 144 L67 144 Z" />
+          </g>
+    
+          <!-- Glutes -->
+          <g data-region="glutes" ${regionStyle(regionStats, "glutes")}>
+            <path d="M54 146 L78 146 L77 175 Q58 178 52 164 Z" />
+            <path d="M106 146 L82 146 L83 175 Q102 178 108 164 Z" />
+          </g>
+    
+          <!-- Hamstrings -->
+          <g data-region="hamstrings" ${regionStyle(regionStats, "hamstrings")}>
+            <path d="M54 178 L76 178 L73 222 L56 220 Z" />
+            <path d="M106 178 L84 178 L87 222 L104 220 Z" />
+          </g>
+    
+          <!-- Calves -->
+          <g data-region="calves" ${regionStyle(regionStats, "calves")}>
+            <path d="M56 228 L72 228 L68 276 L58 276 Q53 252 56 228 Z" />
+            <path d="M104 228 L88 228 L92 276 L102 276 Q107 252 104 228 Z" />
+          </g>
+        </svg>
+      `;
+    }
+    
+    function renderCompletionReportModal(store) {
+      const body = document.getElementById("reportModalBody");
+      if (!body) return;
+    
+      const data = buildTodayReportData(store);
+      const maxRegionLoad = data.strengthBreakdown.reduce((m, r) => Math.max(m, r.load), 1);
+    
+      body.innerHTML = `
+        <!-- Front & Back Muscle Heatmap -->
+        <div class="report-heatmap-box">
+          <div class="report-heatmap-grid">
+            <div class="heatmap-col">
+              <div class="heatmap-side-label">FRONT · 전면</div>
+              ${renderFrontSvg(data.regionStats)}
+            </div>
+            <div class="heatmap-col">
+              <div class="heatmap-side-label">BACK · 후면</div>
+              ${renderBackSvg(data.regionStats)}
+            </div>
+          </div>
+    
+          <!-- Compact Legend -->
+          <div class="heatmap-legend">
+            <span><i class="legend-dot" style="background:#a3e635; box-shadow:0 0 6px rgba(163,230,53,0.6);"></i>주 자극</span>
+            <span><i class="legend-dot" style="background:#4d7c0f;"></i>보조 자극</span>
+            <span><i class="legend-dot" style="background:#38bdf8;"></i>이완·가동성</span>
+            <span><i class="legend-dot" style="background:#26262a; border:1px solid #3f3f46;"></i>휴식</span>
+          </div>
+        </div>
+    
+        <!-- 3-Column KPI Summary (#1c1c1f) -->
+        <div class="grid-3" style="gap: 6px;">
+          <div class="metric-tile">
+            <div style="font-size:10px; color:var(--text-muted); font-weight:700;">완료 볼륨</div>
+            <div class="tabular-nums" style="font-size:13.5px; font-weight:900; color:#ffffff; margin-top:3px;">${data.completedExercises}/${data.totalExercises}종목</div>
+            <div class="tabular-nums" style="font-size:10px; color:var(--accent); font-weight:800; margin-top:2px;">${data.totalSetsDone}세트 완료</div>
+          </div>
+          <div class="metric-tile">
+            <div style="font-size:10px; color:var(--text-muted); font-weight:700;">오늘 근력 부하</div>
+            <div class="tabular-nums" style="font-size:14px; font-weight:900; color:var(--accent); margin-top:3px;">${data.todayStss.toFixed(1)}</div>
+            <div style="font-size:10px; color:var(--text-muted); font-weight:700; margin-top:2px;">sTSS</div>
+          </div>
+          <div class="metric-tile">
+            <div style="font-size:10px; color:var(--text-muted); font-weight:700;">평균 RPE</div>
+            <div class="tabular-nums" style="font-size:14px; font-weight:900; color:#ffffff; margin-top:3px;">${data.avgRpe != null ? `RPE ${data.avgRpe}` : "이완 세션"}</div>
+            <div class="tabular-nums" style="font-size:10px; color:var(--text-muted); font-weight:700; margin-top:2px;">${data.totalVolumeKg > 0 ? `총 ${data.totalVolumeKg.toLocaleString()}kg` : "맨몸·코어 중심"}</div>
+          </div>
+        </div>
+    
+        <!-- Muscle Region Detail Breakdown -->
+        <div style="background:var(--card-2); border:1px solid var(--border); border-radius:14px; padding:11px 12px;" class="stack-2">
+          <div class="row-between">
+            <strong style="font-size:12.5px; color:#ffffff;">부위별 자극 상세</strong>
+            <span style="font-size:10px; color:var(--text-muted);">비중 높은 순</span>
+          </div>
+          ${
+            data.strengthBreakdown.length > 0
+              ? `
+            <div class="stack-2" style="gap:7px;">
+              ${data.strengthBreakdown
+                .map(r => {
+                  const pct = Math.max(10, Math.round((r.load / maxRegionLoad) * 100));
+                  const barColor = r.level === "primary" ? "#a3e635" : "#4d7c0f";
+                  const rpeText = r.avgRpe != null ? ` · 평균 RPE ${r.avgRpe}` : "";
+                  return `
+                    <div style="display:flex; flex-direction:column; gap:3px;">
+                      <div class="row-between" style="font-size:11px;">
+                        <span style="font-weight:800; color:#ffffff;">${r.short}</span>
+                        <span class="tabular-nums" style="color:var(--text-soft); font-weight:700;">${r.totalSets}세트${rpeText}</span>
+                      </div>
+                      <div style="height:6px; border-radius:999px; background:#26262a; overflow:hidden;">
+                        <div style="width:${pct}%; height:100%; border-radius:999px; background:${barColor};"></div>
+                      </div>
+                    </div>
+                  `;
+                })
+                .join("")}
+            </div>
+          `
+              : `<div style="font-size:11.5px; color:var(--text-muted);">오늘 완료된 근력 세트가 아직 없습니다.</div>`
+          }
+    
+          ${
+            data.stretchedOnly.length > 0
+              ? `
+            <div style="display:flex; align-items:center; flex-wrap:wrap; gap:5px; padding-top:4px; border-top:1px solid var(--border);">
+              <span class="report-cyan-pill">🧘 이완 완료: ${data.stretchedOnly.join("·")}</span>
+            </div>
+          `
+              : ""
+          }
+        </div>
+    
+        <!-- Bottom 1-Line Recovery Guide -->
+        <div class="report-recovery-banner">
+          💡 ${data.recoveryGuide}
+        </div>
+      `;
+    }
+    
+    __exp.renderCompletionReportModal = renderCompletionReportModal;
+    
+  };
+
   __mods["js/ui/modals.mjs"] = function(__req, __exp) {
     /**
      * Modals controller: RPE Bottom Sheet, Rich 3-Step Guide & Frame Player Modal, and Custom Exercise Modal.
      */
     const { ENRICHED_DB, getGuideMedia, isWarmupOrStretch } = __req("js/data.mjs");
     const { getTodayStr } = __req("js/date.mjs");
+    const { renderCompletionReportModal } = __req("js/ui/report.mjs");
     
     function createModalController({ store, sync, onRenderAll, showToast }) {
       let pendingRpeExerciseId = null;
@@ -3880,8 +4519,18 @@ body {
             state.todayScreen = "dashboard";
             onRenderAll();
             showToast("🎉 오늘 추천 루틴을 모두 완료했습니다! 고생하셨습니다!");
+            openCompletionReportModal();
           }
         }
+      }
+    
+      function openCompletionReportModal() {
+        renderCompletionReportModal(store);
+        document.getElementById("reportModal")?.classList.remove("hidden");
+      }
+    
+      function closeCompletionReportModal() {
+        document.getElementById("reportModal")?.classList.add("hidden");
       }
     
       function openRpeBottomSheet(ex, rec) {
@@ -3933,6 +4582,11 @@ body {
           if (e.target.id === "zoomModal") closeGuideModal();
         });
     
+        document.getElementById("reportModalCloseBtn")?.addEventListener("click", closeCompletionReportModal);
+        document.getElementById("reportModal")?.addEventListener("click", e => {
+          if (e.target.id === "reportModal") closeCompletionReportModal();
+        });
+    
         document.getElementById("addCustomExBtn")?.addEventListener("click", () => {
           document.getElementById("addExModal")?.classList.remove("hidden");
         });
@@ -3971,6 +4625,8 @@ body {
     
       return {
         openExerciseGuideModal,
+        openCompletionReportModal,
+        closeCompletionReportModal,
         directFinishExercise,
         openRpeBottomSheet,
         finalizeFinishWithRpe,
@@ -4075,6 +4731,10 @@ body {
     
       const summaryEl = document.getElementById("dashStatusSummary");
       if (summaryEl) summaryEl.textContent = `${doneExercises} / ${items.length} 완료`;
+      const reportBtn = document.getElementById("dashReportBtn");
+      if (reportBtn) {
+        reportBtn.classList.toggle("hidden", !(items.length > 0 && doneExercises === items.length));
+      }
     
       // Checklist Items
       const listContainer = document.getElementById("dashRoutineList");
@@ -5246,6 +5906,14 @@ body {
         store.state.activeTab = "catalog";
         store.persistState();
         renderAll();
+      });
+    
+      document.getElementById("dashReportBtn")?.addEventListener("click", () => {
+        modals.openCompletionReportModal();
+      });
+    
+      document.getElementById("syncReportBtn")?.addEventListener("click", () => {
+        modals.openCompletionReportModal();
       });
     
       // Card Screen Top Controls

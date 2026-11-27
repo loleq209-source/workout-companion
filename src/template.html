@@ -71,7 +71,8 @@
         <div class="stack-2" style="margin-top: 4px;">
           <div class="row-between" style="padding: 0 4px;">
             <span style="font-size: 13px; font-weight: 900; color: var(--text-soft);">루틴 종목</span>
-            <div class="row-gap" style="gap: 8px;">
+            <div class="row-gap" style="gap: 6px;">
+              <button id="dashReportBtn" type="button" class="btn-tap badge badge-lime hidden" style="font-size: 10.5px;">📊 완료 리포트 보기</button>
               <button id="dashQuickAddBtn" type="button" class="btn-tap badge badge-muted" style="font-size: 10.5px;">+ 종목 추가</button>
               <span id="dashStatusSummary" class="badge badge-lime tabular-nums" style="font-size: 10.5px;">0 / 7 완료</span>
             </div>
@@ -137,6 +138,10 @@
         <div class="title-large">통합 피로도 & 기록</div>
         <div id="syncStatusBox" class="auto-sync-pill">☁️ Google Drive 자동 동기화 대기</div>
       </div>
+
+      <button id="syncReportBtn" type="button" class="btn-tap btn-secondary" style="height: 36px; width: 100%; border-color: rgba(163,230,53,0.35); color: var(--accent); font-size: 12.5px;">
+        📊 오늘 운동 완료 리포트 보기 (근육 히트맵)
+      </button>
 
       <!-- Card 1: [통합 컨디션 & 피로도] -->
       <div id="cardIntegratedCondition" class="card-surface stack-2"></div>
@@ -303,6 +308,20 @@
         </div>
       </div>
       <button id="saveNewExBtn" type="button" class="btn-tap btn-primary" style="height: 42px; margin-top: 4px;">저장하기</button>
+    </div>
+  </div>
+
+  <!-- Today Workout Completion Report Modal (Front/Back Muscle Heatmap + Breakdown) -->
+  <div id="reportModal" class="modal-backdrop hidden">
+    <div class="modal-panel stack-3" style="max-width: 460px;">
+      <div class="row-between">
+        <div style="display:flex; align-items:center; gap:6px;">
+          <span style="font-size: 17px;">🎉</span>
+          <strong style="font-size: 16px; font-weight: 900; color: #ffffff;">오늘 운동 완료 리포트</strong>
+        </div>
+        <button id="reportModalCloseBtn" type="button" class="btn-tap badge badge-muted" style="padding: 5px 10px; font-size: 11.5px;">닫기 ✕</button>
+      </div>
+      <div id="reportModalBody" class="stack-3"></div>
     </div>
   </div>
 

@@ -7,6 +7,7 @@ import { calculateWorkoutMetrics, computeSessionStss } from "../src/js/metrics.m
 import { createStore } from "../src/js/store.mjs";
 import { upsertTodayHistory, applyLoadedDriveData } from "../src/js/sync.mjs";
 import { createTimerController } from "../src/js/timer.mjs";
+import { mapExerciseToMuscleRegions, buildTodayReportData } from "../src/js/muscleMap.mjs";
 
 function makeMemoryStorage(initial = null) {
   const map = new Map();
@@ -269,4 +270,46 @@ test("Wall-clock timer syncs elapsed time accurately across background sleep", (
   assert.equal(ctrl.timer.running, false);
   assert.equal(ctrl.timer.remaining, 0);
   assert.equal(completed, true);
+});
+
+test("Muscle heatmap maps all 48 exercises & builds today completion report accurately", () => {
+  for (const ex of EXERCISES) {
+    const mapped = mapExerciseToMuscleRegions(ex);
+    const total = mapped.primary.length + mapped.secondary.length + mapped.stretch.length;
+    assert.ok(total > 0, `Expected muscle mapping for ${ex.id}`);
+  }
+
+  const today = formatLocalDate(new Date());
+  const store = createStore(makeMemoryStorage({
+    sessionDate: today,
+    todayRoutine: {
+      date: today,
+      title: "리포트 테스트",
+      mode: "home",
+      items: [
+        { id: "home_smr_glute", sets: 2, reps: "45초" },
+        { id: "home_band_pullup", sets: 3, reps: "3회" },
+        { id: "home_deep_pushup", sets: 3, reps: "13회" },
+        { id: "home_forearm_plank", sets: 3, reps: "50초" }
+      ]
+    },
+    records: {
+      home_smr_glute: { sets: [{ done: true }, { done: true }], isCompleted: true, rpe: null, lastUpdatedDate: today },
+      home_band_pullup: { sets: [{ done: true }, { done: true }, { done: true }], isCompleted: true, rpe: 6, lastUpdatedDate: today },
+      home_deep_pushup: { sets: [{ done: true }, { done: true }, { done: true }], isCompleted: true, rpe: 5, lastUpdatedDate: today },
+      home_forearm_plank: { sets: [{ done: true }, { done: true }, { done: true }], isCompleted: true, rpe: 4, lastUpdatedDate: today }
+    }
+  }));
+
+  const report = buildTodayReportData(store);
+  assert.equal(report.completedExercises, 4);
+  assert.equal(report.totalExercises, 4);
+  assert.equal(report.totalSetsDone, 11);
+  assert.equal(report.avgRpe, 5);
+  assert.equal(report.regionStats.lats.level, "primary");
+  assert.equal(report.regionStats.chest.level, "primary");
+  assert.equal(report.regionStats.glutes.level, "stretch");
+  assert.equal(report.regionStats.hamstrings.level, "rest");
+  assert.ok(report.stretchedOnly.includes("둔근"));
+  assert.ok(report.recoveryGuide.includes("권장 회복"));
 });

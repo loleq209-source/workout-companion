@@ -164,6 +164,14 @@ document.addEventListener("DOMContentLoaded", () => {
     renderAll();
   });
 
+  document.getElementById("dashReportBtn")?.addEventListener("click", () => {
+    modals.openCompletionReportModal();
+  });
+
+  document.getElementById("syncReportBtn")?.addEventListener("click", () => {
+    modals.openCompletionReportModal();
+  });
+
   // Card Screen Top Controls
   document.getElementById("cardBackBtn")?.addEventListener("click", () => {
     store.state.todayScreen = "dashboard";

@@ -3,6 +3,7 @@
  */
 import { ENRICHED_DB, getGuideMedia, isWarmupOrStretch } from "../data.mjs";
 import { getTodayStr } from "../date.mjs";
+import { renderCompletionReportModal } from "./report.mjs";
 
 export function createModalController({ store, sync, onRenderAll, showToast }) {
   let pendingRpeExerciseId = null;
@@ -222,8 +223,18 @@ export function createModalController({ store, sync, onRenderAll, showToast }) {
         state.todayScreen = "dashboard";
         onRenderAll();
         showToast("🎉 오늘 추천 루틴을 모두 완료했습니다! 고생하셨습니다!");
+        openCompletionReportModal();
       }
     }
+  }
+
+  function openCompletionReportModal() {
+    renderCompletionReportModal(store);
+    document.getElementById("reportModal")?.classList.remove("hidden");
+  }
+
+  function closeCompletionReportModal() {
+    document.getElementById("reportModal")?.classList.add("hidden");
   }
 
   function openRpeBottomSheet(ex, rec) {
@@ -275,6 +286,11 @@ export function createModalController({ store, sync, onRenderAll, showToast }) {
       if (e.target.id === "zoomModal") closeGuideModal();
     });
 
+    document.getElementById("reportModalCloseBtn")?.addEventListener("click", closeCompletionReportModal);
+    document.getElementById("reportModal")?.addEventListener("click", e => {
+      if (e.target.id === "reportModal") closeCompletionReportModal();
+    });
+
     document.getElementById("addCustomExBtn")?.addEventListener("click", () => {
       document.getElementById("addExModal")?.classList.remove("hidden");
     });
@@ -313,6 +329,8 @@ export function createModalController({ store, sync, onRenderAll, showToast }) {
 
   return {
     openExerciseGuideModal,
+    openCompletionReportModal,
+    closeCompletionReportModal,
     directFinishExercise,
     openRpeBottomSheet,
     finalizeFinishWithRpe,
