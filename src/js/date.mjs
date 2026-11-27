@@ -9,8 +9,20 @@ export function formatLocalDate(d = new Date()) {
   return `${y}-${m}-${day}`;
 }
 
-export function getTodayStr() {
-  return formatLocalDate(new Date());
+/**
+ * Returns the logical workout date (YYYY-MM-DD) using a 04:00 AM local boundary:
+ * times from 00:00 through 03:59 count as the previous calendar day's workout.
+ */
+export function getWorkoutDateStr(d = new Date(), cutoffHour = 4) {
+  const baseDate = formatLocalDate(d);
+  if (d.getHours() < cutoffHour) {
+    return addDaysLocal(baseDate, -1);
+  }
+  return baseDate;
+}
+
+export function getTodayStr(d = new Date()) {
+  return getWorkoutDateStr(d);
 }
 
 /** Parse YYYY-MM-DD at local noon to prevent DST/midnight boundary shifts. */

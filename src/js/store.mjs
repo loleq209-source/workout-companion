@@ -2,7 +2,7 @@
  * Central state store, localStorage v9 persistence (with v8 migration),
  * midnight rollover protection, and planned-sets reconciliation.
  */
-import { getTodayStr } from "./date.mjs";
+import { getTodayStr, getWorkoutDateStr } from "./date.mjs";
 import { EXERCISES, getAllExercises, isWarmupOrStretch, resolveExerciseId, getLegacyAliasForNewId } from "./data.mjs";
 import { calculateWorkoutMetrics } from "./metrics.mjs";
 
@@ -24,7 +24,7 @@ function loadSavedRaw(storage = typeof localStorage !== "undefined" ? localStora
 
 export function createStore(storage = typeof localStorage !== "undefined" ? localStorage : null) {
   const saved = loadSavedRaw(storage);
-  const today = getTodayStr();
+  const today = getWorkoutDateStr();
 
   const state = {
     activeTab: (saved && saved.activeTab) || "today", // "today" | "catalog" | "sync"
@@ -41,6 +41,14 @@ export function createStore(storage = typeof localStorage !== "undefined" ? loca
     workoutExtra: (saved && saved.workoutExtra) || null,
     wellness: (saved && saved.wellness) || null,
     metrics: (saved && saved.metrics) || null,
+    bodyCondition:
+      saved && saved.bodyCondition && typeof saved.bodyCondition === "object"
+        ? {
+            status: saved.bodyCondition.status === "pain" && Array.isArray(saved.bodyCondition.painAreas) && saved.bodyCondition.painAreas.length > 0 ? "pain" : "ok",
+            painAreas: Array.isArray(saved.bodyCondition.painAreas) ? saved.bodyCondition.painAreas.slice() : [],
+            updatedAt: saved.bodyCondition.updatedAt || ""
+          }
+        : { status: "ok", painAreas: [], updatedAt: "" },
     history: Array.isArray(saved && saved.history) ? saved.history : [],
     gasUrl: (saved && saved.gasUrl) || DEFAULT_GAS_URL,
     lastSyncAt: (saved && saved.lastSyncAt) || "",
@@ -78,13 +86,14 @@ export function createStore(storage = typeof localStorage !== "undefined" ? loca
           extraTodayIds: state.extraTodayIds,
           workoutExtra: state.workoutExtra,
           wellness: state.wellness,
-          metrics: state.metrics
+          metrics: state.metrics,
+          bodyCondition: state.bodyCondition
         })
       );
     } catch (e) {}
   }
 
-  function resetExerciseCompletion(newDate = getTodayStr()) {
+  function resetExerciseCompletion(newDate = getWorkoutDateStr()) {
     if (!state.records) state.records = {};
     Object.keys(state.records).forEach(k => {
       const r = state.records[k];
@@ -99,7 +108,20 @@ export function createStore(storage = typeof localStorage !== "undefined" ? loca
     state.extraTodayIds = [];
     state.todayCardIndex = 0;
     state.sessionDate = newDate;
+    state.bodyCondition = { status: "ok", painAreas: [], updatedAt: "" };
     persistState();
+  }
+
+  function setBodyCondition(painAreas = []) {
+    const clean = Array.isArray(painAreas) ? [...new Set(painAreas.filter(Boolean))] : [];
+    state.bodyCondition = {
+      status: clean.length > 0 ? "pain" : "ok",
+      painAreas: clean,
+      updatedAt: new Date().toISOString()
+    };
+    markUserInteractedToday();
+    persistState();
+    return state.bodyCondition;
   }
 
   /**
@@ -271,18 +293,20 @@ export function createStore(storage = typeof localStorage !== "undefined" ? loca
     return list;
   }
 
-  function addExerciseToTodayRoutine(exId) {
+  function addExerciseToTodayRoutine(exId, overrides = null) {
     const all = getAllExercises(state.customExercises);
     const ex = all.find(x => x.id === exId);
     if (!ex) return -1;
 
     const existingItems = getTodayRoutineExercises();
     const existingIdx = existingItems.findIndex(x => x.id === exId);
-    if (existingIdx !== -1) return existingIdx;
+    const hasOverrides = overrides && (overrides.sets != null || overrides.reps != null || overrides.weightKg != null);
+
+    if (existingIdx !== -1 && !hasOverrides) return existingIdx;
 
     if (!state.todayRoutine) {
       state.todayRoutine = {
-        date: getTodayStr(),
+        date: getWorkoutDateStr(),
         title: "오늘의 맞춤 운동 루틴",
         note: "사용자가 구성한 오늘의 루틴입니다.",
         mode: ex.mode || "home",
@@ -291,22 +315,58 @@ export function createStore(storage = typeof localStorage !== "undefined" ? loca
           label: x.name,
           sets: x.defaultSets,
           reps: x.defaultReps,
+          weightKg: typeof x.defaultWeightKg === "number" ? x.defaultWeightKg : undefined,
           restSec: x.restSec || 60
         }))
       };
     }
 
+    const nextSets = (overrides && Number(overrides.sets)) || ex.defaultSets || 3;
+    const nextReps = (overrides && overrides.reps) || ex.defaultReps || "10회";
+    const nextWeight =
+      overrides && overrides.weightKg != null && !Number.isNaN(Number(overrides.weightKg))
+        ? Number(overrides.weightKg)
+        : ex.defaultWeightKg;
+
+    const newSpec = {
+      id: ex.id,
+      label: ex.name,
+      sets: nextSets,
+      reps: nextReps,
+      weightKg: typeof nextWeight === "number" ? nextWeight : undefined,
+      restSec: ex.restSec || 60,
+      reason: overrides && overrides.reason ? overrides.reason : "오늘 즉석 추가 종목"
+    };
+
     if (Array.isArray(state.todayRoutine.items)) {
-      state.todayRoutine.items.push({
-        id: ex.id,
-        label: ex.name,
-        sets: ex.defaultSets,
-        reps: ex.defaultReps,
-        restSec: ex.restSec || 60
-      });
+      const idxInItems = state.todayRoutine.items.findIndex(it => resolveExerciseId(it && it.id) === ex.id);
+      if (idxInItems !== -1) {
+        state.todayRoutine.items[idxInItems] = Object.assign({}, state.todayRoutine.items[idxInItems], newSpec);
+      } else {
+        state.todayRoutine.items.push(newSpec);
+      }
     } else {
       if (!Array.isArray(state.extraTodayIds)) state.extraTodayIds = [];
-      state.extraTodayIds.push(ex.id);
+      if (!state.extraTodayIds.includes(ex.id)) state.extraTodayIds.push(ex.id);
+    }
+
+    if (hasOverrides) {
+      const targetW = typeof nextWeight === "number" ? nextWeight : 0;
+      const curRec = state.records[ex.id];
+      if (!curRec || (!curRec.isCompleted && (!curRec.sets || curRec.sets.every(s => !s.done)))) {
+        const setsArr = [];
+        for (let i = 0; i < nextSets; i++) {
+          setsArr.push({ weightKg: targetW, reps: nextReps, done: false });
+        }
+        state.records[ex.id] = {
+          sets: setsArr,
+          isCompleted: false,
+          rpe: null,
+          preference: (curRec && curRec.preference) || null,
+          preferenceNote: (curRec && curRec.preferenceNote) || "",
+          lastUpdatedDate: getWorkoutDateStr()
+        };
+      }
     }
 
     markUserInteractedToday();
@@ -400,12 +460,13 @@ export function createStore(storage = typeof localStorage !== "undefined" ? loca
     return list;
   }
 
-  function getLastRecord(exId, exName = "") {
+  function getLastRecord(exId, exName = "", beforeDate = getWorkoutDateStr()) {
     if (!Array.isArray(state.history) || state.history.length === 0) return null;
     const legacyId = getLegacyAliasForNewId(exId);
     for (let i = state.history.length - 1; i >= 0; i--) {
       const sess = state.history[i];
-      if (!sess) continue;
+      if (!sess || !sess.date) continue;
+      if (beforeDate && sess.date >= beforeDate) continue;
       const exArr = sess.exercises || sess.items || [];
       const found = exArr.find(
         item =>
@@ -433,6 +494,7 @@ export function createStore(storage = typeof localStorage !== "undefined" ? loca
     markUserInteractedToday,
     markPendingSync,
     clearPendingSync,
+    setBodyCondition,
     getRecord,
     getTodayRoutineExercises,
     addExerciseToTodayRoutine,

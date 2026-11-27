@@ -62,6 +62,30 @@ export function triggerNativeHaptic() {
   }
 }
 
+export function playCountdownBeep(soundEnabled = true, isGo = false) {
+  if (!soundEnabled || typeof window === "undefined") return;
+  try {
+    const Ctx = window.AudioContext || window.webkitAudioContext;
+    if (!Ctx) return;
+    const ctx = new Ctx();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(isGo ? 1046.5 : 660, ctx.currentTime);
+    const dur = isGo ? 0.16 : 0.08;
+    gain.gain.setValueAtTime(0.001, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.16, ctx.currentTime + 0.01);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + dur);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start(ctx.currentTime);
+    osc.stop(ctx.currentTime + dur + 0.02);
+    setTimeout(() => {
+      try { ctx.close(); } catch (e) {}
+    }, 300);
+  } catch (e) {}
+}
+
 export function playCompletionChime(soundEnabled = true) {
   if (!soundEnabled || typeof window === "undefined") return;
   try {

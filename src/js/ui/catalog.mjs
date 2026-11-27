@@ -88,7 +88,7 @@ export function renderCatalog({ store, sync, modals, onRenderAll, showToast }) {
               <div style="font-size:11.5px; color:var(--text-muted); margin-top:2px;">${ex.targetMuscle} · ${ex.defaultSets}세트 × ${ex.defaultReps}</div>
             </div>
             <button type="button" class="btn-tap badge ${isInToday ? (isDone ? "badge-lime" : "badge-amber") : "badge-lime"}" data-cat-act="add-jump" data-ex-id="${ex.id}" style="padding:5px 10px; flex-shrink:0;">
-              ${isInToday ? (isDone ? "✓ 완료·이동" : "미션 이동 ➔") : "+ 오늘 추가"}
+              ${isInToday ? (isDone ? "✓ 완료·이동" : "미션 이동 ➔") : "+ 오늘 루틴에 추가"}
             </button>
           </div>
         </div>
@@ -125,15 +125,26 @@ export function renderCatalog({ store, sync, modals, onRenderAll, showToast }) {
         sync.scheduleAutoPush(600);
         renderCatalog({ store, sync, modals, onRenderAll, showToast });
       } else if (act === "add-jump") {
-        const idx = store.addExerciseToTodayRoutine(ex.id);
-        if (idx >= 0) {
+        const existingIdx = store.getTodayRoutineExercises().findIndex(x => x.id === ex.id);
+        if (existingIdx !== -1) {
           store.state.activeTab = "today";
           store.state.todayScreen = "card";
-          store.state.todayCardIndex = idx;
+          store.state.todayCardIndex = existingIdx;
           store.persistState();
-          sync.scheduleAutoPush(600);
           onRenderAll();
-          showToast(`🎯 [${ex.name}] 오늘 미션에서 바로 시작합니다!`);
+        } else if (modals && typeof modals.openQuickAddModal === "function") {
+          modals.openQuickAddModal(ex.id);
+        } else {
+          const idx = store.addExerciseToTodayRoutine(ex.id);
+          if (idx >= 0) {
+            store.state.activeTab = "today";
+            store.state.todayScreen = "card";
+            store.state.todayCardIndex = idx;
+            store.persistState();
+            sync.scheduleAutoPush(600);
+            onRenderAll();
+            showToast(`🎯 [${ex.name}] 오늘 미션에서 바로 시작합니다!`);
+          }
         }
       } else if (act === "delete-custom") {
         store.state.customExercises = store.state.customExercises.filter(x => x.id !== id);

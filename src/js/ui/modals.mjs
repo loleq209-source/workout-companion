@@ -1,7 +1,7 @@
 /**
  * Modals controller: RPE Bottom Sheet, Rich 3-Step Guide & Frame Player Modal, and Custom Exercise Modal.
  */
-import { ENRICHED_DB, getGuideMedia, isWarmupOrStretch } from "../data.mjs";
+import { ENRICHED_DB, getGuideMedia, isWarmupOrStretch, getAllExercises } from "../data.mjs";
 import { getTodayStr } from "../date.mjs";
 import { renderCompletionReportModal } from "./report.mjs";
 
@@ -237,6 +237,39 @@ export function createModalController({ store, sync, onRenderAll, showToast }) {
     document.getElementById("reportModal")?.classList.add("hidden");
   }
 
+  function syncQuickAddDefaults(exId) {
+    const allEx = getAllExercises(store.state.customExercises);
+    const ex = allEx.find(x => x.id === exId) || allEx[0];
+    if (!ex) return;
+    const setsEl = document.getElementById("quickAddSets");
+    const repsEl = document.getElementById("quickAddReps");
+    const weightEl = document.getElementById("quickAddWeight");
+    if (setsEl) setsEl.value = String(ex.defaultSets || 3);
+    if (repsEl) repsEl.value = String(ex.defaultReps || "10회");
+    if (weightEl) weightEl.value = String(typeof ex.defaultWeightKg === "number" ? ex.defaultWeightKg : 0);
+  }
+
+  function openQuickAddModal(preselectExId = null) {
+    const sel = document.getElementById("quickAddExSelect");
+    const allEx = getAllExercises(store.state.customExercises);
+    if (sel) {
+      sel.innerHTML = allEx
+        .map(ex => {
+          const tag = ex.mode === "gym" ? "기구" : String(ex.id).startsWith("custom_") ? "내종목" : "홈트";
+          return `<option value="${ex.id}">[${tag}] ${ex.name} (${ex.targetMuscle})</option>`;
+        })
+        .join("");
+      const chosenId = preselectExId && allEx.some(x => x.id === preselectExId) ? preselectExId : (allEx[0] && allEx[0].id);
+      if (chosenId) sel.value = chosenId;
+      syncQuickAddDefaults(chosenId);
+    }
+    document.getElementById("quickAddModal")?.classList.remove("hidden");
+  }
+
+  function closeQuickAddModal() {
+    document.getElementById("quickAddModal")?.classList.add("hidden");
+  }
+
   function openRpeBottomSheet(ex, rec) {
     if (!ex) return;
     if (isWarmupOrStretch(ex)) {
@@ -291,6 +324,33 @@ export function createModalController({ store, sync, onRenderAll, showToast }) {
       if (e.target.id === "reportModal") closeCompletionReportModal();
     });
 
+    document.getElementById("quickAddCloseBtn")?.addEventListener("click", closeQuickAddModal);
+    document.getElementById("quickAddModal")?.addEventListener("click", e => {
+      if (e.target.id === "quickAddModal") closeQuickAddModal();
+    });
+    document.getElementById("quickAddExSelect")?.addEventListener("change", e => {
+      syncQuickAddDefaults(e.target.value);
+    });
+    document.getElementById("quickAddConfirmBtn")?.addEventListener("click", () => {
+      const exId = document.getElementById("quickAddExSelect")?.value;
+      const sets = Math.max(1, Number(document.getElementById("quickAddSets")?.value) || 3);
+      const reps = (document.getElementById("quickAddReps")?.value || "").trim() || "10회";
+      const weightVal = Number(document.getElementById("quickAddWeight")?.value);
+      const weightKg = Number.isNaN(weightVal) || weightVal <= 0 ? 0 : weightVal;
+      const idx = store.addExerciseToTodayRoutine(exId, { sets, reps, weightKg });
+      closeQuickAddModal();
+      if (idx >= 0) {
+        const added = store.getTodayRoutineExercises()[idx];
+        store.state.activeTab = "today";
+        store.state.todayScreen = "card";
+        store.state.todayCardIndex = idx;
+        store.persistState();
+        sync.scheduleAutoPush(300);
+        onRenderAll();
+        showToast(`➕ [${(added && added.name) || exId}] ${sets}세트 × ${reps} 추가됨!`);
+      }
+    });
+
     document.getElementById("addCustomExBtn")?.addEventListener("click", () => {
       document.getElementById("addExModal")?.classList.remove("hidden");
     });
@@ -331,6 +391,8 @@ export function createModalController({ store, sync, onRenderAll, showToast }) {
     openExerciseGuideModal,
     openCompletionReportModal,
     closeCompletionReportModal,
+    openQuickAddModal,
+    closeQuickAddModal,
     directFinishExercise,
     openRpeBottomSheet,
     finalizeFinishWithRpe,

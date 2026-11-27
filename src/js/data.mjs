@@ -169,3 +169,23 @@ export function getMuscleGroup(ex) {
 export function getAllExercises(customExercises = []) {
   return [...EXERCISES, ...(Array.isArray(customExercises) ? customExercises : [])];
 }
+
+export function parseTimedSeconds(repsStr) {
+  const s = String(repsStr || "").trim();
+  if (!s.includes("초")) return null;
+  const m = s.match(/(\d+)/);
+  if (!m) return 30;
+  return Math.max(5, parseInt(m[1], 10));
+}
+
+export function findPainAlertAlternative(ex, painAreas = []) {
+  if (!ex || !Array.isArray(painAreas) || painAreas.length === 0) return null;
+  const enriched = ENRICHED_DB[ex.id];
+  const alts = enriched && Array.isArray(enriched.painAlternatives) ? enriched.painAlternatives : [];
+  for (const alt of alts) {
+    if (!alt || !alt.area || !alt.altId) continue;
+    const matched = painAreas.find(p => alt.area.includes(p) || p.includes(alt.area));
+    if (matched) return { ...alt, matchedArea: matched };
+  }
+  return null;
+}

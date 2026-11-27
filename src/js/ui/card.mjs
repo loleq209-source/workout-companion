@@ -2,8 +2,8 @@
  * Tab 1 — Screen 2: Ultra-Compact 1-Screen Sequential Workout Card,
  * Interactive Set Undo Dots, Swipe Navigation, and Step Bar.
  */
-import { ENRICHED_DB, getGuideMedia, isWarmupOrStretch } from "../data.mjs";
-import { getTodayStr } from "../date.mjs";
+import { ENRICHED_DB, getGuideMedia, isWarmupOrStretch, parseTimedSeconds, findPainAlertAlternative } from "../data.mjs";
+import { getTodayStr, getWorkoutDateStr } from "../date.mjs";
 import { triggerNativeHaptic } from "../bridge.mjs";
 
 function stepRepsText(repsStr, delta) {
@@ -47,7 +47,32 @@ export function updateTimerDom(timer) {
   }
 }
 
-export function createCardController({ store, timerCtrl, sync, modals, onRenderAll, showToast }) {
+export function updateWorkTimerDom(wt) {
+  const btn = document.getElementById("workTimerMainBtn");
+  const resetBtn = document.getElementById("workTimerResetBtn");
+  if (!btn || !wt) return;
+
+  btn.classList.remove("is-prep", "is-running", "is-done");
+  if (wt.phase === "prep") {
+    btn.classList.add("is-prep");
+    btn.textContent = `⚡ 준비 ${wt.prepRemaining}...`;
+  } else if (wt.phase === "running") {
+    btn.classList.add("is-running");
+    btn.textContent = `⏸ ${wt.remaining}초 남음 · 일시정지`;
+  } else if (wt.phase === "paused") {
+    btn.textContent = `▶ ${wt.remaining}초 재개`;
+  } else if (wt.phase === "done") {
+    btn.classList.add("is-done");
+    btn.textContent = `✅ ${wt.duration}초 완료 · 탭하여 세트 체크`;
+  } else {
+    btn.textContent = `⏱ ${wt.duration}초 수행 시작`;
+  }
+  if (resetBtn) {
+    resetBtn.classList.toggle("hidden", wt.phase === "idle");
+  }
+}
+
+export function createCardController({ store, timerCtrl, workTimerCtrl, sync, modals, onRenderAll, showToast }) {
   function renderCardStepBar() {
     const items = store.getTodayRoutineExercises();
     const stepBar = document.getElementById("cardStepBar");
@@ -103,10 +128,54 @@ export function createCardController({ store, timerCtrl, sync, modals, onRenderA
 
     const currentWeight = rec.sets[0] && rec.sets[0].weightKg != null ? rec.sets[0].weightKg : (ex.defaultWeightKg || 0);
     const currentReps = (rec.sets[0] && rec.sets[0].reps) || ex.defaultReps || "10회";
+    const timedSec = parseTimedSeconds(currentReps);
+    if (workTimerCtrl && timedSec) {
+      workTimerCtrl.syncCardTarget(ex.id, timedSec);
+    }
 
     const isStretch = isWarmupOrStretch(ex);
     const remainingSetsCount = rec.sets.filter(s => !s.done).length;
     const isLastRemainingSet = remainingSetsCount <= 1;
+
+    // Previous session record 1-line hint (strictly before today's workout date)
+    const lastRec = store.getLastRecord(ex.id, ex.name, getWorkoutDateStr());
+    let prevRecordHtml = "";
+    if (lastRec && lastRec.data) {
+      const ld = lastRec.data;
+      const mmdd = String(lastRec.date || "").slice(5).replace("-", "/");
+      const lw = ld.actualWeightKg ?? ld.plannedWeightKg ?? 0;
+      const lr = ld.plannedReps || (Array.isArray(ld.setLogs) && ld.setLogs[0] && ld.setLogs[0].reps) || ex.defaultReps || "";
+      const ls = ld.completedSets || ld.plannedSets || (Array.isArray(ld.setLogs) ? ld.setLogs.length : 0);
+      const lrpe = ld.rpe != null ? ` · RPE ${ld.rpe}` : "";
+      prevRecordHtml = `<div id="cardPrevRecordLine" class="card-prev-record-line">🕒 직전(${mmdd}): ${lw > 0 ? `${lw}kg × ` : ""}${lr}${ls > 0 ? ` × ${ls}세트` : ""}${lrpe}</div>`;
+    }
+
+    // Separate Work Countdown Timer Bar (shown for timed "초" exercises)
+    let workTimerHtml = "";
+    if (timedSec) {
+      const wt = (workTimerCtrl && workTimerCtrl.workTimer) || { phase: "idle", duration: timedSec, remaining: timedSec, prepRemaining: 0 };
+      const wtActive = workTimerCtrl && workTimerCtrl.workTimer.exerciseId === ex.id ? wt : { phase: "idle", duration: timedSec, remaining: timedSec, prepRemaining: 0 };
+      let btnLabel = `⏱ ${timedSec}초 수행 시작`;
+      let btnCls = "";
+      if (wtActive.phase === "prep") {
+        btnCls = "is-prep";
+        btnLabel = `⚡ 준비 ${wtActive.prepRemaining}...`;
+      } else if (wtActive.phase === "running") {
+        btnCls = "is-running";
+        btnLabel = `⏸ ${wtActive.remaining}초 남음 · 일시정지`;
+      } else if (wtActive.phase === "paused") {
+        btnLabel = `▶ ${wtActive.remaining}초 재개`;
+      } else if (wtActive.phase === "done") {
+        btnCls = "is-done";
+        btnLabel = `✅ ${wtActive.duration}초 완료 · 탭하여 세트 체크`;
+      }
+      workTimerHtml = `
+        <div id="workTimerBox" class="work-timer-bar" data-target-sec="${timedSec}">
+          <button id="workTimerMainBtn" type="button" data-card-action="work-timer-main" class="btn-tap work-timer-btn ${btnCls}">${btnLabel}</button>
+          <button id="workTimerResetBtn" type="button" data-card-action="work-timer-reset" class="btn-tap work-timer-reset-btn ${wtActive.phase === "idle" ? "hidden" : ""}" title="타이머 초기화">↺</button>
+        </div>
+      `;
+    }
 
     // Interactive set dots: tap any dot to toggle/undo that set
     const setDotsHtml = rec.sets
@@ -123,65 +192,73 @@ export function createCardController({ store, timerCtrl, sync, modals, onRenderA
     let middleControlsHtml = "";
     if (isStretch) {
       middleControlsHtml = `
-        <div class="slim-control-box" style="display:flex; align-items:center; justify-content:space-between; padding:8px 12px;">
-          <span style="font-size:12px; font-weight:800; color:var(--text-soft);">
-            ${curSetNum} / ${rec.sets.length}세트 · 목표 ${currentReps}
-          </span>
-          <div class="row-gap" style="gap:2px;">${setDotsHtml}</div>
+        ${prevRecordHtml}
+        <div class="slim-control-box" style="display:flex; flex-direction:column; gap:7px; padding:8px 12px;">
+          <div style="display:flex; align-items:center; justify-content:space-between;">
+            <span style="font-size:12px; font-weight:800; color:var(--text-soft);">
+              ${curSetNum} / ${rec.sets.length}세트 · 목표 ${currentReps}
+            </span>
+            <div class="row-gap" style="gap:2px;">${setDotsHtml}</div>
+          </div>
+          ${workTimerHtml}
         </div>
       `;
     } else {
       middleControlsHtml = `
-        <div class="slim-control-box" style="display:flex; align-items:center; gap:8px;">
-          <!-- Left: Compact Circular Rest Timer (60x60) -->
-          <div style="flex:0 0 72px; display:flex; flex-direction:column; align-items:center; gap:3px;">
-            <div style="position:relative; width:58px; height:58px; display:flex; align-items:center; justify-content:center;">
-              <svg width="58" height="58" viewBox="0 0 68 68" style="transform: rotate(-90deg);">
-                <circle cx="34" cy="34" r="28" fill="none" stroke="#222226" stroke-width="5" />
-                <circle id="timerRingProgress" cx="34" cy="34" r="28" fill="none" stroke="#a3e635" stroke-width="5" stroke-linecap="round"
-                  style="stroke-dasharray:${circum.toFixed(1)}; stroke-dashoffset:${(circum * (1 - ratio)).toFixed(1)}; transition: stroke-dashoffset 0.3s linear;" />
-              </svg>
-              <div style="position:absolute; text-align:center;">
-                <div id="timerRingTime" class="tabular-nums" style="font-size:13.5px; font-weight:900; color:#ffffff;">${min}:${sec}</div>
-                <div id="timerRingLabel" style="font-size:8px; font-weight:800; color:var(--text-muted); max-width:44px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${t.running ? "휴식 중" : "휴식"}</div>
+        ${prevRecordHtml}
+        <div class="slim-control-box" style="display:flex; flex-direction:column; gap:6px;">
+          ${workTimerHtml}
+          <div style="display:flex; align-items:center; gap:8px;">
+            <!-- Left: Compact Circular Rest Timer (60x60) -->
+            <div style="flex:0 0 72px; display:flex; flex-direction:column; align-items:center; gap:3px;">
+              <div style="position:relative; width:58px; height:58px; display:flex; align-items:center; justify-content:center;">
+                <svg width="58" height="58" viewBox="0 0 68 68" style="transform: rotate(-90deg);">
+                  <circle cx="34" cy="34" r="28" fill="none" stroke="#222226" stroke-width="5" />
+                  <circle id="timerRingProgress" cx="34" cy="34" r="28" fill="none" stroke="#a3e635" stroke-width="5" stroke-linecap="round"
+                    style="stroke-dasharray:${circum.toFixed(1)}; stroke-dashoffset:${(circum * (1 - ratio)).toFixed(1)}; transition: stroke-dashoffset 0.3s linear;" />
+                </svg>
+                <div style="position:absolute; text-align:center;">
+                  <div id="timerRingTime" class="tabular-nums" style="font-size:13.5px; font-weight:900; color:#ffffff;">${min}:${sec}</div>
+                  <div id="timerRingLabel" style="font-size:8px; font-weight:800; color:var(--text-muted); max-width:44px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${t.running ? "휴식 중" : "휴식"}</div>
+                </div>
               </div>
-            </div>
-            <div class="row-gap" style="gap:3px; width:100%;">
-              <button id="timerToggleBtn" type="button" class="btn-tap" style="flex:1; height:22px; border-radius:6px; font-size:9.5px; font-weight:800; border:1px solid var(--accent); background:var(--accent-bg); color:var(--accent); padding:0;">
-                ${t.running ? "⏸ 정지" : "⏱️ 시작"}
-              </button>
-              <button type="button" data-card-action="timer-add" class="btn-tap btn-secondary" style="flex:1; height:22px; border-radius:6px; font-size:9.5px; padding:0;">
-                +15초
-              </button>
-            </div>
-          </div>
-
-          <!-- Right: Interactive Set Dots + Steppers -->
-          <div style="flex:1; min-width:0; display:flex; flex-direction:column; gap:4px;">
-            <div style="display:flex; align-items:center; justify-content:space-between;">
-              <span style="font-size:11px; font-weight:800; color:var(--text-soft);">${curSetNum} / ${rec.sets.length}세트 <span style="font-size:9.5px; color:var(--text-muted); font-weight:600;">(점 탭=되돌림)</span></span>
-              <div class="row-gap" style="gap:1px;">${setDotsHtml}</div>
-            </div>
-
-            <div style="background:var(--card); border:1px solid var(--border); border-radius:8px; padding:3px 8px; display:flex; align-items:center; justify-content:space-between;">
-              <div>
-                <div style="font-size:8px; color:var(--text-muted); font-weight:700;">중량</div>
-                <div id="batchWeightDisplay" class="tabular-nums" style="font-size:12px; font-weight:900; color:#fff;">${currentWeight > 0 ? `${currentWeight}kg` : "맨몸/밴드"}</div>
-              </div>
-              <div class="row-gap" style="gap:3px;">
-                <button type="button" data-card-action="step-weight" data-delta="-2" class="btn-tap stepper-btn" style="width:24px; height:24px; font-size:13px; border-radius:6px;">-</button>
-                <button type="button" data-card-action="step-weight" data-delta="2" class="btn-tap stepper-btn" style="width:24px; height:24px; font-size:13px; border-radius:6px;">+</button>
+              <div class="row-gap" style="gap:3px; width:100%;">
+                <button id="timerToggleBtn" type="button" class="btn-tap" style="flex:1; height:22px; border-radius:6px; font-size:9.5px; font-weight:800; border:1px solid var(--accent); background:var(--accent-bg); color:var(--accent); padding:0;">
+                  ${t.running ? "⏸ 정지" : "⏱️ 시작"}
+                </button>
+                <button type="button" data-card-action="timer-add" class="btn-tap btn-secondary" style="flex:1; height:22px; border-radius:6px; font-size:9.5px; padding:0;">
+                  +15초
+                </button>
               </div>
             </div>
 
-            <div style="background:var(--card); border:1px solid var(--border); border-radius:8px; padding:3px 8px; display:flex; align-items:center; justify-content:space-between;">
-              <div>
-                <div style="font-size:8px; color:var(--text-muted); font-weight:700;">횟수/시간</div>
-                <div id="batchRepsDisplay" class="tabular-nums" style="font-size:12px; font-weight:900; color:#fff;">${currentReps}</div>
+            <!-- Right: Interactive Set Dots + Steppers -->
+            <div style="flex:1; min-width:0; display:flex; flex-direction:column; gap:4px;">
+              <div style="display:flex; align-items:center; justify-content:space-between;">
+                <span style="font-size:11px; font-weight:800; color:var(--text-soft);">${curSetNum} / ${rec.sets.length}세트 <span style="font-size:9.5px; color:var(--text-muted); font-weight:600;">(점 탭=되돌림)</span></span>
+                <div class="row-gap" style="gap:1px;">${setDotsHtml}</div>
               </div>
-              <div class="row-gap" style="gap:3px;">
-                <button type="button" data-card-action="step-reps" data-delta="-1" class="btn-tap stepper-btn" style="width:24px; height:24px; font-size:13px; border-radius:6px;">-</button>
-                <button type="button" data-card-action="step-reps" data-delta="1" class="btn-tap stepper-btn" style="width:24px; height:24px; font-size:13px; border-radius:6px;">+</button>
+
+              <div style="background:var(--card); border:1px solid var(--border); border-radius:8px; padding:3px 8px; display:flex; align-items:center; justify-content:space-between;">
+                <div>
+                  <div style="font-size:8px; color:var(--text-muted); font-weight:700;">중량</div>
+                  <div id="batchWeightDisplay" class="tabular-nums" style="font-size:12px; font-weight:900; color:#fff;">${currentWeight > 0 ? `${currentWeight}kg` : "맨몸/밴드"}</div>
+                </div>
+                <div class="row-gap" style="gap:3px;">
+                  <button type="button" data-card-action="step-weight" data-delta="-2" class="btn-tap stepper-btn" style="width:24px; height:24px; font-size:13px; border-radius:6px;">-</button>
+                  <button type="button" data-card-action="step-weight" data-delta="2" class="btn-tap stepper-btn" style="width:24px; height:24px; font-size:13px; border-radius:6px;">+</button>
+                </div>
+              </div>
+
+              <div style="background:var(--card); border:1px solid var(--border); border-radius:8px; padding:3px 8px; display:flex; align-items:center; justify-content:space-between;">
+                <div>
+                  <div style="font-size:8px; color:var(--text-muted); font-weight:700;">횟수/시간</div>
+                  <div id="batchRepsDisplay" class="tabular-nums" style="font-size:12px; font-weight:900; color:#fff;">${currentReps}</div>
+                </div>
+                <div class="row-gap" style="gap:3px;">
+                  <button type="button" data-card-action="step-reps" data-delta="-1" class="btn-tap stepper-btn" style="width:24px; height:24px; font-size:13px; border-radius:6px;">-</button>
+                  <button type="button" data-card-action="step-reps" data-delta="1" class="btn-tap stepper-btn" style="width:24px; height:24px; font-size:13px; border-radius:6px;">+</button>
+                </div>
               </div>
             </div>
           </div>
@@ -225,7 +302,9 @@ export function createCardController({ store, timerCtrl, sync, modals, onRenderA
     const dontCue = enriched && enriched.dontCue ? enriched.dontCue : "반동을 쓰거나 무리한 가동범위 주의";
     const tempo = enriched && enriched.tempo ? enriched.tempo : ex.tempo || "자연스러운 템포";
     const painAlts = enriched && Array.isArray(enriched.painAlternatives) ? enriched.painAlternatives : [];
-    const firstAlt = painAlts.length > 0 ? painAlts[0] : null;
+    const painAreas = (store.state.bodyCondition && Array.isArray(store.state.bodyCondition.painAreas)) ? store.state.bodyCondition.painAreas : [];
+    const alertAlt = findPainAlertAlternative(ex, painAreas);
+    const firstAlt = alertAlt || (painAlts.length > 0 ? painAlts[0] : null);
     const isGym = ex.mode === "gym" || String(ex.id).startsWith("gym_");
 
     const cardContainer = document.getElementById("cardMainContent");
@@ -315,8 +394,8 @@ export function createCardController({ store, timerCtrl, sync, modals, onRenderA
             ${
               firstAlt
                 ? `
-              <button type="button" data-card-action="switch-alt" data-alt-id="${firstAlt.altId}" class="btn-tap" style="font-size:10.5px; font-weight:800; color:var(--amber-bright); background:rgba(250,204,21,0.1); border:1px solid rgba(250,204,21,0.3); border-radius:7px; height:24px; padding:0 7px; display:flex; align-items:center; gap:3px; white-space:nowrap; max-width:62%; overflow:hidden; text-overflow:ellipsis; flex-shrink:0;">
-                <span style="overflow:hidden; text-overflow:ellipsis;">🩹 ${firstAlt.area} 불편 시 → ${firstAlt.altName.replace(/^[0-9]+kg\s*/, "")}</span>
+              <button type="button" data-card-action="switch-alt" data-alt-id="${firstAlt.altId}" class="btn-tap" style="font-size:10.5px; font-weight:800; color:${alertAlt ? "#fde047" : "var(--amber-bright)"}; background:${alertAlt ? "rgba(250,204,21,0.18)" : "rgba(250,204,21,0.1)"}; border:1px solid ${alertAlt ? "rgba(250,204,21,0.55)" : "rgba(250,204,21,0.3)"}; border-radius:7px; height:24px; padding:0 7px; display:flex; align-items:center; gap:3px; white-space:nowrap; max-width:65%; overflow:hidden; text-overflow:ellipsis; flex-shrink:0;">
+                <span style="overflow:hidden; text-overflow:ellipsis;">🩹 ${alertAlt ? `${alertAlt.matchedArea} 주의 · 원탭 대체` : `${firstAlt.area} 불편 시`} → ${firstAlt.altName.replace(/^[0-9]+kg\s*/, "")}</span>
               </button>
             `
                 : `<span style="font-size:10px; color:var(--text-muted); flex-shrink:0;">표준 자세 권장</span>`
@@ -346,6 +425,43 @@ export function createCardController({ store, timerCtrl, sync, modals, onRenderA
       });
     }
 
+    function completeCurrentSet() {
+      const isStretch = isWarmupOrStretch(ex);
+      const nextSetIdx = rec.sets.findIndex(s => !s.done);
+      store.markUserInteractedToday();
+
+      if (nextSetIdx !== -1) {
+        rec.sets[nextSetIdx].done = true;
+        rec.lastUpdatedDate = getTodayStr();
+        triggerNativeHaptic();
+        rec.isCompleted = rec.sets.every(s => s.done);
+        store.refreshMetrics();
+        store.persistState();
+
+        if (!isStretch) {
+          timerCtrl.start(ex.restSec || 60, `${ex.name} ${nextSetIdx + 1}세트 후 휴식`, ex.id);
+        }
+
+        if (rec.isCompleted) {
+          if (isStretch) {
+            modals.directFinishExercise(ex, rec);
+          } else {
+            modals.openRpeBottomSheet(ex, rec);
+          }
+        } else {
+          sync.scheduleAutoPush(800);
+          renderFocusedCard();
+          renderCardStepBar();
+        }
+      } else {
+        if (isStretch) {
+          modals.directFinishExercise(ex, rec);
+        } else {
+          modals.openRpeBottomSheet(ex, rec);
+        }
+      }
+    }
+
     container.querySelectorAll("[data-card-action]").forEach(el => {
       el.addEventListener("click", () => {
         const act = el.dataset.cardAction;
@@ -363,6 +479,24 @@ export function createCardController({ store, timerCtrl, sync, modals, onRenderA
           renderCardStepBar();
           renderFocusedCard();
           showToast(rec.sets[sIdx].done ? `✅ ${sIdx + 1}세트 체크` : `↺ ${sIdx + 1}세트 되돌림`);
+        } else if (act === "work-timer-main") {
+          if (!workTimerCtrl) return;
+          const curReps = (rec.sets[0] && rec.sets[0].reps) || ex.defaultReps || "30초";
+          const targetSec = parseTimedSeconds(curReps) || 30;
+          const wt = workTimerCtrl.workTimer;
+          if (wt.phase === "done" && wt.exerciseId === ex.id) {
+            workTimerCtrl.reset(targetSec, ex.id);
+            completeCurrentSet();
+          } else if (wt.phase === "idle" || wt.exerciseId !== ex.id) {
+            workTimerCtrl.startWithPrep(targetSec, ex.name, ex.id);
+          } else {
+            workTimerCtrl.togglePause();
+          }
+        } else if (act === "work-timer-reset") {
+          if (!workTimerCtrl) return;
+          const curReps = (rec.sets[0] && rec.sets[0].reps) || ex.defaultReps || "30초";
+          const targetSec = parseTimedSeconds(curReps) || 30;
+          workTimerCtrl.reset(targetSec, ex.id);
         } else if (act === "switch-alt") {
           const altId = el.dataset.altId;
           const items = store.getTodayRoutineExercises();
@@ -401,6 +535,10 @@ export function createCardController({ store, timerCtrl, sync, modals, onRenderA
           const nextR = stepRepsText(curR, delta);
           rec.sets.forEach(s => { s.reps = nextR; });
           rec.lastUpdatedDate = getTodayStr();
+          if (workTimerCtrl) {
+            const nextSec = parseTimedSeconds(nextR);
+            if (nextSec) workTimerCtrl.reset(nextSec, ex.id);
+          }
           store.persistState();
           sync.scheduleAutoPush(800);
           renderFocusedCard();
@@ -418,40 +556,12 @@ export function createCardController({ store, timerCtrl, sync, modals, onRenderA
     const completeBtn = document.getElementById("cardSetCompleteBtn");
     if (completeBtn) {
       completeBtn.addEventListener("click", () => {
-        const isStretch = isWarmupOrStretch(ex);
-        const nextSetIdx = rec.sets.findIndex(s => !s.done);
-        store.markUserInteractedToday();
-
-        if (nextSetIdx !== -1) {
-          rec.sets[nextSetIdx].done = true;
-          rec.lastUpdatedDate = getTodayStr();
-          triggerNativeHaptic();
-          rec.isCompleted = rec.sets.every(s => s.done);
-          store.refreshMetrics();
-          store.persistState();
-
-          if (!isStretch) {
-            timerCtrl.start(ex.restSec || 60, `${ex.name} ${nextSetIdx + 1}세트 후 휴식`, ex.id);
-          }
-
-          if (rec.isCompleted) {
-            if (isStretch) {
-              modals.directFinishExercise(ex, rec);
-            } else {
-              modals.openRpeBottomSheet(ex, rec);
-            }
-          } else {
-            sync.scheduleAutoPush(800);
-            renderFocusedCard();
-            renderCardStepBar();
-          }
-        } else {
-          if (isStretch) {
-            modals.directFinishExercise(ex, rec);
-          } else {
-            modals.openRpeBottomSheet(ex, rec);
-          }
+        if (workTimerCtrl && workTimerCtrl.workTimer.exerciseId === ex.id && workTimerCtrl.workTimer.phase !== "idle") {
+          const curReps = (rec.sets[0] && rec.sets[0].reps) || ex.defaultReps || "30초";
+          const nextSec = parseTimedSeconds(curReps);
+          if (nextSec) workTimerCtrl.reset(nextSec, ex.id);
         }
+        completeCurrentSet();
       });
     }
   }
@@ -532,7 +642,9 @@ export function createCardController({ store, timerCtrl, sync, modals, onRenderA
         const rpeOpen = !document.getElementById("rpeBottomSheet")?.classList.contains("hidden");
         const zoomOpen = !document.getElementById("zoomModal")?.classList.contains("hidden");
         const addOpen = !document.getElementById("addExModal")?.classList.contains("hidden");
-        if (rpeOpen || zoomOpen || addOpen) {
+        const quickAddOpen = !document.getElementById("quickAddModal")?.classList.contains("hidden");
+        const reportOpen = !document.getElementById("reportModal")?.classList.contains("hidden");
+        if (rpeOpen || zoomOpen || addOpen || quickAddOpen || reportOpen) {
           cancelled = true;
           return;
         }

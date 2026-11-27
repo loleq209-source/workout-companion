@@ -2,13 +2,13 @@
  * Workout Companion v3.0 Entry Point & Lifecycle Orchestrator.
  */
 import { createStore } from "./store.mjs";
-import { createTimerController } from "./timer.mjs";
+import { createTimerController, createWorkTimerController } from "./timer.mjs";
 import { createSyncService } from "./sync.mjs";
 import { hasGasBridge } from "./bridge.mjs";
 import { showToast, updateSyncBadge, setSyncStatusMsg } from "./ui/toast.mjs";
 import { createModalController } from "./ui/modals.mjs";
 import { renderDashboard } from "./ui/dashboard.mjs";
-import { createCardController, updateTimerDom } from "./ui/card.mjs";
+import { createCardController, updateTimerDom, updateWorkTimerDom } from "./ui/card.mjs";
 import { renderCatalog } from "./ui/catalog.mjs";
 import { renderSyncTab, renderMetricsCards } from "./ui/syncTab.mjs";
 
@@ -18,6 +18,7 @@ let sync = null;
 let modals = null;
 let cardCtrl = null;
 let timerCtrl = null;
+let workTimerCtrl = null;
 
 function updateFloatingTimerPill() {
   const pill = document.getElementById("floatingRestPill");
@@ -59,6 +60,9 @@ function renderAll() {
     if (state.todayScreen === "dashboard") {
       renderDashboard({
         store,
+        sync,
+        onRenderAll: renderAll,
+        showToast,
         onSelectExercise: idx => {
           state.todayCardIndex = idx;
           state.todayScreen = "card";
@@ -89,6 +93,20 @@ timerCtrl = createTimerController(store, {
   }
 });
 
+workTimerCtrl = createWorkTimerController(store, {
+  onTick: wt => {
+    const items = store.getTodayRoutineExercises();
+    const curEx = items[store.state.todayCardIndex];
+    if (curEx && wt.exerciseId === curEx.id) {
+      updateWorkTimerDom(wt);
+    }
+  },
+  onComplete: (label, wt) => {
+    updateWorkTimerDom(wt);
+    showToast(`✅ [${label}] ${wt.duration}초 수행 완료! 완료 버튼을 눌러 체크하세요.`);
+  }
+});
+
 sync = createSyncService(store, {
   onBadge: updateSyncBadge,
   onStatus: setSyncStatusMsg,
@@ -102,12 +120,13 @@ sync = createSyncService(store, {
 });
 
 modals = createModalController({ store, sync, onRenderAll: renderAll, showToast });
-cardCtrl = createCardController({ store, timerCtrl, sync, modals, onRenderAll: renderAll, showToast });
+cardCtrl = createCardController({ store, timerCtrl, workTimerCtrl, sync, modals, onRenderAll: renderAll, showToast });
 
 // Hook called by Android MainActivity.onResume() when returning to WebView
 let lastAutoSyncAt = 0;
 function triggerThrottledAutoSync() {
   timerCtrl.syncWithClock();
+  workTimerCtrl.syncWithClock();
   const rolled = store.ensureCurrentSessionDate();
   if (rolled) renderAll();
   const now = Date.now();
@@ -162,6 +181,10 @@ document.addEventListener("DOMContentLoaded", () => {
     store.state.activeTab = "catalog";
     store.persistState();
     renderAll();
+  });
+
+  document.getElementById("dashBottomAddBtn")?.addEventListener("click", () => {
+    modals.openQuickAddModal();
   });
 
   document.getElementById("dashReportBtn")?.addEventListener("click", () => {

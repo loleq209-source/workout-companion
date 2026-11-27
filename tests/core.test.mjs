@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import { formatLocalDate, addDaysLocal, parseLocalDateNoon } from "../src/js/date.mjs";
+import { formatLocalDate, addDaysLocal, parseLocalDateNoon, getWorkoutDateStr } from "../src/js/date.mjs";
 import { EXERCISES, getMuscleGroup, isWarmupOrStretch, resolveAssetBase } from "../src/js/data.mjs";
 import { calculateWorkoutMetrics, computeSessionStss } from "../src/js/metrics.mjs";
 import { createStore } from "../src/js/store.mjs";
@@ -312,4 +312,62 @@ test("Muscle heatmap maps all 48 exercises & builds today completion report accu
   assert.equal(report.regionStats.hamstrings.level, "rest");
   assert.ok(report.stretchedOnly.includes("둔근"));
   assert.ok(report.recoveryGuide.includes("권장 회복"));
+});
+
+test("04:00 KST workout date boundary prevents midnight-to-04:00 double rollover", () => {
+  assert.equal(getWorkoutDateStr(new Date(2026, 10, 27, 23, 30, 0)), "2026-11-27");
+  assert.equal(getWorkoutDateStr(new Date(2026, 10, 28, 0, 30, 0)), "2026-11-27");
+  assert.equal(getWorkoutDateStr(new Date(2026, 10, 28, 3, 59, 0)), "2026-11-27");
+  assert.equal(getWorkoutDateStr(new Date(2026, 10, 28, 4, 0, 0)), "2026-11-28");
+});
+
+test("Quick-add exercise & bodyCondition check-in sync into history, sTSS, and heatmap", () => {
+  const today = getWorkoutDateStr();
+  const store = createStore(makeMemoryStorage({
+    sessionDate: today,
+    todayRoutine: {
+      date: today,
+      title: "테스트 루틴",
+      mode: "home",
+      items: [{ id: "home_kb_rdl", sets: 3, reps: "10회", weightKg: 14 }]
+    },
+    history: [
+      {
+        date: addDaysLocal(today, -2),
+        exercises: [{ id: "home_kb_swing", name: "14kg 케틀벨 스윙", completedSets: 5, actualWeightKg: 14, plannedReps: "15회", rpe: 6, isCompleted: true }]
+      }
+    ]
+  }));
+
+  // 1. Body condition check-in
+  store.setBodyCondition(["허리"]);
+  assert.equal(store.state.bodyCondition.status, "pain");
+  assert.deepEqual(store.state.bodyCondition.painAreas, ["허리"]);
+
+  // 2. Quick-add kettlebell swing 10x10
+  const idx = store.addExerciseToTodayRoutine("home_kb_swing", { sets: 10, reps: "10회", weightKg: 14 });
+  assert.equal(idx, 1);
+  const items = store.getTodayRoutineExercises();
+  assert.equal(items.length, 2);
+  const swingRec = store.getRecord(items[1], today);
+  assert.equal(swingRec.sets.length, 10);
+  swingRec.sets.forEach(s => { s.done = true; });
+  swingRec.isCompleted = true;
+  swingRec.rpe = 7;
+
+  // 3. Payload & history include bodyCondition & added exercise
+  const payload = upsertTodayHistory(store, today);
+  assert.equal(payload.bodyCondition.status, "pain");
+  assert.equal(payload.exercises.length, 2);
+
+  // 4. Previous record lookup strictly excludes today & finds 2 days ago
+  const prevSwing = store.getLastRecord("home_kb_swing", items[1].name, today);
+  assert.ok(prevSwing);
+  assert.equal(prevSwing.date, addDaysLocal(today, -2));
+
+  // 5. Report heatmap & sTSS reflect the 10-set swing
+  const report = buildTodayReportData(store);
+  assert.equal(report.totalSetsDone, 10);
+  assert.ok(report.todayStss > 0);
+  assert.equal(report.regionStats.glutes.level, "primary");
 });

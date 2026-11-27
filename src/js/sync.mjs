@@ -1,12 +1,12 @@
 /**
  * Bidirectional Google Drive Sync, Payload Builder, and Anti-Midnight Contamination Guard.
  */
-import { getTodayStr, formatLocalTimeHHMM } from "./date.mjs";
+import { getTodayStr, getWorkoutDateStr, formatLocalTimeHHMM } from "./date.mjs";
 import { hasGasBridge } from "./bridge.mjs";
 import { calculateWorkoutMetrics } from "./metrics.mjs";
 import { ENRICHED_DB } from "./data.mjs";
 
-export function buildWorkoutLogPayload(store, targetDate = getTodayStr()) {
+export function buildWorkoutLogPayload(store, targetDate = getWorkoutDateStr()) {
   const state = store.state;
   const items = store.getTodayRoutineExercises();
   const nowIso = new Date().toISOString();
@@ -60,6 +60,7 @@ export function buildWorkoutLogPayload(store, targetDate = getTodayStr()) {
     mode: state.todayRoutine ? state.todayRoutine.mode : "home",
     preset: state.preset,
     routineTitle: state.todayRoutine ? state.todayRoutine.title : "오늘의 추천 루틴",
+    bodyCondition: state.bodyCondition || { status: "ok", painAreas: [], updatedAt: "" },
     summary: {
       totalExercises: items.length,
       completedExercises: routineItems.filter(e => e.isCompleted).length,
@@ -241,6 +242,17 @@ export function applyLoadedDriveData(store, data, options = {}) {
 
   if (data.workoutExtra !== undefined) state.workoutExtra = data.workoutExtra;
   if (data.wellness) state.wellness = data.wellness;
+  if (data.bodyCondition && typeof data.bodyCondition === "object" && !routineChangedToNewerDate) {
+    const localTs = (state.bodyCondition && state.bodyCondition.updatedAt) || "";
+    const incTs = data.bodyCondition.updatedAt || "";
+    if (!localTs || incTs >= localTs) {
+      state.bodyCondition = {
+        status: data.bodyCondition.status === "pain" && Array.isArray(data.bodyCondition.painAreas) && data.bodyCondition.painAreas.length > 0 ? "pain" : "ok",
+        painAreas: Array.isArray(data.bodyCondition.painAreas) ? data.bodyCondition.painAreas.slice() : [],
+        updatedAt: incTs
+      };
+    }
+  }
   if (data.enrichedExercises && data.enrichedExercises.exercises && typeof data.enrichedExercises.exercises === "object") {
     Object.assign(ENRICHED_DB, data.enrichedExercises.exercises);
   }
@@ -288,6 +300,7 @@ export function createSyncService(store, uiHooks = {}) {
       customExercises: state.customExercises,
       todayRoutine: state.todayRoutine,
       metrics: state.metrics,
+      bodyCondition: state.bodyCondition || { status: "ok", painAreas: [], updatedAt: "" },
       log: payloadLog
     };
 

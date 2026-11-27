@@ -1,9 +1,10 @@
 /**
  * Tab 1 — Screen 1: Today Mission Dashboard Renderer.
  */
-import { getKoreanDateTitle } from "../date.mjs";
+import { getKoreanDateTitle, getWorkoutDateStr } from "../date.mjs";
+import { findPainAlertAlternative } from "../data.mjs";
 
-export function renderDashboard({ store, onSelectExercise }) {
+export function renderDashboard({ store, sync, onRenderAll, onSelectExercise, showToast }) {
   const state = store.state;
   const items = store.getTodayRoutineExercises();
   const totalSets = items.reduce((acc, ex) => acc + store.getRecord(ex).sets.length, 0);
@@ -11,7 +12,7 @@ export function renderDashboard({ store, onSelectExercise }) {
   const doneExercises = items.filter(ex => store.getRecord(ex).isCompleted).length;
 
   const dateEl = document.getElementById("dashDateTitle");
-  if (dateEl) dateEl.textContent = getKoreanDateTitle();
+  if (dateEl) dateEl.textContent = getKoreanDateTitle(state.sessionDate || getWorkoutDateStr());
 
   // Progress Ring (r = 23, circum = 144.5)
   const circum = 2 * Math.PI * 23;
@@ -75,6 +76,48 @@ export function renderDashboard({ store, onSelectExercise }) {
     briefingCard.classList.add("hidden");
   }
 
+  // 3-Second Body Condition & Pain Check-In Bar
+  const cond = state.bodyCondition || { status: "ok", painAreas: [] };
+  const painAreas = Array.isArray(cond.painAreas) ? cond.painAreas : [];
+  const statusLbl = document.getElementById("dashConditionStatusLabel");
+  if (statusLbl) {
+    statusLbl.textContent =
+      painAreas.length > 0
+        ? `⚠️ ${painAreas.join("·")} 주의 (안전 대체 활성화)`
+        : "😊 정상 컨디션";
+    statusLbl.style.color = painAreas.length > 0 ? "var(--rose)" : "var(--accent)";
+  }
+  const chipsWrap = document.getElementById("dashConditionChips");
+  if (chipsWrap) {
+    chipsWrap.querySelectorAll(".condition-chip").forEach(btn => {
+      const c = btn.dataset.cond;
+      btn.classList.remove("active-ok", "active-pain");
+      if (c === "ok") {
+        if (painAreas.length === 0) btn.classList.add("active-ok");
+      } else if (painAreas.includes(c)) {
+        btn.classList.add("active-pain");
+      }
+      btn.onclick = () => {
+        if (c === "ok") {
+          store.setBodyCondition([]);
+          showToast("😊 정상 컨디션으로 체크되었습니다.");
+        } else {
+          const next = painAreas.includes(c)
+            ? painAreas.filter(p => p !== c)
+            : [...painAreas, c];
+          store.setBodyCondition(next);
+          showToast(
+            next.length > 0
+              ? `🩺 [${next.join("·")}] 주의 부위 기록 & 안전 대체 연동됨`
+              : "😊 정상 컨디션으로 체크되었습니다."
+          );
+        }
+        if (onRenderAll) onRenderAll();
+        if (sync) sync.pushToGoogleDrive(true);
+      };
+    });
+  }
+
   // CTA Button text
   const ctaBtn = document.getElementById("dashCtaBtn");
   if (ctaBtn) {
@@ -108,6 +151,7 @@ export function renderDashboard({ store, onSelectExercise }) {
       const r = (rec.sets[0] && rec.sets[0].reps) || ex.defaultReps || "10회";
       const restSec = ex.restSec || 60;
       const specMeta = `${w > 0 ? `${w}kg · ` : ""}${totalSetCount}세트 × ${r} · 휴식 ${restSec}초`;
+      const painAlt = !isDone ? findPainAlertAlternative(ex, painAreas) : null;
 
       let badgeHtml = "";
       if (isDone) {
@@ -128,6 +172,11 @@ export function renderDashboard({ store, onSelectExercise }) {
                 <span style="color:var(--accent); font-weight:700;">${specMeta}</span> · ${ex.targetMuscle}
               </div>
               ${ex.reason ? `<div class="dash-reason-line">🎯 ${ex.reason}</div>` : ""}
+              ${
+                painAlt
+                  ? `<button type="button" class="btn-tap dash-pain-alert-btn" data-dash-alt-idx="${idx}" data-alt-id="${painAlt.altId}">🩹 ${painAlt.matchedArea} 주의 · 원탭 대체 → ${painAlt.altName.replace(/^[0-9]+kg\s*/, "")}</button>`
+                  : ""
+              }
             </div>
           </div>
           <div style="flex-shrink:0; margin-left:6px;">${badgeHtml}</div>
@@ -135,6 +184,20 @@ export function renderDashboard({ store, onSelectExercise }) {
       `;
     })
     .join("");
+
+  listContainer.querySelectorAll(".dash-pain-alert-btn").forEach(btn => {
+    btn.addEventListener("click", e => {
+      e.stopPropagation();
+      const idx = Number(btn.dataset.dashAltIdx);
+      const altId = btn.dataset.altId;
+      if (store.replaceTodayRoutineExercise(idx, altId)) {
+        if (sync) sync.scheduleAutoPush(300);
+        if (onRenderAll) onRenderAll();
+        const replaced = store.getTodayRoutineExercises()[idx];
+        if (showToast) showToast(`🩹 ${(replaced && replaced.name) || altId}(으)로 안전 대체되었습니다.`);
+      }
+    });
+  });
 
   listContainer.querySelectorAll(".dash-card-item").forEach(card => {
     card.addEventListener("click", () => onSelectExercise(Number(card.dataset.dashIdx)));
