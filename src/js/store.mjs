@@ -296,6 +296,8 @@ export function createStore(storage = typeof localStorage !== "undefined" ? loca
             routineWeightKg: hasRoutineWeight ? it.weightKg : null,
             restSec: it.restSec || found.restSec,
             reason: it.reason || "",
+            isExtra: !!it.isExtra,
+            extraReason: it.extraReason || "",
             swappedFrom: it.swappedFrom || null,
             swapReason: it.swapReason || null,
             undoItem: it.undoItem || null,
@@ -316,6 +318,8 @@ export function createStore(storage = typeof localStorage !== "undefined" ? loca
           routineWeightKg: hasRoutineWeight ? it.weightKg : null,
           restSec: it.restSec || 60,
           reason: it.reason || "",
+          isExtra: !!it.isExtra,
+          extraReason: it.extraReason || "",
           swappedFrom: it.swappedFrom || null,
           swapReason: it.swapReason || null,
           undoItem: it.undoItem || null,
@@ -345,7 +349,13 @@ export function createStore(storage = typeof localStorage !== "undefined" ? loca
 
     const existingItems = getTodayRoutineExercises();
     const existingIdx = existingItems.findIndex(x => x.id === exId);
-    const hasOverrides = overrides && (overrides.sets != null || overrides.reps != null || overrides.weightKg != null);
+    const hasOverrides =
+      overrides &&
+      (overrides.sets != null ||
+        overrides.reps != null ||
+        overrides.weightKg != null ||
+        overrides.isExtra != null ||
+        overrides.extraReason != null);
 
     if (existingIdx !== -1 && !hasOverrides) return existingIdx;
 
@@ -361,7 +371,8 @@ export function createStore(storage = typeof localStorage !== "undefined" ? loca
           sets: x.defaultSets,
           reps: x.defaultReps,
           weightKg: typeof x.defaultWeightKg === "number" ? x.defaultWeightKg : undefined,
-          restSec: x.restSec || 60
+          restSec: x.restSec || 60,
+          ...(x.isExtra ? { isExtra: true, extraReason: x.extraReason || "" } : {})
         }))
       };
     }
@@ -372,6 +383,8 @@ export function createStore(storage = typeof localStorage !== "undefined" ? loca
       overrides && overrides.weightKg != null && !Number.isNaN(Number(overrides.weightKg))
         ? Number(overrides.weightKg)
         : ex.defaultWeightKg;
+    const isExtra = overrides && overrides.isExtra !== undefined ? !!overrides.isExtra : true;
+    const extraReason = (overrides && overrides.extraReason) || "";
 
     const newSpec = {
       id: ex.id,
@@ -380,7 +393,8 @@ export function createStore(storage = typeof localStorage !== "undefined" ? loca
       reps: nextReps,
       weightKg: typeof nextWeight === "number" ? nextWeight : undefined,
       restSec: ex.restSec || 60,
-      reason: overrides && overrides.reason ? overrides.reason : "오늘 즉석 추가 종목"
+      reason: (overrides && overrides.reason) || (extraReason ? `${extraReason} 추가 운동` : "오늘 즉석 추가 종목"),
+      ...(isExtra ? { isExtra: true, extraReason: extraReason || "직접 선택" } : {})
     };
 
     if (Array.isArray(state.todayRoutine.items)) {
@@ -419,6 +433,48 @@ export function createStore(storage = typeof localStorage !== "undefined" ? loca
     return getTodayRoutineExercises().findIndex(x => x.id === ex.id);
   }
 
+  function removeExtraExercise(idx) {
+    ensureMaterializedRoutine();
+    const current = getTodayRoutineExercises();
+    if (idx < 0 || idx >= current.length) return false;
+    const ex = current[idx];
+    if (!ex || !ex.isExtra) return false;
+    const rec = getRecord(ex);
+    if (rec && rec.isCompleted) return false;
+
+    const itemIdx = state.todayRoutine.items.findIndex(it => resolveExerciseId(it && it.id) === ex.id);
+    if (itemIdx !== -1) {
+      state.todayRoutine.items.splice(itemIdx, 1);
+    }
+    if (Array.isArray(state.extraTodayIds)) {
+      state.extraTodayIds = state.extraTodayIds.filter(eid => resolveExerciseId(eid) !== ex.id);
+    }
+    if (state.records && state.records[ex.id] && !state.records[ex.id].isCompleted) {
+      const prevRec = state.records[ex.id];
+      state.records[ex.id] = {
+        sets: (prevRec.sets || []).map(s => ({
+          weightKg: s.weightKg != null ? s.weightKg : 0,
+          reps: s.reps || ex.defaultReps || "10회",
+          done: false
+        })),
+        isCompleted: false,
+        rpe: null,
+        preference: prevRec.preference || null,
+        preferenceNote: prevRec.preferenceNote || "",
+        lastUpdatedDate: ""
+      };
+    }
+
+    const nextLen = getTodayRoutineExercises().length;
+    if (state.todayCardIndex >= nextLen) {
+      state.todayCardIndex = Math.max(0, nextLen - 1);
+    }
+    markUserInteractedToday();
+    refreshMetrics();
+    persistState();
+    return true;
+  }
+
   function ensureMaterializedRoutine() {
     const cur = getTodayRoutineExercises();
     if (!state.todayRoutine || !Array.isArray(state.todayRoutine.items) || state.todayRoutine.items.length === 0) {
@@ -434,7 +490,8 @@ export function createStore(storage = typeof localStorage !== "undefined" ? loca
           reps: x.defaultReps,
           weightKg: typeof x.defaultWeightKg === "number" ? x.defaultWeightKg : undefined,
           restSec: x.restSec || 60,
-          reason: x.reason || ""
+          reason: x.reason || "",
+          ...(x.isExtra ? { isExtra: true, extraReason: x.extraReason || "" } : {})
         }))
       };
       state.extraTodayIds = [];
@@ -739,6 +796,7 @@ export function createStore(storage = typeof localStorage !== "undefined" ? loca
     getRecord,
     getTodayRoutineExercises,
     addExerciseToTodayRoutine,
+    removeExtraExercise,
     replaceTodayRoutineExercise,
     undoRoutineSwap,
     getRoutineEffectiveMode,

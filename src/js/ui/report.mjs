@@ -208,5 +208,10 @@ export function renderCompletionReportModal(store) {
     <div class="report-recovery-banner">
       💡 ${data.recoveryGuide}
     </div>
+
+    <!-- Deep Link to Smart Extra Exercise Recommendations -->
+    <button id="reportOpenExtraBtn" type="button" class="btn-tap report-extra-cta-btn">
+      ⚡ 에너지가 남았다면? 추가운동 추천받기
+    </button>
   `;
 }

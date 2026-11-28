@@ -41,6 +41,7 @@ export function buildWorkoutLogPayload(store, targetDate = getWorkoutDateStr()) 
       isCompleted: isComp,
       preference: rec.preference || "neutral",
       preferenceNote: rec.preferenceNote || "",
+      ...(ex.isExtra ? { isExtra: true, extraReason: ex.extraReason || "" } : {}),
       ...(ex.swappedFrom ? { swappedFrom: ex.swappedFrom, swapReason: ex.swapReason || "variation" } : {}),
       setLogs: setsArr.map((s, idx) => ({
         set: idx + 1,
@@ -450,10 +451,19 @@ export function createSyncService(store, uiHooks = {}) {
     }
   }
 
+  function commitTodayHistory(today = getTodayStr()) {
+    upsertTodayHistory(store, today);
+    const metrics = store.refreshMetrics();
+    store.persistState();
+    if (uiHooks.onMetricsUpdated) uiHooks.onMetricsUpdated(metrics);
+    return metrics;
+  }
+
   return {
     pushToGoogleDrive,
     scheduleAutoPush,
     pullFromGoogleDrive,
-    runAutoSync
+    runAutoSync,
+    commitTodayHistory
   };
 }

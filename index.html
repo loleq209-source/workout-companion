@@ -820,6 +820,109 @@ body {
   font-weight: 800;
 }
 
+/* Smart Extra Recommendation Bottom Sheet & Extra Badges */
+.badge-extra-mini {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  border: 1px solid #a3e635;
+  background: rgba(163, 230, 53, 0.09);
+  color: #a3e635;
+  font-size: 9.5px;
+  font-weight: 900;
+  line-height: 1.3;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.dash-extra-remove-btn {
+  width: 24px;
+  height: 24px;
+  border-radius: 7px;
+  border: 1px solid rgba(251, 113, 133, 0.45);
+  background: rgba(251, 113, 133, 0.12);
+  color: var(--rose);
+  font-size: 11px;
+  font-weight: 900;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  flex-shrink: 0;
+}
+.quick-filter-banner {
+  background: rgba(250, 204, 21, 0.1);
+  border: 1px solid rgba(250, 204, 21, 0.35);
+  border-radius: 9px;
+  padding: 5px 9px;
+  font-size: 10.5px;
+  font-weight: 800;
+  color: var(--amber-bright);
+  line-height: 1.35;
+}
+.quick-rec-card {
+  width: 100%;
+  text-align: left;
+  background: var(--card-2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 9px 11px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.quick-rec-card.is-selected {
+  border-color: #a3e635;
+  background: rgba(163, 230, 53, 0.1);
+  box-shadow: 0 0 0 1px rgba(163, 230, 53, 0.25);
+}
+.quick-rec-reason {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--accent);
+  line-height: 1.35;
+  word-break: keep-all;
+}
+.quick-selected-panel {
+  background: #0e0e11;
+  border: 1px solid var(--border);
+  border-radius: 13px;
+  padding: 9px 11px;
+  gap: 7px;
+}
+.quick-preset-chip {
+  flex: 0 0 auto;
+  height: 26px;
+  padding: 0 9px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--card-2);
+  color: var(--text-soft);
+  font-size: 11px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+.quick-preset-chip.active {
+  border-color: #a3e635;
+  background: rgba(163, 230, 53, 0.18);
+  color: #a3e635;
+}
+.report-extra-cta-btn {
+  width: 100%;
+  height: 40px;
+  border-radius: 12px;
+  border: 1px dashed rgba(163, 230, 53, 0.55);
+  background: rgba(163, 230, 53, 0.08);
+  color: var(--accent);
+  font-size: 12.5px;
+  font-weight: 900;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+}
+
   </style>
 </head>
 <body>
@@ -1155,37 +1258,70 @@ body {
     </div>
   </div>
 
-  <!-- Quick-Add Exercise to Today Routine Modal -->
+  <!-- Quick-Add Smart Recommendation & Search Bottom Sheet -->
   <div id="quickAddModal" class="modal-backdrop hidden" style="align-items: flex-end; padding: 0;">
-    <div class="modal-panel stack-3" style="max-width: 540px; border-radius: 24px 24px 0 0; padding: 18px 18px calc(24px + env(safe-area-inset-bottom, 0px));">
+    <div class="modal-panel stack-2" style="max-width: 540px; max-height: 88dvh; overflow-y: auto; border-radius: 24px 24px 0 0; padding: 16px 16px calc(22px + env(safe-area-inset-bottom, 0px)); gap: 10px;">
       <div class="row-between">
         <div>
-          <span class="badge badge-lime">+ 추가 운동</span>
-          <div id="quickAddTitle" style="font-size: 16.5px; font-weight: 900; color: #fff; margin-top: 4px;">오늘 루틴에 종목 추가</div>
+          <span class="badge badge-lime">⚡ 추가운동 추천 & 검색</span>
+          <div id="quickAddTitle" style="font-size: 16px; font-weight: 900; color: #fff; margin-top: 3px;">오늘 루틴에 추가운동 더하기</div>
         </div>
         <button id="quickAddCloseBtn" type="button" class="btn-tap badge badge-muted" style="padding: 5px 10px; font-size: 11.5px;">닫기 ✕</button>
       </div>
-      <div class="stack-2">
-        <div>
-          <label style="font-size: 11.5px; color: var(--text-muted); font-weight: 700;">운동 종목 선택</label>
-          <select id="quickAddExSelect" class="input-dark" style="margin-top: 4px;"></select>
+
+      <!-- 4 Purpose Recommendation Chips -->
+      <div id="quickAddModeChips" class="condition-chips-row">
+        <button type="button" class="btn-tap condition-chip active-ok" data-rec-mode="custom">🎯 맞춤 추천</button>
+        <button type="button" class="btn-tap condition-chip" data-rec-mode="burning">🔥 칼로리 버닝</button>
+        <button type="button" class="btn-tap condition-chip" data-rec-mode="tv">📺 TV 보며 가볍게</button>
+        <button type="button" class="btn-tap condition-chip" data-rec-mode="care">🩹 허리·거북목 케어</button>
+      </div>
+
+      <!-- Active Pain / Dislike Auto-Filter Notice -->
+      <div id="quickAddFilterStatus" class="hidden quick-filter-banner"></div>
+
+      <!-- Top 3~4 Smart Recommendation Cards -->
+      <div id="quickAddRecList" class="stack-2" style="gap: 7px;"></div>
+
+      <!-- Selected Exercise + 1-Tap Volume Presets + Fine Controls -->
+      <div id="quickAddSelectedBox" class="quick-selected-panel stack-2">
+        <div class="row-between" style="gap: 6px;">
+          <div style="min-width: 0; flex: 1;">
+            <div style="font-size: 10px; color: var(--accent); font-weight: 800;">선택된 추가운동</div>
+            <div id="quickAddSelectedName" style="font-size: 14px; font-weight: 900; color: #ffffff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">종목을 선택하세요</div>
+          </div>
+          <span id="quickAddSelectedMeta" class="badge badge-muted" style="font-size: 10px; flex-shrink: 0;">맞춤 추천</span>
         </div>
-        <div class="grid-3">
+
+        <div id="quickAddPresetChips" class="condition-chips-row" style="gap: 5px;"></div>
+
+        <div class="grid-3" style="gap: 6px;">
           <div>
-            <label style="font-size: 11px; color: var(--text-muted); font-weight: 700;">목표 세트</label>
-            <input id="quickAddSets" type="number" min="1" max="20" class="input-dark" value="3" style="margin-top: 4px;">
+            <label style="font-size: 10.5px; color: var(--text-muted); font-weight: 700;">목표 세트</label>
+            <input id="quickAddSets" type="number" min="1" max="20" class="input-dark" value="3" style="margin-top: 3px; height: 34px; font-size: 13px;">
           </div>
           <div>
-            <label style="font-size: 11px; color: var(--text-muted); font-weight: 700;">횟수/시간</label>
-            <input id="quickAddReps" type="text" class="input-dark" value="10회" style="margin-top: 4px;">
+            <label style="font-size: 10.5px; color: var(--text-muted); font-weight: 700;">횟수/시간</label>
+            <input id="quickAddReps" type="text" class="input-dark" value="10회" style="margin-top: 3px; height: 34px; font-size: 13px;">
           </div>
           <div>
-            <label style="font-size: 11px; color: var(--text-muted); font-weight: 700;">중량(kg)</label>
-            <input id="quickAddWeight" type="number" min="0" step="0.5" class="input-dark" value="0" style="margin-top: 4px;">
+            <label style="font-size: 10.5px; color: var(--text-muted); font-weight: 700;">중량(kg)</label>
+            <input id="quickAddWeight" type="number" min="0" step="0.5" class="input-dark" value="0" style="margin-top: 3px; height: 34px; font-size: 13px;">
           </div>
         </div>
       </div>
-      <button id="quickAddConfirmBtn" type="button" class="btn-tap btn-primary" style="height: 44px; font-size: 14px;">오늘 루틴에 추가하고 시작하기</button>
+
+      <!-- Direct Search & Selection Across All 58+ Exercises -->
+      <div id="quickAddSearchSection" class="stack-1" style="border-top: 1px solid var(--border); padding-top: 8px; gap: 5px;">
+        <div class="row-between">
+          <label for="quickAddSearchInput" style="font-size: 11px; color: var(--text-muted); font-weight: 700;">전체 종목 검색 · 직접 선택</label>
+          <span id="quickAddSearchCount" style="font-size: 10px; color: var(--text-muted); font-weight: 700;">58종</span>
+        </div>
+        <input id="quickAddSearchInput" type="search" class="input-dark" placeholder="🔍 종목명·타깃 부위·도구 검색..." style="height: 34px; font-size: 12.5px;">
+        <select id="quickAddExSelect" class="input-dark" style="height: 36px; font-size: 12.5px;"></select>
+      </div>
+
+      <button id="quickAddConfirmBtn" type="button" class="btn-tap btn-primary" style="height: 44px; font-size: 14px; flex-shrink: 0; position: sticky; bottom: 0; z-index: 2; box-shadow: 0 -6px 14px rgba(20, 20, 22, 0.95);">+ 추가하고 바로 시작</button>
     </div>
   </div>
 
@@ -3221,6 +3357,335 @@ body {
     
   };
 
+  __mods["js/recommendEngine.mjs"] = function(__req, __exp) {
+    /**
+     * Client-Side Real-Time Extra Exercise Recommendation Engine.
+     * Supports 4 purpose modes:
+     *   1) custom  ("🎯 맞춤 추천"): Auto-scoring TOP 4 using muscleFreshness >= 80%,
+     *      low weeklyHardSets, pain-area filtering, and dislike deprioritization/exclusion.
+     *   2) burning ("🔥 칼로리 버닝"): Full-body / large-muscle metabolic movements.
+     *   3) tv      ("📺 TV 보며 가볍게"): Silent, low-impact, floor/grip exercises.
+     *   4) care    ("🩹 허리·거북목 케어"): Spinal decompression & thoracic/neck mobility.
+     */
+    const { ENRICHED_DB, getAllExercises, getMuscleGroup, isWarmupOrStretch, findPainAlertAlternative } = __req("js/data.mjs");
+    
+    const EXTRA_MODES = [
+      { id: "custom", label: "🎯 맞춤 추천", name: "맞춤 추천", desc: "회복도·주간 볼륨·통증 분석 TOP 4" },
+      { id: "burning", label: "🔥 칼로리 버닝", name: "칼로리 버닝", desc: "전신·대근육 대사성 운동" },
+      { id: "tv", label: "📺 TV 보며 가볍게", name: "TV 보며 가볍게", desc: "무소음·저충격 홈 케어" },
+      { id: "care", label: "🩹 허리·거북목 케어", name: "허리·거북목 케어", desc: "척추 감압·목·흉추 이완" }
+    ];
+    
+    const CURATED_POOLS = {
+      burning: [
+        "home_kb_swing",
+        "home_kb_sumo_deadlift",
+        "home_kb_reverse_lunge",
+        "home_kb_clean_press",
+        "home_kb_suitcase_carry",
+        "home_goblet_squat",
+        "home_bulgarian",
+        "home_kb_glute_bridge",
+        "home_dips",
+        "home_kb_floor_2arm",
+        "gym_leg_press",
+        "gym_chest_press"
+      ],
+      tv: [
+        "home_gyro_ball",
+        "home_kb_calf_raise",
+        "home_side_plank",
+        "home_bird_dog",
+        "home_smr_chest_open",
+        "home_smr_glute",
+        "home_smr_quad_itb",
+        "home_smr_suboccipital",
+        "home_deadbug",
+        "home_calf_stretch",
+        "home_hip_flexor_stretch"
+      ],
+      care: [
+        "home_smr_glute",
+        "home_smr_thoracic",
+        "home_smr_suboccipital",
+        "home_smr_chest_open",
+        "home_dead_hang",
+        "home_deadbug",
+        "home_bird_dog",
+        "home_pushup_scapula",
+        "home_thoracic_rot",
+        "home_smr",
+        "home_smr_quad_itb"
+      ]
+    };
+    
+    const GROUP_LABEL = {
+      push: "가슴·밀기",
+      pull: "등·당기기",
+      legs: "하체·둔근",
+      core: "코어"
+    };
+    
+    const PRIORITY_HOME_IDS = new Set([
+      "home_inverted_row",
+      "home_band_pullup",
+      "home_deep_pushup",
+      "home_goblet_squat",
+      "home_kb_sumo_deadlift",
+      "home_kb_reverse_lunge",
+      "home_kb_clean_press",
+      "home_kb_swing",
+      "home_side_plank",
+      "home_deadbug",
+      "home_bird_dog",
+      "home_kb_row",
+      "home_dips"
+    ]);
+    
+    function getVolumePresetsForExercise(ex) {
+      if (!ex) return [];
+      const defaultWeight = typeof ex.defaultWeightKg === "number" ? ex.defaultWeightKg : 0;
+      const defaultReps = ex.defaultReps || "10회";
+      const presets = [
+        { id: "light_2", label: "가볍게 2세트", sets: 2, reps: defaultReps, weightKg: defaultWeight },
+        { id: "std_3", label: "표준 3세트", sets: 3, reps: defaultReps, weightKg: defaultWeight },
+        { id: "focus_5", label: "집중 5세트", sets: 5, reps: defaultReps, weightKg: defaultWeight }
+      ];
+      if (ex.id === "home_kb_swing") {
+        presets.push({
+          id: "swing_10x10",
+          label: "챌린지 10×10",
+          sets: 10,
+          reps: "10회",
+          weightKg: defaultWeight || 14
+        });
+      }
+      return presets;
+    }
+    
+    function isPainUnsafeForAreas(ex, painAreas = []) {
+      if (!ex || !Array.isArray(painAreas) || painAreas.length === 0) return false;
+      return Boolean(findPainAlertAlternative(ex, painAreas));
+    }
+    
+    function buildCustomReason(ex, grp, fresh, weekly, painAreas) {
+      if (!grp) {
+        if (painAreas.length > 0) {
+          return `${painAreas.join("·")} 긴장 완화 · 안전 이완`;
+        }
+        return "전신 가동성·이완 보강 · 피로 부담 0";
+      }
+      const label = GROUP_LABEL[grp] || grp;
+      if (painAreas.length > 0) {
+        return `${label} 회복 ${fresh}% · ${painAreas.join("·")} 무부담`;
+      }
+      if (weekly < 10) {
+        return `${label} 회복 ${fresh}% · 주간 볼륨 보강`;
+      }
+      return `${label} 회복 ${fresh}% · 컨디션 최적`;
+    }
+    
+    function buildCuratedReason(modeId, ex, grp, freshness, painAreas) {
+      const fresh = grp && freshness && freshness[grp] != null ? freshness[grp] : 100;
+      const label = grp ? GROUP_LABEL[grp] : "전신·이완";
+      if (modeId === "burning") {
+        return painAreas.length > 0
+          ? `전신 대사성 버닝 · ${painAreas.join("·")} 부담 없음`
+          : `전신 대사성 버닝 · ${label} 회복 ${fresh}%`;
+      }
+      if (modeId === "tv") {
+        if (isWarmupOrStretch(ex)) {
+          return "무소음 매트 이완 · TV 보며 피로 부담 0";
+        }
+        return `무소음·저충격 집중 · ${label} 가벼운 자극`;
+      }
+      if (modeId === "care") {
+        return painAreas.length > 0
+          ? `${painAreas.join("·")} 케어 · 척추 감압·부드러운 가동성`
+          : "척추 감압·거북목 정렬 · 무부담 코어·이완";
+      }
+      return "";
+    }
+    
+    /**
+     * Computes top extra exercise recommendations for the selected mode.
+     * Returns array of { ex, reason, modeId, modeName, muscleGroup, freshnessPct, weeklySets }.
+     */
+    function recommendExtraExercises({
+      mode = "custom",
+      routineItems = [],
+      records = {},
+      metrics = null,
+      painAreas = [],
+      dislikedExercises = [],
+      customExercises = [],
+      routineMode = "home",
+      limit = 4
+    } = {}) {
+      const allEx = getAllExercises(customExercises);
+      const byId = new Map(allEx.map(x => [x.id, x]));
+      const modeMeta = EXTRA_MODES.find(m => m.id === mode) || EXTRA_MODES[0];
+    
+      const completedIds = new Set();
+      const inRoutineIds = new Set();
+      for (const item of routineItems || []) {
+        if (!item || !item.id) continue;
+        inRoutineIds.add(item.id);
+        const rec = records && records[item.id];
+        if (rec && rec.isCompleted) {
+          completedIds.add(item.id);
+        }
+      }
+    
+      const dislikedSet = new Set(Array.isArray(dislikedExercises) ? dislikedExercises : []);
+      if (records) {
+        for (const [eid, rec] of Object.entries(records)) {
+          if (rec && rec.preference === "dislike") dislikedSet.add(eid);
+        }
+      }
+    
+      const freshness = (metrics && metrics.muscleFreshness) || { push: 100, pull: 100, legs: 100, core: 100 };
+      const weeklySets = (metrics && metrics.weeklyHardSets) || { push: 0, pull: 0, legs: 0, core: 0 };
+    
+      const isEligibleStrict = ex =>
+        ex &&
+        !completedIds.has(ex.id) &&
+        !inRoutineIds.has(ex.id) &&
+        !dislikedSet.has(ex.id) &&
+        !isPainUnsafeForAreas(ex, painAreas);
+    
+      if (mode !== "custom") {
+        const curatedIds = CURATED_POOLS[mode] || [];
+        const picked = [];
+        const seen = new Set();
+    
+        for (const id of curatedIds) {
+          const ex = byId.get(id);
+          if (!ex || seen.has(ex.id)) continue;
+          if (!isEligibleStrict(ex)) continue;
+          seen.add(ex.id);
+          const grp = getMuscleGroup(ex);
+          picked.push({
+            ex,
+            modeId: mode,
+            modeName: modeMeta.name,
+            muscleGroup: grp,
+            freshnessPct: grp ? (freshness[grp] ?? 100) : 100,
+            weeklySets: grp ? (weeklySets[grp] ?? 0) : 0,
+            reason: buildCuratedReason(mode, ex, grp, freshness, painAreas)
+          });
+          if (picked.length >= limit) break;
+        }
+    
+        // Fallback: if strict pool has < limit (e.g. several already completed or in routine), add non-completed/safe items matching theme
+        if (picked.length < limit) {
+          for (const ex of allEx) {
+            if (picked.length >= limit) break;
+            if (seen.has(ex.id) || !isEligibleStrict(ex)) continue;
+            if (mode === "burning" && isWarmupOrStretch(ex)) continue;
+            if (mode === "care" && !isWarmupOrStretch(ex) && getMuscleGroup(ex) !== "core") continue;
+            if (mode === "tv" && (ex.mode === "gym" || (typeof ex.defaultWeightKg === "number" && ex.defaultWeightKg > 14))) continue;
+            seen.add(ex.id);
+            const grp = getMuscleGroup(ex);
+            picked.push({
+              ex,
+              modeId: mode,
+              modeName: modeMeta.name,
+              muscleGroup: grp,
+              freshnessPct: grp ? (freshness[grp] ?? 100) : 100,
+              weeklySets: grp ? (weeklySets[grp] ?? 0) : 0,
+              reason: buildCuratedReason(mode, ex, grp, freshness, painAreas)
+            });
+          }
+        }
+    
+        return picked;
+      }
+    
+      // Mode 1: 🎯 맞춤 추천 (Auto-scoring TOP 4)
+      const anyGroupRecovered80 = ["push", "pull", "legs", "core"].some(g => (freshness[g] ?? 100) >= 80);
+    
+      const scored = allEx
+        .filter(ex => isEligibleStrict(ex))
+        .map((ex, idx) => {
+          const grp = getMuscleGroup(ex);
+          let score = 0;
+    
+          // Mode alignment (prefer matching home vs gym routine mode)
+          if (ex.mode === routineMode) score += 25;
+          else if (String(ex.id).startsWith("custom_")) score += 10;
+          else score -= 35;
+    
+          let fresh = 100;
+          let weekly = 0;
+          if (grp) {
+            fresh = freshness[grp] != null ? freshness[grp] : 100;
+            weekly = weeklySets[grp] != null ? weeklySets[grp] : 0;
+    
+            if (fresh >= 80) score += 60;
+            else if (fresh >= 60) score += 15;
+            else score -= 35;
+    
+            score += fresh * 0.55;
+            score += Math.max(0, 14 - weekly) * 5;
+            if (PRIORITY_HOME_IDS.has(ex.id)) score += 6;
+          } else {
+            // Warmup/mobility: surface prominently when muscles are globally fatigued (<80%)
+            score += anyGroupRecovered80 ? 12 : 88;
+          }
+    
+          if (painAreas.length > 0 && ENRICHED_DB[ex.id]) {
+            score += 5;
+          }
+    
+          return {
+            ex,
+            grp,
+            fresh,
+            weekly,
+            score,
+            origIdx: idx,
+            reason: buildCustomReason(ex, grp, fresh, weekly, painAreas)
+          };
+        });
+    
+      // Pick top `limit` with soft muscle-group diversity so TOP 4 isn't monochrome
+      const remaining = scored.slice();
+      const groupCounts = {};
+      const selected = [];
+    
+      while (selected.length < limit && remaining.length > 0) {
+        remaining.sort((a, b) => {
+          const penA = (groupCounts[a.grp || "stretch"] || 0) * 32;
+          const penB = (groupCounts[b.grp || "stretch"] || 0) * 32;
+          return b.score - penB !== a.score - penA
+            ? (b.score - penB) - (a.score - penA)
+            : a.origIdx - b.origIdx;
+        });
+        const best = remaining.shift();
+        groupCounts[best.grp || "stretch"] = (groupCounts[best.grp || "stretch"] || 0) + 1;
+        selected.push({
+          ex: best.ex,
+          modeId: "custom",
+          modeName: modeMeta.name,
+          muscleGroup: best.grp,
+          freshnessPct: best.fresh,
+          weeklySets: best.weekly,
+          score: Math.round((best.score) * 10) / 10,
+          reason: best.reason
+        });
+      }
+    
+      return selected;
+    }
+    
+    __exp.getVolumePresetsForExercise = getVolumePresetsForExercise;
+    __exp.isPainUnsafeForAreas = isPainUnsafeForAreas;
+    __exp.recommendExtraExercises = recommendExtraExercises;
+    __exp.EXTRA_MODES = EXTRA_MODES;
+    
+  };
+
   __mods["js/bridge.mjs"] = function(__req, __exp) {
     /**
      * Native AndroidBridge (v2.1 + v3.0 compatible), Web Audio completion chime, and Haptics.
@@ -4110,6 +4575,8 @@ body {
                 routineWeightKg: hasRoutineWeight ? it.weightKg : null,
                 restSec: it.restSec || found.restSec,
                 reason: it.reason || "",
+                isExtra: !!it.isExtra,
+                extraReason: it.extraReason || "",
                 swappedFrom: it.swappedFrom || null,
                 swapReason: it.swapReason || null,
                 undoItem: it.undoItem || null,
@@ -4130,6 +4597,8 @@ body {
               routineWeightKg: hasRoutineWeight ? it.weightKg : null,
               restSec: it.restSec || 60,
               reason: it.reason || "",
+              isExtra: !!it.isExtra,
+              extraReason: it.extraReason || "",
               swappedFrom: it.swappedFrom || null,
               swapReason: it.swapReason || null,
               undoItem: it.undoItem || null,
@@ -4159,7 +4628,13 @@ body {
     
         const existingItems = getTodayRoutineExercises();
         const existingIdx = existingItems.findIndex(x => x.id === exId);
-        const hasOverrides = overrides && (overrides.sets != null || overrides.reps != null || overrides.weightKg != null);
+        const hasOverrides =
+          overrides &&
+          (overrides.sets != null ||
+            overrides.reps != null ||
+            overrides.weightKg != null ||
+            overrides.isExtra != null ||
+            overrides.extraReason != null);
     
         if (existingIdx !== -1 && !hasOverrides) return existingIdx;
     
@@ -4175,7 +4650,8 @@ body {
               sets: x.defaultSets,
               reps: x.defaultReps,
               weightKg: typeof x.defaultWeightKg === "number" ? x.defaultWeightKg : undefined,
-              restSec: x.restSec || 60
+              restSec: x.restSec || 60,
+              ...(x.isExtra ? { isExtra: true, extraReason: x.extraReason || "" } : {})
             }))
           };
         }
@@ -4186,6 +4662,8 @@ body {
           overrides && overrides.weightKg != null && !Number.isNaN(Number(overrides.weightKg))
             ? Number(overrides.weightKg)
             : ex.defaultWeightKg;
+        const isExtra = overrides && overrides.isExtra !== undefined ? !!overrides.isExtra : true;
+        const extraReason = (overrides && overrides.extraReason) || "";
     
         const newSpec = {
           id: ex.id,
@@ -4194,7 +4672,8 @@ body {
           reps: nextReps,
           weightKg: typeof nextWeight === "number" ? nextWeight : undefined,
           restSec: ex.restSec || 60,
-          reason: overrides && overrides.reason ? overrides.reason : "오늘 즉석 추가 종목"
+          reason: (overrides && overrides.reason) || (extraReason ? `${extraReason} 추가 운동` : "오늘 즉석 추가 종목"),
+          ...(isExtra ? { isExtra: true, extraReason: extraReason || "직접 선택" } : {})
         };
     
         if (Array.isArray(state.todayRoutine.items)) {
@@ -4233,6 +4712,48 @@ body {
         return getTodayRoutineExercises().findIndex(x => x.id === ex.id);
       }
     
+      function removeExtraExercise(idx) {
+        ensureMaterializedRoutine();
+        const current = getTodayRoutineExercises();
+        if (idx < 0 || idx >= current.length) return false;
+        const ex = current[idx];
+        if (!ex || !ex.isExtra) return false;
+        const rec = getRecord(ex);
+        if (rec && rec.isCompleted) return false;
+    
+        const itemIdx = state.todayRoutine.items.findIndex(it => resolveExerciseId(it && it.id) === ex.id);
+        if (itemIdx !== -1) {
+          state.todayRoutine.items.splice(itemIdx, 1);
+        }
+        if (Array.isArray(state.extraTodayIds)) {
+          state.extraTodayIds = state.extraTodayIds.filter(eid => resolveExerciseId(eid) !== ex.id);
+        }
+        if (state.records && state.records[ex.id] && !state.records[ex.id].isCompleted) {
+          const prevRec = state.records[ex.id];
+          state.records[ex.id] = {
+            sets: (prevRec.sets || []).map(s => ({
+              weightKg: s.weightKg != null ? s.weightKg : 0,
+              reps: s.reps || ex.defaultReps || "10회",
+              done: false
+            })),
+            isCompleted: false,
+            rpe: null,
+            preference: prevRec.preference || null,
+            preferenceNote: prevRec.preferenceNote || "",
+            lastUpdatedDate: ""
+          };
+        }
+    
+        const nextLen = getTodayRoutineExercises().length;
+        if (state.todayCardIndex >= nextLen) {
+          state.todayCardIndex = Math.max(0, nextLen - 1);
+        }
+        markUserInteractedToday();
+        refreshMetrics();
+        persistState();
+        return true;
+      }
+    
       function ensureMaterializedRoutine() {
         const cur = getTodayRoutineExercises();
         if (!state.todayRoutine || !Array.isArray(state.todayRoutine.items) || state.todayRoutine.items.length === 0) {
@@ -4248,7 +4769,8 @@ body {
               reps: x.defaultReps,
               weightKg: typeof x.defaultWeightKg === "number" ? x.defaultWeightKg : undefined,
               restSec: x.restSec || 60,
-              reason: x.reason || ""
+              reason: x.reason || "",
+              ...(x.isExtra ? { isExtra: true, extraReason: x.extraReason || "" } : {})
             }))
           };
           state.extraTodayIds = [];
@@ -4553,6 +5075,7 @@ body {
         getRecord,
         getTodayRoutineExercises,
         addExerciseToTodayRoutine,
+        removeExtraExercise,
         replaceTodayRoutineExercise,
         undoRoutineSwap,
         getRoutineEffectiveMode,
@@ -4910,6 +5433,7 @@ body {
           isCompleted: isComp,
           preference: rec.preference || "neutral",
           preferenceNote: rec.preferenceNote || "",
+          ...(ex.isExtra ? { isExtra: true, extraReason: ex.extraReason || "" } : {}),
           ...(ex.swappedFrom ? { swappedFrom: ex.swappedFrom, swapReason: ex.swapReason || "variation" } : {}),
           setLogs: setsArr.map((s, idx) => ({
             set: idx + 1,
@@ -5319,11 +5843,20 @@ body {
         }
       }
     
+      function commitTodayHistory(today = getTodayStr()) {
+        upsertTodayHistory(store, today);
+        const metrics = store.refreshMetrics();
+        store.persistState();
+        if (uiHooks.onMetricsUpdated) uiHooks.onMetricsUpdated(metrics);
+        return metrics;
+      }
+    
       return {
         pushToGoogleDrive,
         scheduleAutoPush,
         pullFromGoogleDrive,
-        runAutoSync
+        runAutoSync,
+        commitTodayHistory
       };
     }
     
@@ -5590,6 +6123,11 @@ body {
         <div class="report-recovery-banner">
           💡 ${data.recoveryGuide}
         </div>
+    
+        <!-- Deep Link to Smart Extra Exercise Recommendations -->
+        <button id="reportOpenExtraBtn" type="button" class="btn-tap report-extra-cta-btn">
+          ⚡ 에너지가 남았다면? 추가운동 추천받기
+        </button>
       `;
     }
     
@@ -5604,6 +6142,7 @@ body {
     const { ENRICHED_DB, getGuideMedia, isWarmupOrStretch, getAllExercises, findPainAlertAlternative } = __req("js/data.mjs");
     const { getTodayStr, getWorkoutDateStr } = __req("js/date.mjs");
     const { getSwapCandidates } = __req("js/swapEngine.mjs");
+    const { EXTRA_MODES, getVolumePresetsForExercise, recommendExtraExercises } = __req("js/recommendEngine.mjs");
     const { renderCompletionReportModal } = __req("js/ui/report.mjs");
     
     function createModalController({ store, sync, onRenderAll, showToast }) {
@@ -5617,6 +6156,11 @@ body {
       let swapTabMode = "home";
       let swapReason = "variation";
       let swapReasonManual = false;
+      let quickAddRecMode = "custom";
+      let quickAddSearchQuery = "";
+      let quickAddSelectedId = null;
+      let quickAddSelectedReason = "맞춤 추천";
+      let quickAddActivePreset = "default";
     
       function stopGuideAutoPlay() {
         if (guidePlayTimer) {
@@ -5805,7 +6349,12 @@ body {
         if (Array.isArray(rec.sets)) {
           rec.sets.forEach(s => { s.done = true; });
         }
-        store.persistState();
+        if (sync && typeof sync.commitTodayHistory === "function") {
+          sync.commitTodayHistory();
+        } else {
+          store.refreshMetrics();
+          store.persistState();
+        }
         sync.scheduleAutoPush(300);
         showToast(`✅ ${ex.name} 완료!`);
         moveToNextIncompleteExercise();
@@ -5841,34 +6390,221 @@ body {
         document.getElementById("reportModal")?.classList.add("hidden");
       }
     
-      function syncQuickAddDefaults(exId) {
+      function getAllDislikedIds() {
+        const set = new Set(Array.isArray(store.state.dislikedExercises) ? store.state.dislikedExercises : []);
+        if (store.state.records) {
+          for (const [eid, rec] of Object.entries(store.state.records)) {
+            if (rec && rec.preference === "dislike") set.add(eid);
+          }
+        }
+        return [...set];
+      }
+    
+      function renderQuickAddPresetChips(ex) {
+        const wrap = document.getElementById("quickAddPresetChips");
+        if (!wrap || !ex) return;
+        const presets = getVolumePresetsForExercise(ex);
+        wrap.innerHTML = presets
+          .map(
+            p => `
+              <button type="button" class="btn-tap quick-preset-chip ${quickAddActivePreset === p.id ? "active" : ""}" data-vol-preset="${p.id}">
+                ${p.label}
+              </button>
+            `
+          )
+          .join("");
+    
+        wrap.querySelectorAll("[data-vol-preset]").forEach(btn => {
+          btn.addEventListener("click", () => {
+            const picked = presets.find(x => x.id === btn.dataset.volPreset);
+            if (!picked) return;
+            quickAddActivePreset = picked.id;
+            const setsEl = document.getElementById("quickAddSets");
+            const repsEl = document.getElementById("quickAddReps");
+            const weightEl = document.getElementById("quickAddWeight");
+            if (setsEl) setsEl.value = String(picked.sets);
+            if (repsEl) repsEl.value = String(picked.reps);
+            if (weightEl) weightEl.value = String(picked.weightKg);
+            wrap.querySelectorAll("[data-vol-preset]").forEach(b => {
+              b.classList.toggle("active", b.dataset.volPreset === picked.id);
+            });
+          });
+        });
+      }
+    
+      function syncQuickAddDefaults(exId, reasonLabel = null) {
         const allEx = getAllExercises(store.state.customExercises);
         const ex = allEx.find(x => x.id === exId) || allEx[0];
         if (!ex) return;
+        quickAddSelectedId = ex.id;
+        if (reasonLabel) quickAddSelectedReason = reasonLabel;
+        quickAddActivePreset = "default";
+    
         const setsEl = document.getElementById("quickAddSets");
         const repsEl = document.getElementById("quickAddReps");
         const weightEl = document.getElementById("quickAddWeight");
+        const selEl = document.getElementById("quickAddExSelect");
+        const nameEl = document.getElementById("quickAddSelectedName");
+        const metaEl = document.getElementById("quickAddSelectedMeta");
+    
         if (setsEl) setsEl.value = String(ex.defaultSets || 3);
         if (repsEl) repsEl.value = String(ex.defaultReps || "10회");
         if (weightEl) weightEl.value = String(typeof ex.defaultWeightKg === "number" ? ex.defaultWeightKg : 0);
+        if (selEl && [...selEl.options].some(o => o.value === ex.id)) selEl.value = ex.id;
+        if (nameEl) nameEl.textContent = ex.name;
+        if (metaEl) metaEl.textContent = quickAddSelectedReason || "추가 선택";
+    
+        renderQuickAddPresetChips(ex);
+        document.querySelectorAll("#quickAddRecList [data-rec-pick]").forEach(card => {
+          card.classList.toggle("is-selected", card.dataset.recPick === ex.id);
+        });
+      }
+    
+      function renderQuickAddCatalogOptions() {
+        const sel = document.getElementById("quickAddExSelect");
+        const countEl = document.getElementById("quickAddSearchCount");
+        if (!sel) return [];
+    
+        const allEx = getAllExercises(store.state.customExercises);
+        const dislikedSet = new Set(getAllDislikedIds());
+        const q = (quickAddSearchQuery || "").trim().toLowerCase();
+    
+        let filtered = allEx;
+        if (q) {
+          filtered = allEx.filter(
+            ex =>
+              (ex.name || "").toLowerCase().includes(q) ||
+              (ex.targetMuscle || "").toLowerCase().includes(q) ||
+              (ex.equipment || "").toLowerCase().includes(q) ||
+              (ex.category || "").toLowerCase().includes(q)
+          );
+        }
+    
+        const sortedEx = filtered.slice().sort((a, b) => Number(dislikedSet.has(a.id)) - Number(dislikedSet.has(b.id)));
+        if (countEl) {
+          countEl.textContent = q ? `검색 ${sortedEx.length}/${allEx.length}종` : `전체 ${allEx.length}종`;
+        }
+    
+        if (!sortedEx.length) {
+          sel.innerHTML = `<option value="">검색 결과 없음</option>`;
+          return [];
+        }
+    
+        sel.innerHTML = sortedEx
+          .map(ex => {
+            const tag = ex.mode === "gym" ? "기구" : String(ex.id).startsWith("custom_") ? "내종목" : "홈트";
+            const dislikeTag = dislikedSet.has(ex.id) ? " · 👎 비선호" : "";
+            return `<option value="${ex.id}">[${tag}] ${ex.name} (${ex.targetMuscle})${dislikeTag}</option>`;
+          })
+          .join("");
+    
+        if (quickAddSelectedId && sortedEx.some(x => x.id === quickAddSelectedId)) {
+          sel.value = quickAddSelectedId;
+        } else if (sortedEx[0]) {
+          sel.value = sortedEx[0].id;
+        }
+        return sortedEx;
+      }
+    
+      function renderQuickAddSheet(autoPickTopRec = false) {
+        // 1. Update 4 purpose chips
+        document.querySelectorAll("#quickAddModeChips [data-rec-mode]").forEach(btn => {
+          btn.classList.toggle("active-ok", btn.dataset.recMode === quickAddRecMode);
+        });
+    
+        const painAreas =
+          store.state.bodyCondition && Array.isArray(store.state.bodyCondition.painAreas)
+            ? store.state.bodyCondition.painAreas
+            : [];
+        const disliked = getAllDislikedIds();
+        const routineItems = store.getTodayRoutineExercises();
+        const metrics = store.refreshMetrics();
+        const routineMode = store.getRoutineEffectiveMode ? store.getRoutineEffectiveMode() : "home";
+    
+        const statusBanner = document.getElementById("quickAddFilterStatus");
+        if (statusBanner) {
+          const notes = [];
+          if (painAreas.length > 0) notes.push(`🩺 [${painAreas.join("·")}] 부담 종목 제외`);
+          if (disliked.length > 0) notes.push(`👎 비선호 ${disliked.length}종 제외`);
+          if (notes.length > 0) {
+            statusBanner.textContent = `자동 안전 필터링 적용 중: ${notes.join(" · ")}`;
+            statusBanner.classList.remove("hidden");
+          } else {
+            statusBanner.classList.add("hidden");
+          }
+        }
+    
+        const recs = recommendExtraExercises({
+          mode: quickAddRecMode,
+          routineItems,
+          records: store.state.records,
+          metrics,
+          painAreas,
+          dislikedExercises: disliked,
+          customExercises: store.state.customExercises,
+          routineMode,
+          limit: 4
+        });
+    
+        if (autoPickTopRec && recs.length > 0) {
+          syncQuickAddDefaults(recs[0].ex.id, recs[0].modeName);
+        }
+    
+        const recList = document.getElementById("quickAddRecList");
+        if (recList) {
+          if (!recs.length) {
+            recList.innerHTML = `<div style="font-size:12px; color:var(--text-muted); text-align:center; padding:12px;">조건에 맞는 추천 종목이 없습니다. 아래 전체 검색에서 직접 선택해 보세요.</div>`;
+          } else {
+            recList.innerHTML = recs
+              .map(r => {
+                const ex = r.ex;
+                const isSel = ex.id === quickAddSelectedId;
+                const wText = ex.defaultWeightKg > 0 ? `${ex.defaultWeightKg}kg · ` : "";
+                return `
+                  <button type="button" class="btn-tap quick-rec-card ${isSel ? "is-selected" : ""}" data-rec-pick="${ex.id}" data-rec-mode-name="${r.modeName}">
+                    <div class="row-between" style="width:100%; gap:6px;">
+                      <div class="row-gap" style="gap:4px; min-width:0;">
+                        <span class="badge ${ex.mode === "gym" ? "badge-purple" : "badge-lime"}" style="font-size:9.5px; padding:1px 6px;">${ex.mode === "gym" ? "🏋️ 기구" : "🏠 홈트"}</span>
+                        <span style="font-size:10.5px; color:var(--text-muted); font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${ex.category}</span>
+                      </div>
+                      <span class="tabular-nums" style="font-size:10.5px; color:var(--text-soft); font-weight:700; flex-shrink:0;">${wText}${ex.defaultSets}세트 × ${ex.defaultReps}</span>
+                    </div>
+                    <div style="font-size:14px; font-weight:900; color:#ffffff;">${ex.name}</div>
+                    <div class="quick-rec-reason">✨ ${r.reason}</div>
+                  </button>
+                `;
+              })
+              .join("");
+    
+            recList.querySelectorAll("[data-rec-pick]").forEach(btn => {
+              btn.addEventListener("click", () => {
+                syncQuickAddDefaults(btn.dataset.recPick, btn.dataset.recModeName || "맞춤 추천");
+              });
+            });
+          }
+        }
+    
+        renderQuickAddCatalogOptions();
       }
     
       function openQuickAddModal(preselectExId = null) {
-        const sel = document.getElementById("quickAddExSelect");
-        const allEx = getAllExercises(store.state.customExercises);
-        const dislikedSet = new Set(Array.isArray(store.state.dislikedExercises) ? store.state.dislikedExercises : []);
-        const sortedEx = allEx.slice().sort((a, b) => Number(dislikedSet.has(a.id)) - Number(dislikedSet.has(b.id)));
-        if (sel) {
-          sel.innerHTML = sortedEx
-            .map(ex => {
-              const tag = ex.mode === "gym" ? "기구" : String(ex.id).startsWith("custom_") ? "내종목" : "홈트";
-              const dislikeTag = dislikedSet.has(ex.id) ? " · 👎 비선호" : "";
-              return `<option value="${ex.id}">[${tag}] ${ex.name} (${ex.targetMuscle})${dislikeTag}</option>`;
-            })
-            .join("");
-          const chosenId = preselectExId && sortedEx.some(x => x.id === preselectExId) ? preselectExId : (sortedEx[0] && sortedEx[0].id);
-          if (chosenId) sel.value = chosenId;
-          syncQuickAddDefaults(chosenId);
+        quickAddRecMode = "custom";
+        quickAddSearchQuery = "";
+        const searchInput = document.getElementById("quickAddSearchInput");
+        if (searchInput) searchInput.value = "";
+    
+        if (preselectExId) {
+          quickAddSelectedReason = "직접 선택";
+          syncQuickAddDefaults(preselectExId, "직접 선택");
+          renderQuickAddSheet(false);
+        } else {
+          quickAddSelectedId = null;
+          quickAddSelectedReason = EXTRA_MODES[0].name;
+          renderQuickAddSheet(true);
+          if (!quickAddSelectedId) {
+            const sorted = renderQuickAddCatalogOptions();
+            if (sorted[0]) syncQuickAddDefaults(sorted[0].id, "직접 선택");
+          }
         }
         document.getElementById("quickAddModal")?.classList.remove("hidden");
       }
@@ -6010,8 +6746,12 @@ body {
           rec.sets.forEach(s => { s.done = true; });
         }
     
-        store.refreshMetrics();
-        store.persistState();
+        if (sync && typeof sync.commitTodayHistory === "function") {
+          sync.commitTodayHistory();
+        } else {
+          store.refreshMetrics();
+          store.persistState();
+        }
         sync.scheduleAutoPush(300);
         moveToNextIncompleteExercise();
       }
@@ -6029,33 +6769,75 @@ body {
     
         document.getElementById("reportModalCloseBtn")?.addEventListener("click", closeCompletionReportModal);
         document.getElementById("reportModal")?.addEventListener("click", e => {
-          if (e.target.id === "reportModal") closeCompletionReportModal();
+          if (e.target.id === "reportModal") {
+            closeCompletionReportModal();
+          } else if (e.target.closest("#reportOpenExtraBtn")) {
+            closeCompletionReportModal();
+            openQuickAddModal();
+          }
         });
     
         document.getElementById("quickAddCloseBtn")?.addEventListener("click", closeQuickAddModal);
         document.getElementById("quickAddModal")?.addEventListener("click", e => {
           if (e.target.id === "quickAddModal") closeQuickAddModal();
         });
+        document.querySelectorAll("#quickAddModeChips [data-rec-mode]").forEach(btn => {
+          btn.addEventListener("click", () => {
+            quickAddRecMode = btn.dataset.recMode || "custom";
+            const modeMeta = EXTRA_MODES.find(m => m.id === quickAddRecMode) || EXTRA_MODES[0];
+            quickAddSelectedReason = modeMeta.name;
+            renderQuickAddSheet(true);
+          });
+        });
+        document.getElementById("quickAddSearchInput")?.addEventListener("input", e => {
+          quickAddSearchQuery = e.target.value || "";
+          const filtered = renderQuickAddCatalogOptions();
+          if (quickAddSearchQuery.trim() && filtered.length > 0 && !filtered.some(x => x.id === quickAddSelectedId)) {
+            syncQuickAddDefaults(filtered[0].id, "검색 선택");
+          }
+        });
         document.getElementById("quickAddExSelect")?.addEventListener("change", e => {
-          syncQuickAddDefaults(e.target.value);
+          if (e.target.value) syncQuickAddDefaults(e.target.value, "직접 선택");
+        });
+        ["quickAddSets", "quickAddReps", "quickAddWeight"].forEach(id => {
+          document.getElementById(id)?.addEventListener("input", () => {
+            quickAddActivePreset = "custom";
+            document.querySelectorAll("#quickAddPresetChips [data-vol-preset]").forEach(b => b.classList.remove("active"));
+          });
         });
         document.getElementById("quickAddConfirmBtn")?.addEventListener("click", () => {
-          const exId = document.getElementById("quickAddExSelect")?.value;
+          const selVal = document.getElementById("quickAddExSelect")?.value;
+          const exId = quickAddSelectedId || selVal;
+          if (!exId) {
+            showToast("추가할 운동 종목을 선택해 주세요.");
+            return;
+          }
           const sets = Math.max(1, Number(document.getElementById("quickAddSets")?.value) || 3);
           const reps = (document.getElementById("quickAddReps")?.value || "").trim() || "10회";
           const weightVal = Number(document.getElementById("quickAddWeight")?.value);
           const weightKg = Number.isNaN(weightVal) || weightVal <= 0 ? 0 : weightVal;
-          const idx = store.addExerciseToTodayRoutine(exId, { sets, reps, weightKg });
+          const reasonName = quickAddSelectedReason || "맞춤 추천";
+          const idx = store.addExerciseToTodayRoutine(exId, {
+            sets,
+            reps,
+            weightKg,
+            isExtra: true,
+            extraReason: reasonName
+          });
           closeQuickAddModal();
           if (idx >= 0) {
             const added = store.getTodayRoutineExercises()[idx];
             store.state.activeTab = "today";
             store.state.todayScreen = "card";
             store.state.todayCardIndex = idx;
-            store.persistState();
+            if (sync && typeof sync.commitTodayHistory === "function") {
+              sync.commitTodayHistory();
+            } else {
+              store.persistState();
+            }
             sync.scheduleAutoPush(300);
             onRenderAll();
-            showToast(`➕ [${(added && added.name) || exId}] ${sets}세트 × ${reps} 추가됨!`);
+            showToast(`⚡ [${(added && added.name) || exId}] ${sets}세트 × ${reps} 추가됨 (${reasonName})!`);
           }
         });
     
@@ -6339,7 +7121,10 @@ body {
               <div class="row-gap" style="gap:10px; min-width:0; flex:1;">
                 <span class="step-chip ${isDone ? "done" : ""}" style="width:28px; height:28px; font-size:12px;">${isDone ? "✓" : idx + 1}</span>
                 <div style="min-width:0; flex:1;">
-                  <div style="font-size:14px; font-weight:800; color:#ffffff; line-height:1.25;">${ex.name}</div>
+                  <div style="display:flex; align-items:center; gap:5px; flex-wrap:wrap;">
+                    <span style="font-size:14px; font-weight:800; color:#ffffff; line-height:1.25;">${ex.name}</span>
+                    ${ex.isExtra ? `<span class="badge-extra-mini">⚡ 추가</span>` : ""}
+                  </div>
                   <div style="font-size:11px; color:var(--text-muted); margin-top:3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
                     <span style="color:var(--accent); font-weight:700;">${specMeta}</span> · ${ex.targetMuscle}
                   </div>
@@ -6351,11 +7136,28 @@ body {
                   }
                 </div>
               </div>
-              <div style="flex-shrink:0; margin-left:6px;">${badgeHtml}</div>
+              <div style="flex-shrink:0; margin-left:6px; display:flex; align-items:center; gap:5px;">
+                ${badgeHtml}
+                ${ex.isExtra && !isDone ? `<button type="button" class="btn-tap dash-extra-remove-btn" data-dash-remove-idx="${idx}" aria-label="${ex.name} 삭제" title="추가 운동 삭제">✕</button>` : ""}
+              </div>
             </div>
           `;
         })
         .join("");
+    
+      listContainer.querySelectorAll(".dash-extra-remove-btn").forEach(btn => {
+        btn.addEventListener("click", e => {
+          e.stopPropagation();
+          const idx = Number(btn.dataset.dashRemoveIdx);
+          const target = store.getTodayRoutineExercises()[idx];
+          if (store.removeExtraExercise && store.removeExtraExercise(idx)) {
+            if (sync && typeof sync.commitTodayHistory === "function") sync.commitTodayHistory();
+            if (sync) sync.scheduleAutoPush(300);
+            if (onRenderAll) onRenderAll();
+            if (showToast) showToast(`🗑️ [${(target && target.name) || "추가 운동"}] 삭제되었습니다.`);
+          }
+        });
+      });
     
       listContainer.querySelectorAll(".dash-pain-alert-btn").forEach(btn => {
         btn.addEventListener("click", e => {
@@ -6709,9 +7511,12 @@ body {
             }
     
             <div class="unified-coach-body">
-              <!-- 2. Exercise Title Row (No Truncation) + Unilateral Badge + Undo Swap -->
+              <!-- 2. Exercise Title Row (No Truncation) + Extra Badge + Unilateral Badge + Undo Swap -->
               <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:6px;">
-                <span style="font-size:16.5px; font-weight:900; color:#ffffff; word-break:keep-all; line-height:1.25; letter-spacing:-0.3px;">${ex.name}</span>
+                <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap; min-width:0; flex:1;">
+                  <span style="font-size:16.5px; font-weight:900; color:#ffffff; word-break:keep-all; line-height:1.25; letter-spacing:-0.3px;">${ex.name}</span>
+                  ${ex.isExtra ? `<span class="badge-extra-mini">⚡ 추가</span>` : ""}
+                </div>
                 <div style="display:flex; align-items:center; gap:4px; flex-shrink:0; margin-top:1px;">
                   ${ex.swappedFrom ? `<button type="button" data-card-action="undo-swap" class="btn-tap card-undo-swap-btn">↩ 원래 종목 복구</button>` : ""}
                   ${enriched && enriched.unilateral ? `<span class="badge badge-purple" style="font-size:9.5px; padding:1px 6px; white-space:nowrap;">↔ 양쪽</span>` : ""}
@@ -6868,8 +7673,12 @@ body {
               rec.lastUpdatedDate = getTodayStr();
               rec.isCompleted = rec.sets.every(s => s.done);
               if (!rec.isCompleted) rec.rpe = null;
-              store.refreshMetrics();
-              store.persistState();
+              if (sync && typeof sync.commitTodayHistory === "function") {
+                sync.commitTodayHistory();
+              } else {
+                store.refreshMetrics();
+                store.persistState();
+              }
               sync.scheduleAutoPush(600);
               renderCardStepBar();
               renderFocusedCard();

@@ -807,3 +807,106 @@ body {
   font-size: 10px;
   font-weight: 800;
 }
+
+/* Smart Extra Recommendation Bottom Sheet & Extra Badges */
+.badge-extra-mini {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  border: 1px solid #a3e635;
+  background: rgba(163, 230, 53, 0.09);
+  color: #a3e635;
+  font-size: 9.5px;
+  font-weight: 900;
+  line-height: 1.3;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.dash-extra-remove-btn {
+  width: 24px;
+  height: 24px;
+  border-radius: 7px;
+  border: 1px solid rgba(251, 113, 133, 0.45);
+  background: rgba(251, 113, 133, 0.12);
+  color: var(--rose);
+  font-size: 11px;
+  font-weight: 900;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  flex-shrink: 0;
+}
+.quick-filter-banner {
+  background: rgba(250, 204, 21, 0.1);
+  border: 1px solid rgba(250, 204, 21, 0.35);
+  border-radius: 9px;
+  padding: 5px 9px;
+  font-size: 10.5px;
+  font-weight: 800;
+  color: var(--amber-bright);
+  line-height: 1.35;
+}
+.quick-rec-card {
+  width: 100%;
+  text-align: left;
+  background: var(--card-2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 9px 11px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.quick-rec-card.is-selected {
+  border-color: #a3e635;
+  background: rgba(163, 230, 53, 0.1);
+  box-shadow: 0 0 0 1px rgba(163, 230, 53, 0.25);
+}
+.quick-rec-reason {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--accent);
+  line-height: 1.35;
+  word-break: keep-all;
+}
+.quick-selected-panel {
+  background: #0e0e11;
+  border: 1px solid var(--border);
+  border-radius: 13px;
+  padding: 9px 11px;
+  gap: 7px;
+}
+.quick-preset-chip {
+  flex: 0 0 auto;
+  height: 26px;
+  padding: 0 9px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--card-2);
+  color: var(--text-soft);
+  font-size: 11px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+.quick-preset-chip.active {
+  border-color: #a3e635;
+  background: rgba(163, 230, 53, 0.18);
+  color: #a3e635;
+}
+.report-extra-cta-btn {
+  width: 100%;
+  height: 40px;
+  border-radius: 12px;
+  border: 1px dashed rgba(163, 230, 53, 0.55);
+  background: rgba(163, 230, 53, 0.08);
+  color: var(--accent);
+  font-size: 12.5px;
+  font-weight: 900;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+}

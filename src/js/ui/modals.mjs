@@ -4,6 +4,7 @@
 import { ENRICHED_DB, getGuideMedia, isWarmupOrStretch, getAllExercises, findPainAlertAlternative } from "../data.mjs";
 import { getTodayStr, getWorkoutDateStr } from "../date.mjs";
 import { getSwapCandidates } from "../swapEngine.mjs";
+import { EXTRA_MODES, getVolumePresetsForExercise, recommendExtraExercises } from "../recommendEngine.mjs";
 import { renderCompletionReportModal } from "./report.mjs";
 
 export function createModalController({ store, sync, onRenderAll, showToast }) {
@@ -17,6 +18,11 @@ export function createModalController({ store, sync, onRenderAll, showToast }) {
   let swapTabMode = "home";
   let swapReason = "variation";
   let swapReasonManual = false;
+  let quickAddRecMode = "custom";
+  let quickAddSearchQuery = "";
+  let quickAddSelectedId = null;
+  let quickAddSelectedReason = "맞춤 추천";
+  let quickAddActivePreset = "default";
 
   function stopGuideAutoPlay() {
     if (guidePlayTimer) {
@@ -205,7 +211,12 @@ export function createModalController({ store, sync, onRenderAll, showToast }) {
     if (Array.isArray(rec.sets)) {
       rec.sets.forEach(s => { s.done = true; });
     }
-    store.persistState();
+    if (sync && typeof sync.commitTodayHistory === "function") {
+      sync.commitTodayHistory();
+    } else {
+      store.refreshMetrics();
+      store.persistState();
+    }
     sync.scheduleAutoPush(300);
     showToast(`✅ ${ex.name} 완료!`);
     moveToNextIncompleteExercise();
@@ -241,34 +252,221 @@ export function createModalController({ store, sync, onRenderAll, showToast }) {
     document.getElementById("reportModal")?.classList.add("hidden");
   }
 
-  function syncQuickAddDefaults(exId) {
+  function getAllDislikedIds() {
+    const set = new Set(Array.isArray(store.state.dislikedExercises) ? store.state.dislikedExercises : []);
+    if (store.state.records) {
+      for (const [eid, rec] of Object.entries(store.state.records)) {
+        if (rec && rec.preference === "dislike") set.add(eid);
+      }
+    }
+    return [...set];
+  }
+
+  function renderQuickAddPresetChips(ex) {
+    const wrap = document.getElementById("quickAddPresetChips");
+    if (!wrap || !ex) return;
+    const presets = getVolumePresetsForExercise(ex);
+    wrap.innerHTML = presets
+      .map(
+        p => `
+          <button type="button" class="btn-tap quick-preset-chip ${quickAddActivePreset === p.id ? "active" : ""}" data-vol-preset="${p.id}">
+            ${p.label}
+          </button>
+        `
+      )
+      .join("");
+
+    wrap.querySelectorAll("[data-vol-preset]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const picked = presets.find(x => x.id === btn.dataset.volPreset);
+        if (!picked) return;
+        quickAddActivePreset = picked.id;
+        const setsEl = document.getElementById("quickAddSets");
+        const repsEl = document.getElementById("quickAddReps");
+        const weightEl = document.getElementById("quickAddWeight");
+        if (setsEl) setsEl.value = String(picked.sets);
+        if (repsEl) repsEl.value = String(picked.reps);
+        if (weightEl) weightEl.value = String(picked.weightKg);
+        wrap.querySelectorAll("[data-vol-preset]").forEach(b => {
+          b.classList.toggle("active", b.dataset.volPreset === picked.id);
+        });
+      });
+    });
+  }
+
+  function syncQuickAddDefaults(exId, reasonLabel = null) {
     const allEx = getAllExercises(store.state.customExercises);
     const ex = allEx.find(x => x.id === exId) || allEx[0];
     if (!ex) return;
+    quickAddSelectedId = ex.id;
+    if (reasonLabel) quickAddSelectedReason = reasonLabel;
+    quickAddActivePreset = "default";
+
     const setsEl = document.getElementById("quickAddSets");
     const repsEl = document.getElementById("quickAddReps");
     const weightEl = document.getElementById("quickAddWeight");
+    const selEl = document.getElementById("quickAddExSelect");
+    const nameEl = document.getElementById("quickAddSelectedName");
+    const metaEl = document.getElementById("quickAddSelectedMeta");
+
     if (setsEl) setsEl.value = String(ex.defaultSets || 3);
     if (repsEl) repsEl.value = String(ex.defaultReps || "10회");
     if (weightEl) weightEl.value = String(typeof ex.defaultWeightKg === "number" ? ex.defaultWeightKg : 0);
+    if (selEl && [...selEl.options].some(o => o.value === ex.id)) selEl.value = ex.id;
+    if (nameEl) nameEl.textContent = ex.name;
+    if (metaEl) metaEl.textContent = quickAddSelectedReason || "추가 선택";
+
+    renderQuickAddPresetChips(ex);
+    document.querySelectorAll("#quickAddRecList [data-rec-pick]").forEach(card => {
+      card.classList.toggle("is-selected", card.dataset.recPick === ex.id);
+    });
+  }
+
+  function renderQuickAddCatalogOptions() {
+    const sel = document.getElementById("quickAddExSelect");
+    const countEl = document.getElementById("quickAddSearchCount");
+    if (!sel) return [];
+
+    const allEx = getAllExercises(store.state.customExercises);
+    const dislikedSet = new Set(getAllDislikedIds());
+    const q = (quickAddSearchQuery || "").trim().toLowerCase();
+
+    let filtered = allEx;
+    if (q) {
+      filtered = allEx.filter(
+        ex =>
+          (ex.name || "").toLowerCase().includes(q) ||
+          (ex.targetMuscle || "").toLowerCase().includes(q) ||
+          (ex.equipment || "").toLowerCase().includes(q) ||
+          (ex.category || "").toLowerCase().includes(q)
+      );
+    }
+
+    const sortedEx = filtered.slice().sort((a, b) => Number(dislikedSet.has(a.id)) - Number(dislikedSet.has(b.id)));
+    if (countEl) {
+      countEl.textContent = q ? `검색 ${sortedEx.length}/${allEx.length}종` : `전체 ${allEx.length}종`;
+    }
+
+    if (!sortedEx.length) {
+      sel.innerHTML = `<option value="">검색 결과 없음</option>`;
+      return [];
+    }
+
+    sel.innerHTML = sortedEx
+      .map(ex => {
+        const tag = ex.mode === "gym" ? "기구" : String(ex.id).startsWith("custom_") ? "내종목" : "홈트";
+        const dislikeTag = dislikedSet.has(ex.id) ? " · 👎 비선호" : "";
+        return `<option value="${ex.id}">[${tag}] ${ex.name} (${ex.targetMuscle})${dislikeTag}</option>`;
+      })
+      .join("");
+
+    if (quickAddSelectedId && sortedEx.some(x => x.id === quickAddSelectedId)) {
+      sel.value = quickAddSelectedId;
+    } else if (sortedEx[0]) {
+      sel.value = sortedEx[0].id;
+    }
+    return sortedEx;
+  }
+
+  function renderQuickAddSheet(autoPickTopRec = false) {
+    // 1. Update 4 purpose chips
+    document.querySelectorAll("#quickAddModeChips [data-rec-mode]").forEach(btn => {
+      btn.classList.toggle("active-ok", btn.dataset.recMode === quickAddRecMode);
+    });
+
+    const painAreas =
+      store.state.bodyCondition && Array.isArray(store.state.bodyCondition.painAreas)
+        ? store.state.bodyCondition.painAreas
+        : [];
+    const disliked = getAllDislikedIds();
+    const routineItems = store.getTodayRoutineExercises();
+    const metrics = store.refreshMetrics();
+    const routineMode = store.getRoutineEffectiveMode ? store.getRoutineEffectiveMode() : "home";
+
+    const statusBanner = document.getElementById("quickAddFilterStatus");
+    if (statusBanner) {
+      const notes = [];
+      if (painAreas.length > 0) notes.push(`🩺 [${painAreas.join("·")}] 부담 종목 제외`);
+      if (disliked.length > 0) notes.push(`👎 비선호 ${disliked.length}종 제외`);
+      if (notes.length > 0) {
+        statusBanner.textContent = `자동 안전 필터링 적용 중: ${notes.join(" · ")}`;
+        statusBanner.classList.remove("hidden");
+      } else {
+        statusBanner.classList.add("hidden");
+      }
+    }
+
+    const recs = recommendExtraExercises({
+      mode: quickAddRecMode,
+      routineItems,
+      records: store.state.records,
+      metrics,
+      painAreas,
+      dislikedExercises: disliked,
+      customExercises: store.state.customExercises,
+      routineMode,
+      limit: 4
+    });
+
+    if (autoPickTopRec && recs.length > 0) {
+      syncQuickAddDefaults(recs[0].ex.id, recs[0].modeName);
+    }
+
+    const recList = document.getElementById("quickAddRecList");
+    if (recList) {
+      if (!recs.length) {
+        recList.innerHTML = `<div style="font-size:12px; color:var(--text-muted); text-align:center; padding:12px;">조건에 맞는 추천 종목이 없습니다. 아래 전체 검색에서 직접 선택해 보세요.</div>`;
+      } else {
+        recList.innerHTML = recs
+          .map(r => {
+            const ex = r.ex;
+            const isSel = ex.id === quickAddSelectedId;
+            const wText = ex.defaultWeightKg > 0 ? `${ex.defaultWeightKg}kg · ` : "";
+            return `
+              <button type="button" class="btn-tap quick-rec-card ${isSel ? "is-selected" : ""}" data-rec-pick="${ex.id}" data-rec-mode-name="${r.modeName}">
+                <div class="row-between" style="width:100%; gap:6px;">
+                  <div class="row-gap" style="gap:4px; min-width:0;">
+                    <span class="badge ${ex.mode === "gym" ? "badge-purple" : "badge-lime"}" style="font-size:9.5px; padding:1px 6px;">${ex.mode === "gym" ? "🏋️ 기구" : "🏠 홈트"}</span>
+                    <span style="font-size:10.5px; color:var(--text-muted); font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${ex.category}</span>
+                  </div>
+                  <span class="tabular-nums" style="font-size:10.5px; color:var(--text-soft); font-weight:700; flex-shrink:0;">${wText}${ex.defaultSets}세트 × ${ex.defaultReps}</span>
+                </div>
+                <div style="font-size:14px; font-weight:900; color:#ffffff;">${ex.name}</div>
+                <div class="quick-rec-reason">✨ ${r.reason}</div>
+              </button>
+            `;
+          })
+          .join("");
+
+        recList.querySelectorAll("[data-rec-pick]").forEach(btn => {
+          btn.addEventListener("click", () => {
+            syncQuickAddDefaults(btn.dataset.recPick, btn.dataset.recModeName || "맞춤 추천");
+          });
+        });
+      }
+    }
+
+    renderQuickAddCatalogOptions();
   }
 
   function openQuickAddModal(preselectExId = null) {
-    const sel = document.getElementById("quickAddExSelect");
-    const allEx = getAllExercises(store.state.customExercises);
-    const dislikedSet = new Set(Array.isArray(store.state.dislikedExercises) ? store.state.dislikedExercises : []);
-    const sortedEx = allEx.slice().sort((a, b) => Number(dislikedSet.has(a.id)) - Number(dislikedSet.has(b.id)));
-    if (sel) {
-      sel.innerHTML = sortedEx
-        .map(ex => {
-          const tag = ex.mode === "gym" ? "기구" : String(ex.id).startsWith("custom_") ? "내종목" : "홈트";
-          const dislikeTag = dislikedSet.has(ex.id) ? " · 👎 비선호" : "";
-          return `<option value="${ex.id}">[${tag}] ${ex.name} (${ex.targetMuscle})${dislikeTag}</option>`;
-        })
-        .join("");
-      const chosenId = preselectExId && sortedEx.some(x => x.id === preselectExId) ? preselectExId : (sortedEx[0] && sortedEx[0].id);
-      if (chosenId) sel.value = chosenId;
-      syncQuickAddDefaults(chosenId);
+    quickAddRecMode = "custom";
+    quickAddSearchQuery = "";
+    const searchInput = document.getElementById("quickAddSearchInput");
+    if (searchInput) searchInput.value = "";
+
+    if (preselectExId) {
+      quickAddSelectedReason = "직접 선택";
+      syncQuickAddDefaults(preselectExId, "직접 선택");
+      renderQuickAddSheet(false);
+    } else {
+      quickAddSelectedId = null;
+      quickAddSelectedReason = EXTRA_MODES[0].name;
+      renderQuickAddSheet(true);
+      if (!quickAddSelectedId) {
+        const sorted = renderQuickAddCatalogOptions();
+        if (sorted[0]) syncQuickAddDefaults(sorted[0].id, "직접 선택");
+      }
     }
     document.getElementById("quickAddModal")?.classList.remove("hidden");
   }
@@ -410,8 +608,12 @@ export function createModalController({ store, sync, onRenderAll, showToast }) {
       rec.sets.forEach(s => { s.done = true; });
     }
 
-    store.refreshMetrics();
-    store.persistState();
+    if (sync && typeof sync.commitTodayHistory === "function") {
+      sync.commitTodayHistory();
+    } else {
+      store.refreshMetrics();
+      store.persistState();
+    }
     sync.scheduleAutoPush(300);
     moveToNextIncompleteExercise();
   }
@@ -429,33 +631,75 @@ export function createModalController({ store, sync, onRenderAll, showToast }) {
 
     document.getElementById("reportModalCloseBtn")?.addEventListener("click", closeCompletionReportModal);
     document.getElementById("reportModal")?.addEventListener("click", e => {
-      if (e.target.id === "reportModal") closeCompletionReportModal();
+      if (e.target.id === "reportModal") {
+        closeCompletionReportModal();
+      } else if (e.target.closest("#reportOpenExtraBtn")) {
+        closeCompletionReportModal();
+        openQuickAddModal();
+      }
     });
 
     document.getElementById("quickAddCloseBtn")?.addEventListener("click", closeQuickAddModal);
     document.getElementById("quickAddModal")?.addEventListener("click", e => {
       if (e.target.id === "quickAddModal") closeQuickAddModal();
     });
+    document.querySelectorAll("#quickAddModeChips [data-rec-mode]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        quickAddRecMode = btn.dataset.recMode || "custom";
+        const modeMeta = EXTRA_MODES.find(m => m.id === quickAddRecMode) || EXTRA_MODES[0];
+        quickAddSelectedReason = modeMeta.name;
+        renderQuickAddSheet(true);
+      });
+    });
+    document.getElementById("quickAddSearchInput")?.addEventListener("input", e => {
+      quickAddSearchQuery = e.target.value || "";
+      const filtered = renderQuickAddCatalogOptions();
+      if (quickAddSearchQuery.trim() && filtered.length > 0 && !filtered.some(x => x.id === quickAddSelectedId)) {
+        syncQuickAddDefaults(filtered[0].id, "검색 선택");
+      }
+    });
     document.getElementById("quickAddExSelect")?.addEventListener("change", e => {
-      syncQuickAddDefaults(e.target.value);
+      if (e.target.value) syncQuickAddDefaults(e.target.value, "직접 선택");
+    });
+    ["quickAddSets", "quickAddReps", "quickAddWeight"].forEach(id => {
+      document.getElementById(id)?.addEventListener("input", () => {
+        quickAddActivePreset = "custom";
+        document.querySelectorAll("#quickAddPresetChips [data-vol-preset]").forEach(b => b.classList.remove("active"));
+      });
     });
     document.getElementById("quickAddConfirmBtn")?.addEventListener("click", () => {
-      const exId = document.getElementById("quickAddExSelect")?.value;
+      const selVal = document.getElementById("quickAddExSelect")?.value;
+      const exId = quickAddSelectedId || selVal;
+      if (!exId) {
+        showToast("추가할 운동 종목을 선택해 주세요.");
+        return;
+      }
       const sets = Math.max(1, Number(document.getElementById("quickAddSets")?.value) || 3);
       const reps = (document.getElementById("quickAddReps")?.value || "").trim() || "10회";
       const weightVal = Number(document.getElementById("quickAddWeight")?.value);
       const weightKg = Number.isNaN(weightVal) || weightVal <= 0 ? 0 : weightVal;
-      const idx = store.addExerciseToTodayRoutine(exId, { sets, reps, weightKg });
+      const reasonName = quickAddSelectedReason || "맞춤 추천";
+      const idx = store.addExerciseToTodayRoutine(exId, {
+        sets,
+        reps,
+        weightKg,
+        isExtra: true,
+        extraReason: reasonName
+      });
       closeQuickAddModal();
       if (idx >= 0) {
         const added = store.getTodayRoutineExercises()[idx];
         store.state.activeTab = "today";
         store.state.todayScreen = "card";
         store.state.todayCardIndex = idx;
-        store.persistState();
+        if (sync && typeof sync.commitTodayHistory === "function") {
+          sync.commitTodayHistory();
+        } else {
+          store.persistState();
+        }
         sync.scheduleAutoPush(300);
         onRenderAll();
-        showToast(`➕ [${(added && added.name) || exId}] ${sets}세트 × ${reps} 추가됨!`);
+        showToast(`⚡ [${(added && added.name) || exId}] ${sets}세트 × ${reps} 추가됨 (${reasonName})!`);
       }
     });
 

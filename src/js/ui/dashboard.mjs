@@ -199,7 +199,10 @@ export function renderDashboard({ store, sync, onRenderAll, onSelectExercise, sh
           <div class="row-gap" style="gap:10px; min-width:0; flex:1;">
             <span class="step-chip ${isDone ? "done" : ""}" style="width:28px; height:28px; font-size:12px;">${isDone ? "✓" : idx + 1}</span>
             <div style="min-width:0; flex:1;">
-              <div style="font-size:14px; font-weight:800; color:#ffffff; line-height:1.25;">${ex.name}</div>
+              <div style="display:flex; align-items:center; gap:5px; flex-wrap:wrap;">
+                <span style="font-size:14px; font-weight:800; color:#ffffff; line-height:1.25;">${ex.name}</span>
+                ${ex.isExtra ? `<span class="badge-extra-mini">⚡ 추가</span>` : ""}
+              </div>
               <div style="font-size:11px; color:var(--text-muted); margin-top:3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
                 <span style="color:var(--accent); font-weight:700;">${specMeta}</span> · ${ex.targetMuscle}
               </div>
@@ -211,11 +214,28 @@ export function renderDashboard({ store, sync, onRenderAll, onSelectExercise, sh
               }
             </div>
           </div>
-          <div style="flex-shrink:0; margin-left:6px;">${badgeHtml}</div>
+          <div style="flex-shrink:0; margin-left:6px; display:flex; align-items:center; gap:5px;">
+            ${badgeHtml}
+            ${ex.isExtra && !isDone ? `<button type="button" class="btn-tap dash-extra-remove-btn" data-dash-remove-idx="${idx}" aria-label="${ex.name} 삭제" title="추가 운동 삭제">✕</button>` : ""}
+          </div>
         </div>
       `;
     })
     .join("");
+
+  listContainer.querySelectorAll(".dash-extra-remove-btn").forEach(btn => {
+    btn.addEventListener("click", e => {
+      e.stopPropagation();
+      const idx = Number(btn.dataset.dashRemoveIdx);
+      const target = store.getTodayRoutineExercises()[idx];
+      if (store.removeExtraExercise && store.removeExtraExercise(idx)) {
+        if (sync && typeof sync.commitTodayHistory === "function") sync.commitTodayHistory();
+        if (sync) sync.scheduleAutoPush(300);
+        if (onRenderAll) onRenderAll();
+        if (showToast) showToast(`🗑️ [${(target && target.name) || "추가 운동"}] 삭제되었습니다.`);
+      }
+    });
+  });
 
   listContainer.querySelectorAll(".dash-pain-alert-btn").forEach(btn => {
     btn.addEventListener("click", e => {

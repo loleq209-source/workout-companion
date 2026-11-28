@@ -16,6 +16,7 @@ import { upsertTodayHistory, applyLoadedDriveData } from "../src/js/sync.mjs";
 import { createTimerController } from "../src/js/timer.mjs";
 import { mapExerciseToMuscleRegions, buildTodayReportData } from "../src/js/muscleMap.mjs";
 import { getSwapCandidates, HOME_TO_GYM_MAP } from "../src/js/swapEngine.mjs";
+import { getVolumePresetsForExercise, recommendExtraExercises } from "../src/js/recommendEngine.mjs";
 
 function makeMemoryStorage(initial = null) {
   const map = new Map();
@@ -534,4 +535,124 @@ test("New 10 home exercises (total 58) map cleanly across groups, heatmap, timer
   assert.equal(HOME_TO_GYM_MAP.home_kb_sumo_deadlift[0], "gym_inner_thigh");
   assert.equal(HOME_TO_GYM_MAP.home_kb_reverse_lunge[0], "gym_leg_press");
   assert.equal(HOME_TO_GYM_MAP.home_kb_clean_press[0], "gym_shoulder_press");
+});
+
+test("Smart extra recommendations filter pain/dislike/completed, expose volume presets & delete uncompleted extra", () => {
+  const today = getWorkoutDateStr();
+  const routineItems = [
+    EXERCISES.find(x => x.id === "home_deep_pushup"),
+    EXERCISES.find(x => x.id === "home_smr_glute")
+  ];
+  const records = {
+    home_deep_pushup: { sets: [{ done: true }, { done: true }], isCompleted: true, rpe: 6, lastUpdatedDate: today },
+    home_smr_glute: { sets: [{ done: true }, { done: true }], isCompleted: true, rpe: null, lastUpdatedDate: today }
+  };
+  const metrics = {
+    muscleFreshness: { push: 65, pull: 92, legs: 88, core: 95 },
+    weeklyHardSets: { push: 12, pull: 2, legs: 8, core: 1 }
+  };
+
+  // 1. Custom mode favors high-recovery (>=80%) + low weeklyHardSets (core/pull), excludes completed/pain/dislike
+  const customRecs = recommendExtraExercises({
+    mode: "custom",
+    routineItems,
+    records,
+    metrics,
+    painAreas: ["허리"],
+    dislikedExercises: ["home_band_chinup"],
+    routineMode: "home",
+    limit: 4
+  });
+  assert.equal(customRecs.length, 4);
+  const customIds = customRecs.map(r => r.ex.id);
+  assert.equal(customIds.includes("home_deep_pushup"), false);
+  assert.equal(customIds.includes("home_band_chinup"), false);
+  assert.equal(customIds.includes("home_kb_row"), false); // lumbar pain conflict
+  assert.equal(customIds.includes("home_kb_swing"), false); // lumbar pain conflict
+  assert.ok(customRecs.every(r => r.freshnessPct >= 80));
+  assert.ok(customRecs.some(r => r.muscleGroup === "core" || r.muscleGroup === "pull"));
+  assert.ok(customRecs[0].reason.includes("회복"));
+
+  // 2. Burning / TV / Spine-care modes exclude pain & disliked cleanly
+  const burningSafe = recommendExtraExercises({
+    mode: "burning",
+    routineItems,
+    records,
+    metrics,
+    painAreas: ["허리"],
+    dislikedExercises: ["home_goblet_squat"],
+    limit: 4
+  });
+  assert.ok(burningSafe.length > 0);
+  assert.equal(burningSafe.some(r => r.ex.id === "home_kb_swing"), false);
+  assert.equal(burningSafe.some(r => r.ex.id === "home_goblet_squat"), false);
+
+  const tvRecs = recommendExtraExercises({ mode: "tv", routineItems, records, metrics, limit: 4 });
+  assert.ok(tvRecs.some(r => r.ex.id === "home_gyro_ball" || r.ex.id === "home_kb_calf_raise" || r.ex.id === "home_side_plank"));
+
+  const careRecs = recommendExtraExercises({ mode: "care", routineItems, records, metrics, limit: 4 });
+  assert.ok(careRecs.some(r => r.ex.id === "home_smr_thoracic" || r.ex.id === "home_dead_hang" || r.ex.id === "home_deadbug"));
+
+  // 3. Volume presets: 10x10 challenge appears exclusively for home_kb_swing
+  const swingPresets = getVolumePresetsForExercise(EXERCISES.find(x => x.id === "home_kb_swing"));
+  assert.equal(swingPresets.length, 4);
+  assert.equal(swingPresets[3].label, "챌린지 10×10");
+  assert.equal(swingPresets[3].sets, 10);
+  const plankPresets = getVolumePresetsForExercise(EXERCISES.find(x => x.id === "home_side_plank"));
+  assert.equal(plankPresets.length, 3);
+
+  // 4. Store add/remove extra exercise + sTSS/report/log preservation
+  const store = createStore(makeMemoryStorage({
+    sessionDate: today,
+    todayRoutine: {
+      date: today,
+      title: "본 루틴 완료",
+      mode: "home",
+      items: [{ id: "home_deep_pushup", sets: 2, reps: "10회" }]
+    },
+    records: {
+      home_deep_pushup: { sets: [{ weightKg: 0, reps: "10회", done: true }, { weightKg: 0, reps: "10회", done: true }], isCompleted: true, rpe: 6, lastUpdatedDate: today }
+    }
+  }));
+
+  const extraIdx = store.addExerciseToTodayRoutine("home_kb_swing", {
+    sets: 10,
+    reps: "10회",
+    weightKg: 14,
+    isExtra: true,
+    extraReason: "칼로리 버닝"
+  });
+  assert.equal(extraIdx, 1);
+  let items = store.getTodayRoutineExercises();
+  assert.equal(items[1].isExtra, true);
+  assert.equal(items[1].extraReason, "칼로리 버닝");
+  assert.equal(items[0].isExtra, false);
+
+  // Can delete uncompleted extra exercise; cannot delete main routine exercise
+  assert.equal(store.removeExtraExercise(0), false);
+  assert.equal(store.removeExtraExercise(1), true);
+  assert.equal(store.getTodayRoutineExercises().length, 1);
+
+  // Re-add extra, complete it -> reflected in payload, report heatmap, & cannot delete once completed
+  const idx2 = store.addExerciseToTodayRoutine("home_inverted_row", {
+    sets: 2,
+    reps: "8회",
+    weightKg: 0,
+    isExtra: true,
+    extraReason: "맞춤 추천"
+  });
+  const rowEx = store.getTodayRoutineExercises()[idx2];
+  const rowRec = store.getRecord(rowEx, today);
+  rowRec.sets.forEach(s => { s.done = true; });
+  rowRec.isCompleted = true;
+  rowRec.rpe = 7;
+  assert.equal(store.removeExtraExercise(idx2), false);
+
+  const payload = upsertTodayHistory(store, today);
+  assert.equal(payload.exercises[1].isExtra, true);
+  assert.equal(payload.exercises[1].extraReason, "맞춤 추천");
+  const report = buildTodayReportData(store);
+  assert.equal(report.completedExercises, 2);
+  assert.ok(report.todayStss > 0);
+  assert.equal(report.regionStats.lats.level, "primary");
 });

@@ -326,9 +326,12 @@ export function createCardController({ store, timerCtrl, workTimerCtrl, sync, mo
         }
 
         <div class="unified-coach-body">
-          <!-- 2. Exercise Title Row (No Truncation) + Unilateral Badge + Undo Swap -->
+          <!-- 2. Exercise Title Row (No Truncation) + Extra Badge + Unilateral Badge + Undo Swap -->
           <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:6px;">
-            <span style="font-size:16.5px; font-weight:900; color:#ffffff; word-break:keep-all; line-height:1.25; letter-spacing:-0.3px;">${ex.name}</span>
+            <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap; min-width:0; flex:1;">
+              <span style="font-size:16.5px; font-weight:900; color:#ffffff; word-break:keep-all; line-height:1.25; letter-spacing:-0.3px;">${ex.name}</span>
+              ${ex.isExtra ? `<span class="badge-extra-mini">⚡ 추가</span>` : ""}
+            </div>
             <div style="display:flex; align-items:center; gap:4px; flex-shrink:0; margin-top:1px;">
               ${ex.swappedFrom ? `<button type="button" data-card-action="undo-swap" class="btn-tap card-undo-swap-btn">↩ 원래 종목 복구</button>` : ""}
               ${enriched && enriched.unilateral ? `<span class="badge badge-purple" style="font-size:9.5px; padding:1px 6px; white-space:nowrap;">↔ 양쪽</span>` : ""}
@@ -485,8 +488,12 @@ export function createCardController({ store, timerCtrl, workTimerCtrl, sync, mo
           rec.lastUpdatedDate = getTodayStr();
           rec.isCompleted = rec.sets.every(s => s.done);
           if (!rec.isCompleted) rec.rpe = null;
-          store.refreshMetrics();
-          store.persistState();
+          if (sync && typeof sync.commitTodayHistory === "function") {
+            sync.commitTodayHistory();
+          } else {
+            store.refreshMetrics();
+            store.persistState();
+          }
           sync.scheduleAutoPush(600);
           renderCardStepBar();
           renderFocusedCard();
