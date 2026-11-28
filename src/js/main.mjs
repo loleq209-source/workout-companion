@@ -4,6 +4,7 @@
 import { createStore } from "./store.mjs";
 import { createTimerController, createWorkTimerController } from "./timer.mjs";
 import { createSyncService } from "./sync.mjs";
+import { createUiHistory } from "./uiHistory.mjs";
 import { hasGasBridge } from "./bridge.mjs";
 import { showToast, updateSyncBadge, setSyncStatusMsg } from "./ui/toast.mjs";
 import { createModalController } from "./ui/modals.mjs";
@@ -64,8 +65,10 @@ function renderAll() {
         onRenderAll: renderAll,
         showToast,
         onSelectExercise: idx => {
+          const prevScreen = state.todayScreen;
           state.todayCardIndex = idx;
           state.todayScreen = "card";
+          if (prevScreen !== "card") uiHistory.push("card");
           renderAll();
         }
       });
@@ -119,7 +122,21 @@ sync = createSyncService(store, {
   }
 });
 
-modals = createModalController({ store, sync, onRenderAll: renderAll, showToast });
+const uiHistory = createUiHistory(() => {
+  if (modals && modals.closeTopModal(true)) return;
+  if (store.state.activeTab === "today" && store.state.todayScreen === "card") {
+    store.state.todayScreen = "dashboard";
+    renderAll();
+    return;
+  }
+  if (store.state.activeTab !== "today") {
+    store.state.activeTab = "today";
+    store.persistState();
+    renderAll();
+  }
+});
+
+modals = createModalController({ store, sync, uiHistory, onRenderAll: renderAll, showToast });
 cardCtrl = createCardController({ store, timerCtrl, workTimerCtrl, sync, modals, onRenderAll: renderAll, showToast });
 
 // Hook called by Android MainActivity.onResume() when returning to WebView
@@ -143,6 +160,7 @@ if (typeof window !== "undefined") {
 document.addEventListener("DOMContentLoaded", () => {
   cardCtrl.initSwipeGesture();
   modals.bindModalEvents();
+  uiHistory.attach();
 
   // Register Service Worker for true offline PWA support
   if ("serviceWorker" in navigator && !hasGasBridge() && location.protocol.startsWith("http")) {
@@ -152,32 +170,53 @@ document.addEventListener("DOMContentLoaded", () => {
   // Bottom Navigation
   document.querySelectorAll(".nav-item").forEach(btn => {
     btn.addEventListener("click", () => {
-      store.state.activeTab = btn.dataset.tab;
+      const nextTab = btn.dataset.tab;
+      const prevTab = store.state.activeTab;
+      if (nextTab === "today" && prevTab !== "today") {
+        uiHistory.pop("tab");
+      } else if (nextTab !== "today" && prevTab === "today") {
+        uiHistory.push("tab");
+      }
+      store.state.activeTab = nextTab;
       store.persistState();
       renderAll();
     });
   });
 
-  // Floating Rest Mini Pill jump back to active card
-  document.getElementById("floatingRestPill")?.addEventListener("click", () => {
+  // Floating Rest Mini Pill jump back to active card OR quick skip rest
+  document.getElementById("floatingRestJumpBtn")?.addEventListener("click", () => {
     const items = store.getTodayRoutineExercises();
     const idx = items.findIndex(x => x.id === timerCtrl.timer.exerciseId);
+    const prevTab = store.state.activeTab;
+    const prevScreen = store.state.todayScreen;
     store.state.activeTab = "today";
     store.state.todayScreen = "card";
+    if (prevTab !== "today") uiHistory.clearTag("tab");
+    if (prevScreen !== "card") uiHistory.push("card");
     if (idx !== -1) store.state.todayCardIndex = idx;
     renderAll();
+  });
+
+  document.getElementById("floatingRestSkipBtn")?.addEventListener("click", e => {
+    e.stopPropagation();
+    if (typeof timerCtrl.skip === "function") timerCtrl.skip();
+    updateFloatingTimerPill();
+    showToast("⏭ 휴식을 스킵했습니다.");
   });
 
   // Dashboard CTA & Quick Add
   document.getElementById("dashCtaBtn")?.addEventListener("click", () => {
     const items = store.getTodayRoutineExercises();
     const firstIncomplete = items.findIndex(e => !store.getRecord(e).isCompleted);
+    const prevScreen = store.state.todayScreen;
     store.state.todayScreen = "card";
     store.state.todayCardIndex = firstIncomplete !== -1 ? firstIncomplete : 0;
+    if (prevScreen !== "card") uiHistory.push("card");
     renderAll();
   });
 
   document.getElementById("dashQuickAddBtn")?.addEventListener("click", () => {
+    if (store.state.activeTab === "today") uiHistory.push("tab");
     store.state.activeTab = "catalog";
     store.persistState();
     renderAll();
@@ -185,6 +224,22 @@ document.addEventListener("DOMContentLoaded", () => {
 
   document.getElementById("dashBottomAddBtn")?.addEventListener("click", () => {
     modals.openQuickAddModal();
+  });
+
+  document.getElementById("dashQuickModeBtn")?.addEventListener("click", () => {
+    const res = store.toggleQuickMode();
+    if (res.reverted || res.compressedCount > 0) {
+      if (typeof sync.commitTodayHistory === "function") sync.commitTodayHistory();
+      sync.scheduleAutoPush(400);
+      renderAll();
+      if (res.reverted) {
+        showToast(`↩ 원래 세트 수로 복구했습니다! (예상 약 ${res.estimatedMinutes}분)`);
+      } else {
+        showToast(`⚡ ${res.compressedCount}개 근력 종목 2세트 압축! (예상 약 ${res.estimatedMinutes}분)`);
+      }
+    } else {
+      showToast("압축할 미완료 3세트+ 근력 종목이 없습니다.");
+    }
   });
 
   document.getElementById("dashModeSwapBtn")?.addEventListener("click", () => {
@@ -211,7 +266,16 @@ document.addEventListener("DOMContentLoaded", () => {
   // Card Screen Top Controls
   document.getElementById("cardBackBtn")?.addEventListener("click", () => {
     store.state.todayScreen = "dashboard";
+    uiHistory.pop("card");
     renderAll();
+  });
+
+  document.getElementById("cardPrevBtn")?.addEventListener("click", () => {
+    cardCtrl.navigateCardWithSwipe(-1);
+  });
+
+  document.getElementById("cardNextBtn")?.addEventListener("click", () => {
+    cardCtrl.navigateCardWithSwipe(1);
   });
 
   document.getElementById("cardDirectFinishBtn")?.addEventListener("click", () => {

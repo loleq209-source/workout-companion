@@ -50,7 +50,7 @@ export function renderCatalog({ store, sync, modals, onRenderAll, showToast }) {
 
   const items = store.getFilteredCatalogExercises();
   if (!items.length) {
-    listContainer.innerHTML = `<div class="card-surface" style="text-align:center; color:var(--text-muted); font-size:12.5px; padding:20px;">조건에 맞는 운동 종목이 없습니다. 프리셋이나 필터를 조정해 보세요.</div>`;
+    listContainer.innerHTML = `<div class="card-surface cat-empty-state" style="text-align:center; color:var(--text-muted); font-size:12.5px; padding:20px;">조건에 맞는 운동 종목이 없습니다. 프리셋이나 필터를 조정해 보세요.</div>`;
     return;
   }
 

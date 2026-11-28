@@ -104,6 +104,19 @@ export function createTimerController(store, callbacks = {}) {
     emitTick();
   }
 
+  function skip(defaultSec = null) {
+    clearInterval(timer.intervalId);
+    timer.intervalId = null;
+    timer.running = false;
+    timer.endTimestamp = 0;
+    const s = Math.max(1, Number(defaultSec || timer.duration) || 60);
+    timer.duration = s;
+    timer.remaining = s;
+    timer.label = "휴식";
+    cancelNativeTimer();
+    emitTick();
+  }
+
   /**
    * When viewing a different exercise while timer is IDLE, update preview duration
    * to match the current exercise's default rest time.
@@ -125,6 +138,7 @@ export function createTimerController(store, callbacks = {}) {
     toggle,
     addSeconds,
     reset,
+    skip,
     syncWithClock,
     previewExerciseRest
   };

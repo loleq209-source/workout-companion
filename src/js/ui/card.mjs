@@ -28,6 +28,7 @@ export function updateTimerDom(timer) {
   const timeText = document.getElementById("timerRingTime");
   const labelText = document.getElementById("timerRingLabel");
   const toggleBtn = document.getElementById("timerToggleBtn");
+  const skipBtn = document.getElementById("timerSkipBtn");
 
   if (timeText) {
     const m = String(Math.floor(timer.remaining / 60)).padStart(2, "0");
@@ -44,6 +45,10 @@ export function updateTimerDom(timer) {
   }
   if (toggleBtn) {
     toggleBtn.textContent = timer.running ? "⏸ 정지" : "▶ 시작";
+  }
+  if (skipBtn) {
+    const showSkip = Boolean(timer.running || timer.remaining < timer.duration);
+    skipBtn.classList.toggle("hidden", !showSkip);
   }
 }
 
@@ -101,6 +106,11 @@ export function createCardController({ store, timerCtrl, workTimerCtrl, sync, mo
         onRenderAll();
       });
     });
+
+    const prevBtn = document.getElementById("cardPrevBtn");
+    const nextBtn = document.getElementById("cardNextBtn");
+    if (prevBtn) prevBtn.disabled = store.state.todayCardIndex <= 0;
+    if (nextBtn) nextBtn.disabled = store.state.todayCardIndex >= items.length - 1;
   }
 
   function renderFocusedCard() {
@@ -208,56 +218,59 @@ export function createCardController({ store, timerCtrl, workTimerCtrl, sync, mo
         ${prevRecordHtml}
         <div class="slim-control-box" style="display:flex; flex-direction:column; gap:6px;">
           ${workTimerHtml}
-          <div style="display:flex; align-items:center; gap:8px;">
-            <!-- Left: Compact Circular Rest Timer (60x60) -->
-            <div style="flex:0 0 78px; display:flex; flex-direction:column; align-items:center; gap:3px;">
-              <div style="position:relative; width:58px; height:58px; display:flex; align-items:center; justify-content:center;">
-                <svg width="58" height="58" viewBox="0 0 68 68" style="transform: rotate(-90deg);">
+          <div style="display:flex; align-items:center; gap:10px;">
+            <!-- Left: Compact Circular Rest Timer (Scales on Portrait Tablet) -->
+            <div class="card-timer-col">
+              <div class="card-timer-ring-wrap">
+                <svg class="card-timer-svg" viewBox="0 0 68 68">
                   <circle cx="34" cy="34" r="28" fill="none" stroke="#222226" stroke-width="5" />
                   <circle id="timerRingProgress" cx="34" cy="34" r="28" fill="none" stroke="#a3e635" stroke-width="5" stroke-linecap="round"
                     style="stroke-dasharray:${circum.toFixed(1)}; stroke-dashoffset:${(circum * (1 - ratio)).toFixed(1)}; transition: stroke-dashoffset 0.3s linear;" />
                 </svg>
                 <div style="position:absolute; text-align:center;">
-                  <div id="timerRingTime" class="tabular-nums" style="font-size:13.5px; font-weight:900; color:#ffffff;">${min}:${sec}</div>
-                  <div id="timerRingLabel" style="font-size:8px; font-weight:800; color:var(--text-muted); max-width:44px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${t.running ? "휴식 중" : "휴식"}</div>
+                  <div id="timerRingTime" class="tabular-nums card-timer-time">${min}:${sec}</div>
+                  <div id="timerRingLabel" class="card-timer-label">${t.running ? "휴식 중" : "휴식"}</div>
                 </div>
               </div>
               <div class="row-gap" style="gap:3px; width:100%;">
-                <button id="timerToggleBtn" type="button" class="btn-tap" style="flex:1; height:22px; border-radius:6px; font-size:9px; font-weight:800; border:1px solid var(--accent); background:var(--accent-bg); color:var(--accent); padding:0 3px; white-space:nowrap;">
+                <button id="timerToggleBtn" type="button" class="btn-tap card-timer-btn" style="border:1px solid var(--accent); background:var(--accent-bg); color:var(--accent);">
                   ${t.running ? "⏸ 정지" : "▶ 시작"}
                 </button>
-                <button type="button" data-card-action="timer-add" class="btn-tap btn-secondary" style="flex:1; height:22px; border-radius:6px; font-size:9px; padding:0 3px; white-space:nowrap;">
+                <button type="button" data-card-action="timer-add" class="btn-tap btn-secondary card-timer-btn">
                   +15초
                 </button>
               </div>
+              <button id="timerSkipBtn" type="button" data-card-action="timer-skip" class="btn-tap card-timer-skip-btn ${t.running || t.remaining < t.duration ? "" : "hidden"}">
+                ⏭ 휴식 스킵
+              </button>
             </div>
 
             <!-- Right: Interactive Set Dots + Steppers -->
-            <div style="flex:1; min-width:0; display:flex; flex-direction:column; gap:4px;">
+            <div style="flex:1; min-width:0; display:flex; flex-direction:column; gap:5px;">
               <div style="display:flex; align-items:center; justify-content:space-between;">
-                <span style="font-size:11px; font-weight:800; color:var(--text-soft);">${curSetNum} / ${rec.sets.length}세트 <span style="font-size:9.5px; color:var(--text-muted); font-weight:600;">(점 탭=되돌림)</span></span>
-                <div class="row-gap" style="gap:1px;">${setDotsHtml}</div>
+                <span style="font-size:11.5px; font-weight:800; color:var(--text-soft);">${curSetNum} / ${rec.sets.length}세트 <span style="font-size:9.5px; color:var(--text-muted); font-weight:600;">(점 탭=되돌림)</span></span>
+                <div class="row-gap" style="gap:2px;">${setDotsHtml}</div>
               </div>
 
-              <div style="background:var(--card); border:1px solid var(--border); border-radius:8px; padding:3px 8px; display:flex; align-items:center; justify-content:space-between;">
+              <div class="card-stepper-box">
                 <div>
-                  <div style="font-size:8px; color:var(--text-muted); font-weight:700;">중량</div>
-                  <div id="batchWeightDisplay" class="tabular-nums" style="font-size:12px; font-weight:900; color:#fff;">${currentWeight > 0 ? `${currentWeight}kg` : "맨몸/밴드"}</div>
+                  <div class="card-stepper-label">중량</div>
+                  <div id="batchWeightDisplay" class="tabular-nums card-stepper-val">${currentWeight > 0 ? `${currentWeight}kg` : "맨몸/밴드"}</div>
                 </div>
-                <div class="row-gap" style="gap:3px;">
-                  <button type="button" data-card-action="step-weight" data-delta="-2" class="btn-tap stepper-btn" style="width:24px; height:24px; font-size:13px; border-radius:6px;">-</button>
-                  <button type="button" data-card-action="step-weight" data-delta="2" class="btn-tap stepper-btn" style="width:24px; height:24px; font-size:13px; border-radius:6px;">+</button>
+                <div class="row-gap" style="gap:4px;">
+                  <button type="button" data-card-action="step-weight" data-delta="-2" class="btn-tap stepper-btn card-stepper-btn">-</button>
+                  <button type="button" data-card-action="step-weight" data-delta="2" class="btn-tap stepper-btn card-stepper-btn">+</button>
                 </div>
               </div>
 
-              <div style="background:var(--card); border:1px solid var(--border); border-radius:8px; padding:3px 8px; display:flex; align-items:center; justify-content:space-between;">
+              <div class="card-stepper-box">
                 <div>
-                  <div style="font-size:8px; color:var(--text-muted); font-weight:700;">횟수/시간</div>
-                  <div id="batchRepsDisplay" class="tabular-nums" style="font-size:12px; font-weight:900; color:#fff;">${currentReps}</div>
+                  <div class="card-stepper-label">횟수/시간</div>
+                  <div id="batchRepsDisplay" class="tabular-nums card-stepper-val">${currentReps}</div>
                 </div>
-                <div class="row-gap" style="gap:3px;">
-                  <button type="button" data-card-action="step-reps" data-delta="-1" class="btn-tap stepper-btn" style="width:24px; height:24px; font-size:13px; border-radius:6px;">-</button>
-                  <button type="button" data-card-action="step-reps" data-delta="1" class="btn-tap stepper-btn" style="width:24px; height:24px; font-size:13px; border-radius:6px;">+</button>
+                <div class="row-gap" style="gap:4px;">
+                  <button type="button" data-card-action="step-reps" data-delta="-1" class="btn-tap stepper-btn card-stepper-btn">-</button>
+                  <button type="button" data-card-action="step-reps" data-delta="1" class="btn-tap stepper-btn card-stepper-btn">+</button>
                 </div>
               </div>
             </div>
@@ -271,27 +284,27 @@ export function createCardController({ store, timerCtrl, workTimerCtrl, sync, mo
       if (!allDone) {
         const btnText = isLastRemainingSet ? "✅ 종목 완료" : `✅ ${curSetNum}세트 완료`;
         ctaButtonHtml = `
-          <button id="cardSetCompleteBtn" type="button" class="btn-tap btn-primary" style="height:44px; border-radius:14px; font-size:14px;">
+          <button id="cardSetCompleteBtn" type="button" class="btn-tap btn-primary card-main-cta">
             ${btnText}
           </button>
         `;
       } else {
         ctaButtonHtml = `
-          <button id="cardSetCompleteBtn" type="button" class="btn-tap btn-primary" style="height:44px; border-radius:14px; font-size:14px; background:var(--amber-bright); color:#050507;">
+          <button id="cardSetCompleteBtn" type="button" class="btn-tap btn-primary card-main-cta" style="background:var(--amber-bright); color:#050507;">
             ✅ 종목 완료 (다음 종목 이동)
           </button>
         `;
       }
     } else if (!allDone) {
       ctaButtonHtml = `
-        <button id="cardSetCompleteBtn" type="button" class="btn-tap btn-primary" style="height:44px; border-radius:14px; font-size:14px;">
+        <button id="cardSetCompleteBtn" type="button" class="btn-tap btn-primary card-main-cta">
           ✅ ${curSetNum}세트 완료 · ${ex.restSec || 60}초 휴식 시작
         </button>
       `;
     } else {
       const rpeLabel = rec.rpe != null ? ` · 현재 RPE ${rec.rpe}` : "";
       ctaButtonHtml = `
-        <button id="cardSetCompleteBtn" type="button" class="btn-tap btn-primary" style="height:44px; border-radius:14px; font-size:14px; background:var(--amber-bright); color:#050507;">
+        <button id="cardSetCompleteBtn" type="button" class="btn-tap btn-primary card-main-cta" style="background:var(--amber-bright); color:#050507;">
           🎉 전 세트 완료 (RPE 강도 기록${rpeLabel})
         </button>
       `;
@@ -329,7 +342,7 @@ export function createCardController({ store, timerCtrl, workTimerCtrl, sync, mo
           <!-- 2. Exercise Title Row (No Truncation) + Extra Badge + Unilateral Badge + Undo Swap -->
           <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:6px;">
             <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap; min-width:0; flex:1;">
-              <span style="font-size:16.5px; font-weight:900; color:#ffffff; word-break:keep-all; line-height:1.25; letter-spacing:-0.3px;">${ex.name}</span>
+              <span class="card-coach-title">${ex.name}</span>
               ${ex.isExtra ? `<span class="badge-extra-mini">⚡ 추가</span>` : ""}
             </div>
             <div style="display:flex; align-items:center; gap:4px; flex-shrink:0; margin-top:1px;">
@@ -357,8 +370,8 @@ export function createCardController({ store, timerCtrl, workTimerCtrl, sync, mo
               ${phases
                 .map(
                   (p, pIdx) => `
-                <div style="display:flex; align-items:flex-start; gap:6px; font-size:11.5px; line-height:1.38;">
-                  <span style="display:inline-flex; align-items:center; justify-content:center; width:16px; height:16px; border-radius:50%; background:var(--accent-bg); color:var(--accent); font-size:10px; font-weight:900; flex-shrink:0; margin-top:1px;">
+                <div class="card-coach-step">
+                  <span style="display:inline-flex; align-items:center; justify-content:center; width:16px; height:16px; border-radius:50%; background:var(--accent-bg); color:var(--accent); font-size:10px; font-weight:900; flex-shrink:0; margin-top:2px;">
                     ${p.step || pIdx + 1}
                   </span>
                   <div style="flex:1; min-width:0; color:var(--text-soft);">
@@ -373,19 +386,19 @@ export function createCardController({ store, timerCtrl, workTimerCtrl, sync, mo
             </div>
           `
               : `
-            <div style="font-size:11.5px; color:var(--text-soft); line-height:1.38;">
-              <strong style="color:#ffffff;">[동작 요약]</strong> ${ex.prep || "올바른 자세를 유지하며 통제된 속도로 진행합니다."}
+            <div class="card-coach-step" style="color:var(--text-soft);">
+              <div><strong style="color:#ffffff;">[동작 요약]</strong> ${ex.prep || "올바른 자세를 유지하며 통제된 속도로 진행합니다."}</div>
             </div>
           `
           }
 
           <!-- 5. Posture Check Box (#1c1c1f) -->
           <div style="background:var(--card-2); border:1px solid var(--border); border-radius:10px; padding:6px 9px; display:flex; flex-direction:column; gap:3.5px;">
-            <div style="display:flex; align-items:flex-start; gap:5px; font-size:11px; line-height:1.35;">
+            <div class="card-coach-ox">
               <span style="color:var(--accent); font-weight:900; flex-shrink:0;">⭕</span>
               <span style="color:var(--text-soft);">${doCue}</span>
             </div>
-            <div style="display:flex; align-items:flex-start; gap:5px; font-size:11px; line-height:1.35;">
+            <div class="card-coach-ox">
               <span style="color:var(--rose); font-weight:900; flex-shrink:0;">❌</span>
               <span style="color:var(--text-soft);">${dontCue}</span>
             </div>
@@ -553,6 +566,13 @@ export function createCardController({ store, timerCtrl, workTimerCtrl, sync, mo
           }
         } else if (act === "timer-add") {
           timerCtrl.addSeconds(15);
+        } else if (act === "timer-skip") {
+          if (typeof timerCtrl.skip === "function") {
+            timerCtrl.skip(ex.restSec || 60);
+          } else {
+            timerCtrl.reset(ex.restSec || 60, ex.id);
+          }
+          showToast("⏭ 휴식을 스킵했습니다.");
         } else if (act === "step-weight") {
           const delta = Number(el.dataset.delta);
           store.markUserInteractedToday();

@@ -89,6 +89,7 @@
           <div class="row-between" style="padding: 0 4px; gap: 6px; flex-wrap: wrap;">
             <span style="font-size: 13px; font-weight: 900; color: var(--text-soft);">루틴 종목</span>
             <div class="row-gap" style="gap: 5px; flex-wrap: wrap;">
+              <button id="dashQuickModeBtn" type="button" class="btn-tap badge badge-muted" style="font-size: 10.5px;">⚡ 2세트 퀵</button>
               <button id="dashModeSwapBtn" type="button" class="btn-tap badge badge-muted" style="font-size: 10.5px;">🔄 헬스 기구로 변환</button>
               <button id="dashReportBtn" type="button" class="btn-tap badge badge-lime hidden" style="font-size: 10.5px;">📊 완료 리포트 보기</button>
               <button id="dashQuickAddBtn" type="button" class="btn-tap badge badge-muted" style="font-size: 10.5px;">+ 종목 추가</button>
@@ -105,12 +106,14 @@
       <!-- SCREEN 2: 순차 카드 진행 화면 (Ultra Compact 1-Screen Layout) -->
       <div id="viewCard" class="hidden" style="display:flex; flex-direction:column; gap:6px;">
         <!-- Top Slim Bar -->
-        <div class="card-top-bar" style="display:flex; align-items:center; justify-content:space-between; gap:6px; height:38px; padding:0 2px;">
-          <button id="cardBackBtn" type="button" class="btn-tap btn-secondary" style="height:30px; padding:0 8px; font-size:11.5px; font-weight:800; border-radius:9px; white-space:nowrap; flex:0 0 auto;">
+        <div class="card-top-bar" style="display:flex; align-items:center; justify-content:space-between; gap:5px; min-height:38px; padding:0 2px;">
+          <button id="cardBackBtn" type="button" class="btn-tap btn-secondary card-top-action-btn">
             ← 미션
           </button>
+          <button id="cardPrevBtn" type="button" class="btn-tap card-nav-btn" aria-label="이전 종목">‹<span class="card-nav-label"> 이전</span></button>
           <div id="cardStepBar" class="step-bar-scroll"></div>
-          <button id="cardDirectFinishBtn" type="button" class="btn-tap badge badge-lime" style="height:30px; padding:0 9px; font-size:11.5px; font-weight:900; border-radius:9px; white-space:nowrap; flex:0 0 auto;">
+          <button id="cardNextBtn" type="button" class="btn-tap card-nav-btn" aria-label="다음 종목"><span class="card-nav-label">다음 </span>›</button>
+          <button id="cardDirectFinishBtn" type="button" class="btn-tap badge badge-lime card-top-finish-btn">
             ✓ 완료
           </button>
         </div>
@@ -213,10 +216,13 @@
   </div>
 
   <!-- Floating Running Rest Timer Pill (Shown when active away from focused timer card) -->
-  <button id="floatingRestPill" type="button" class="btn-tap floating-rest-pill hidden">
-    <span style="color: var(--accent);">⏱</span>
-    <span id="floatingRestText" class="tabular-nums">00:45 · 휴식 중</span>
-  </button>
+  <div id="floatingRestPill" class="floating-rest-pill hidden">
+    <button id="floatingRestJumpBtn" type="button" class="btn-tap floating-rest-jump-btn">
+      <span style="color: var(--accent);">⏱</span>
+      <span id="floatingRestText" class="tabular-nums">00:45 · 휴식 중</span>
+    </button>
+    <button id="floatingRestSkipBtn" type="button" class="btn-tap floating-rest-skip" aria-label="휴식 스킵">⏭ 스킵</button>
+  </div>
 
   <!-- Floating 3-Tab Bottom Bar -->
   <nav class="floating-nav">

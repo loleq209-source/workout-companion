@@ -702,6 +702,126 @@ export function createStore(storage = typeof localStorage !== "undefined" ? loca
     return count;
   }
 
+  function isQuickModeActive() {
+    return Boolean(state.todayRoutine && state.todayRoutine.quickBackup && Array.isArray(state.todayRoutine.quickBackup.items));
+  }
+
+  function toggleQuickMode() {
+    ensureMaterializedRoutine();
+    const todayDate = getWorkoutDateStr();
+    const current = getTodayRoutineExercises();
+    const itemsArr = state.todayRoutine.items;
+
+    if (isQuickModeActive()) {
+      const backup = state.todayRoutine.quickBackup;
+      let restoredCount = 0;
+      for (let i = 0; i < current.length; i++) {
+        const ex = current[i];
+        const rec = getRecord(ex, todayDate);
+        if (rec.isCompleted) continue;
+
+        const byIdx = backup.items[i];
+        const origSpec =
+          byIdx && resolveExerciseId(byIdx.id) === ex.id
+            ? byIdx
+            : backup.items.find(b => resolveExerciseId(b && b.id) === ex.id);
+        if (!origSpec || !origSpec.sets) continue;
+
+        const doneCount = Array.isArray(rec.sets) ? rec.sets.filter(s => s && s.done).length : 0;
+        const targetSets = Math.max(doneCount, Number(origSpec.sets) || 3);
+        const it = itemsArr[i];
+        if (it && Number(it.sets) !== targetSets) {
+          it.sets = targetSets;
+          restoredCount++;
+        }
+        const sample = (rec.sets && rec.sets[rec.sets.length - 1]) || {
+          weightKg: typeof ex.defaultWeightKg === "number" ? ex.defaultWeightKg : 0,
+          reps: ex.defaultReps || "10회"
+        };
+        while (rec.sets.length < targetSets) {
+          rec.sets.push({
+            weightKg: sample.weightKg != null ? sample.weightKg : 0,
+            reps: sample.reps || ex.defaultReps || "10회",
+            done: false
+          });
+        }
+      }
+
+      if (backup.estimatedMinutes != null) {
+        state.todayRoutine.estimatedMinutes = backup.estimatedMinutes;
+      } else {
+        delete state.todayRoutine.estimatedMinutes;
+      }
+      delete state.todayRoutine.quickBackup;
+      markUserInteractedToday();
+      refreshMetrics();
+      persistState();
+      return {
+        compressedCount: restoredCount,
+        active: false,
+        reverted: true,
+        estimatedMinutes: state.todayRoutine.estimatedMinutes || 30
+      };
+    }
+
+    const origMins = Number(state.todayRoutine.estimatedMinutes) || 30;
+    const origTotalSets = itemsArr.reduce((acc, it, idx) => {
+      const ex = current[idx];
+      return acc + (Number(it && it.sets) || (ex && ex.defaultSets) || 3);
+    }, 0);
+
+    const backupItems = itemsArr.map((it, idx) => {
+      const ex = current[idx];
+      return {
+        id: it.id,
+        sets: Number(it.sets) || (ex && ex.defaultSets) || 3
+      };
+    });
+
+    let compressedCount = 0;
+    for (let i = 0; i < current.length; i++) {
+      const ex = current[i];
+      const rec = getRecord(ex, todayDate);
+      const doneCount = Array.isArray(rec.sets) ? rec.sets.filter(s => s && s.done).length : 0;
+      if (rec.isCompleted || isWarmupOrStretch(ex) || doneCount >= 2) continue;
+
+      const curSets = Number(itemsArr[i].sets) || Number(ex.defaultSets) || 3;
+      if (curSets <= 2) continue;
+
+      itemsArr[i].sets = 2;
+      compressedCount++;
+      while (rec.sets.length > 2 && !rec.sets[rec.sets.length - 1].done) {
+        rec.sets.pop();
+      }
+    }
+
+    if (compressedCount === 0) {
+      return { compressedCount: 0, active: false, reverted: false, estimatedMinutes: origMins };
+    }
+
+    const newTotalSets = itemsArr.reduce((acc, it, idx) => {
+      const ex = current[idx];
+      return acc + (Number(it && it.sets) || (ex && ex.defaultSets) || 2);
+    }, 0);
+
+    state.todayRoutine.quickBackup = {
+      estimatedMinutes: state.todayRoutine.estimatedMinutes != null ? state.todayRoutine.estimatedMinutes : 30,
+      items: backupItems
+    };
+    state.todayRoutine.estimatedMinutes =
+      origTotalSets > 0 ? Math.max(10, Math.round(origMins * (newTotalSets / origTotalSets))) : Math.max(10, Math.round(origMins * 0.65));
+
+    markUserInteractedToday();
+    refreshMetrics();
+    persistState();
+    return {
+      compressedCount,
+      active: true,
+      reverted: false,
+      estimatedMinutes: state.todayRoutine.estimatedMinutes
+    };
+  }
+
   function getFilteredCatalogExercises() {
     let list = getAllExercises(state.customExercises);
 
@@ -804,6 +924,8 @@ export function createStore(storage = typeof localStorage !== "undefined" ? loca
     undoRoutineSwap,
     getRoutineEffectiveMode,
     toggleRoutineMode,
+    isQuickModeActive,
+    toggleQuickMode,
     bulkReplacePainExercises,
     getFilteredCatalogExercises,
     getLastRecord,

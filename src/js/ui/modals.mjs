@@ -7,7 +7,7 @@ import { getSwapCandidates } from "../swapEngine.mjs";
 import { EXTRA_MODES, getVolumePresetsForExercise, recommendExtraExercises } from "../recommendEngine.mjs";
 import { renderCompletionReportModal } from "./report.mjs";
 
-export function createModalController({ store, sync, onRenderAll, showToast }) {
+export function createModalController({ store, sync, uiHistory = null, onRenderAll, showToast }) {
   let pendingRpeExerciseId = null;
   let guidePlayTimer = null;
   let guideViewMode = "full"; // "full" | "frame"
@@ -32,11 +32,16 @@ export function createModalController({ store, sync, onRenderAll, showToast }) {
     guidePlaying = false;
   }
 
-  function closeGuideModal() {
+  function closeGuideModal(fromPopState = false) {
     stopGuideAutoPlay();
     activeGuideEx = null;
     const modal = document.getElementById("zoomModal");
+    const wasOpen = modal && !modal.classList.contains("hidden");
     if (modal) modal.classList.add("hidden");
+    if (wasOpen && uiHistory) {
+      if (fromPopState) uiHistory.clearTag("zoomModal");
+      else uiHistory.pop("zoomModal");
+    }
   }
 
   function renderGuideModalBody() {
@@ -200,7 +205,11 @@ export function createModalController({ store, sync, onRenderAll, showToast }) {
     guideViewMode = initialMode;
     guideFrameIdx = 0;
     const modal = document.getElementById("zoomModal");
-    if (modal) modal.classList.remove("hidden");
+    if (modal) {
+      const alreadyOpen = !modal.classList.contains("hidden");
+      modal.classList.remove("hidden");
+      if (!alreadyOpen && uiHistory) uiHistory.push("zoomModal");
+    }
     renderGuideModalBody();
   }
 
@@ -235,6 +244,9 @@ export function createModalController({ store, sync, onRenderAll, showToast }) {
         state.todayCardIndex = firstIncomplete;
         onRenderAll();
       } else {
+        if (uiHistory && state.todayScreen === "card") {
+          uiHistory.replace("card", "reportModal");
+        }
         state.todayScreen = "dashboard";
         onRenderAll();
         showToast("🎉 오늘 추천 루틴을 모두 완료했습니다! 고생하셨습니다!");
@@ -245,11 +257,22 @@ export function createModalController({ store, sync, onRenderAll, showToast }) {
 
   function openCompletionReportModal() {
     renderCompletionReportModal(store);
-    document.getElementById("reportModal")?.classList.remove("hidden");
+    const modal = document.getElementById("reportModal");
+    if (modal) {
+      const alreadyOpen = !modal.classList.contains("hidden");
+      modal.classList.remove("hidden");
+      if (!alreadyOpen && uiHistory) uiHistory.push("reportModal");
+    }
   }
 
-  function closeCompletionReportModal() {
-    document.getElementById("reportModal")?.classList.add("hidden");
+  function closeCompletionReportModal(fromPopState = false) {
+    const modal = document.getElementById("reportModal");
+    const wasOpen = modal && !modal.classList.contains("hidden");
+    if (modal) modal.classList.add("hidden");
+    if (wasOpen && uiHistory) {
+      if (fromPopState) uiHistory.clearTag("reportModal");
+      else uiHistory.pop("reportModal");
+    }
   }
 
   function getAllDislikedIds() {
@@ -449,7 +472,7 @@ export function createModalController({ store, sync, onRenderAll, showToast }) {
     renderQuickAddCatalogOptions();
   }
 
-  function openQuickAddModal(preselectExId = null) {
+  function openQuickAddModal(preselectExId = null, options = {}) {
     quickAddRecMode = "custom";
     quickAddSearchQuery = "";
     const searchInput = document.getElementById("quickAddSearchInput");
@@ -468,15 +491,35 @@ export function createModalController({ store, sync, onRenderAll, showToast }) {
         if (sorted[0]) syncQuickAddDefaults(sorted[0].id, "직접 선택");
       }
     }
-    document.getElementById("quickAddModal")?.classList.remove("hidden");
+    const modal = document.getElementById("quickAddModal");
+    if (modal) {
+      const alreadyOpen = !modal.classList.contains("hidden");
+      modal.classList.remove("hidden");
+      if (uiHistory) {
+        if (options && options.replaceLayer) uiHistory.replace(options.replaceLayer, "quickAddModal");
+        else if (!alreadyOpen) uiHistory.push("quickAddModal");
+      }
+    }
   }
 
-  function closeQuickAddModal() {
-    document.getElementById("quickAddModal")?.classList.add("hidden");
+  function closeQuickAddModal(fromPopState = false, syncHistory = true) {
+    const modal = document.getElementById("quickAddModal");
+    const wasOpen = modal && !modal.classList.contains("hidden");
+    if (modal) modal.classList.add("hidden");
+    if (syncHistory && wasOpen && uiHistory) {
+      if (fromPopState) uiHistory.clearTag("quickAddModal");
+      else uiHistory.pop("quickAddModal");
+    }
   }
 
-  function closeSwapModal() {
-    document.getElementById("swapModal")?.classList.add("hidden");
+  function closeSwapModal(fromPopState = false) {
+    const modal = document.getElementById("swapModal");
+    const wasOpen = modal && !modal.classList.contains("hidden");
+    if (modal) modal.classList.add("hidden");
+    if (wasOpen && uiHistory) {
+      if (fromPopState) uiHistory.clearTag("swapModal");
+      else uiHistory.pop("swapModal");
+    }
   }
 
   function renderSwapModalBody() {
@@ -573,7 +616,47 @@ export function createModalController({ store, sync, onRenderAll, showToast }) {
     swapReason = alertAlt ? "pain" : "variation";
     swapReasonManual = false;
     renderSwapModalBody();
-    document.getElementById("swapModal")?.classList.remove("hidden");
+    const modal = document.getElementById("swapModal");
+    if (modal) {
+      const alreadyOpen = !modal.classList.contains("hidden");
+      modal.classList.remove("hidden");
+      if (!alreadyOpen && uiHistory) uiHistory.push("swapModal");
+    }
+  }
+
+  function closeRpeBottomSheet(fromPopState = false, syncHistory = true) {
+    pendingRpeExerciseId = null;
+    const sheet = document.getElementById("rpeBottomSheet");
+    const wasOpen = sheet && !sheet.classList.contains("hidden");
+    if (sheet) sheet.classList.add("hidden");
+    if (syncHistory && wasOpen && uiHistory) {
+      if (fromPopState) uiHistory.clearTag("rpeBottomSheet");
+      else uiHistory.pop("rpeBottomSheet");
+    }
+  }
+
+  function closeAddExModal(fromPopState = false) {
+    const modal = document.getElementById("addExModal");
+    const wasOpen = modal && !modal.classList.contains("hidden");
+    if (modal) modal.classList.add("hidden");
+    if (wasOpen && uiHistory) {
+      if (fromPopState) uiHistory.clearTag("addExModal");
+      else uiHistory.pop("addExModal");
+    }
+  }
+
+  function closeTopModal(fromPopState = false) {
+    const isVis = id => {
+      const el = document.getElementById(id);
+      return el && !el.classList.contains("hidden");
+    };
+    if (isVis("zoomModal")) { closeGuideModal(fromPopState); return true; }
+    if (isVis("rpeBottomSheet")) { closeRpeBottomSheet(fromPopState); return true; }
+    if (isVis("swapModal")) { closeSwapModal(fromPopState); return true; }
+    if (isVis("quickAddModal")) { closeQuickAddModal(fromPopState); return true; }
+    if (isVis("reportModal")) { closeCompletionReportModal(fromPopState); return true; }
+    if (isVis("addExModal")) { closeAddExModal(fromPopState); return true; }
+    return false;
   }
 
   function openRpeBottomSheet(ex, rec) {
@@ -586,7 +669,11 @@ export function createModalController({ store, sync, onRenderAll, showToast }) {
     const titleEl = document.getElementById("rpeExTitle");
     if (titleEl) titleEl.textContent = `${ex.name} 완료!`;
     const sheet = document.getElementById("rpeBottomSheet");
-    if (sheet) sheet.classList.remove("hidden");
+    if (sheet) {
+      const alreadyOpen = !sheet.classList.contains("hidden");
+      sheet.classList.remove("hidden");
+      if (!alreadyOpen && uiHistory) uiHistory.push("rpeBottomSheet");
+    }
   }
 
   function finalizeFinishWithRpe(rpe) {
@@ -594,6 +681,7 @@ export function createModalController({ store, sync, onRenderAll, showToast }) {
     const exId = pendingRpeExerciseId;
     pendingRpeExerciseId = null;
     const sheet = document.getElementById("rpeBottomSheet");
+    const wasOpen = sheet && !sheet.classList.contains("hidden");
     if (sheet) sheet.classList.add("hidden");
 
     const allEx = store.getTodayRoutineExercises().concat(store.state.customExercises || []);
@@ -615,6 +703,18 @@ export function createModalController({ store, sync, onRenderAll, showToast }) {
       store.persistState();
     }
     sync.scheduleAutoPush(300);
+
+    const hasRemaining = store.getTodayRoutineExercises().some(item => !store.getRecord(item).isCompleted);
+    if (!hasRemaining && uiHistory) {
+      uiHistory.clearTag("card");
+      if (wasOpen) {
+        uiHistory.replace("rpeBottomSheet", "reportModal");
+        // Clear flag so openCompletionReportModal knows layer is set cleanly
+      }
+    } else if (wasOpen && uiHistory) {
+      uiHistory.pop("rpeBottomSheet");
+    }
+
     moveToNextIncompleteExercise();
   }
 
@@ -623,23 +723,26 @@ export function createModalController({ store, sync, onRenderAll, showToast }) {
     document.querySelectorAll(".rpe-btn").forEach(btn => {
       btn.addEventListener("click", () => finalizeFinishWithRpe(Number(btn.dataset.rpe)));
     });
+    document.getElementById("rpeBottomSheet")?.addEventListener("click", e => {
+      if (e.target.id === "rpeBottomSheet") closeRpeBottomSheet();
+    });
 
-    document.getElementById("zoomModalCloseBtn")?.addEventListener("click", closeGuideModal);
+    document.getElementById("zoomModalCloseBtn")?.addEventListener("click", () => closeGuideModal());
     document.getElementById("zoomModal")?.addEventListener("click", e => {
       if (e.target.id === "zoomModal") closeGuideModal();
     });
 
-    document.getElementById("reportModalCloseBtn")?.addEventListener("click", closeCompletionReportModal);
+    document.getElementById("reportModalCloseBtn")?.addEventListener("click", () => closeCompletionReportModal());
     document.getElementById("reportModal")?.addEventListener("click", e => {
       if (e.target.id === "reportModal") {
         closeCompletionReportModal();
       } else if (e.target.closest("#reportOpenExtraBtn")) {
-        closeCompletionReportModal();
-        openQuickAddModal();
+        document.getElementById("reportModal")?.classList.add("hidden");
+        openQuickAddModal(null, { replaceLayer: "reportModal" });
       }
     });
 
-    document.getElementById("quickAddCloseBtn")?.addEventListener("click", closeQuickAddModal);
+    document.getElementById("quickAddCloseBtn")?.addEventListener("click", () => closeQuickAddModal());
     document.getElementById("quickAddModal")?.addEventListener("click", e => {
       if (e.target.id === "quickAddModal") closeQuickAddModal();
     });
@@ -686,7 +789,13 @@ export function createModalController({ store, sync, onRenderAll, showToast }) {
         isExtra: true,
         extraReason: reasonName
       });
-      closeQuickAddModal();
+      const wasCard = store.state.todayScreen === "card" && store.state.activeTab === "today";
+      if (wasCard) {
+        closeQuickAddModal();
+      } else {
+        closeQuickAddModal(false, false);
+        if (uiHistory && idx >= 0) uiHistory.replace("quickAddModal", "card");
+      }
       if (idx >= 0) {
         const added = store.getTodayRoutineExercises()[idx];
         store.state.activeTab = "today";
@@ -703,7 +812,7 @@ export function createModalController({ store, sync, onRenderAll, showToast }) {
       }
     });
 
-    document.getElementById("swapModalCloseBtn")?.addEventListener("click", closeSwapModal);
+    document.getElementById("swapModalCloseBtn")?.addEventListener("click", () => closeSwapModal());
     document.getElementById("swapModal")?.addEventListener("click", e => {
       if (e.target.id === "swapModal") closeSwapModal();
     });
@@ -726,10 +835,16 @@ export function createModalController({ store, sync, onRenderAll, showToast }) {
     });
 
     document.getElementById("addCustomExBtn")?.addEventListener("click", () => {
-      document.getElementById("addExModal")?.classList.remove("hidden");
+      const modal = document.getElementById("addExModal");
+      if (modal) {
+        const alreadyOpen = !modal.classList.contains("hidden");
+        modal.classList.remove("hidden");
+        if (!alreadyOpen && uiHistory) uiHistory.push("addExModal");
+      }
     });
-    document.getElementById("addExModalCloseBtn")?.addEventListener("click", () => {
-      document.getElementById("addExModal")?.classList.add("hidden");
+    document.getElementById("addExModalCloseBtn")?.addEventListener("click", () => closeAddExModal());
+    document.getElementById("addExModal")?.addEventListener("click", e => {
+      if (e.target.id === "addExModal") closeAddExModal();
     });
 
     document.getElementById("saveNewExBtn")?.addEventListener("click", () => {
@@ -754,7 +869,7 @@ export function createModalController({ store, sync, onRenderAll, showToast }) {
       store.state.customExercises.push(newEx);
       store.persistState();
       sync.scheduleAutoPush(300);
-      document.getElementById("addExModal")?.classList.add("hidden");
+      closeAddExModal();
       document.getElementById("newExName").value = "";
       showToast(`✅ [${newEx.name}] 추가 완료!`);
       onRenderAll();
@@ -769,6 +884,7 @@ export function createModalController({ store, sync, onRenderAll, showToast }) {
     closeQuickAddModal,
     openSwapModal,
     closeSwapModal,
+    closeTopModal,
     directFinishExercise,
     openRpeBottomSheet,
     finalizeFinishWithRpe,

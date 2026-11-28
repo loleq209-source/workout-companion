@@ -17,6 +17,7 @@ import { createTimerController } from "../src/js/timer.mjs";
 import { mapExerciseToMuscleRegions, buildTodayReportData } from "../src/js/muscleMap.mjs";
 import { getSwapCandidates, HOME_TO_GYM_MAP } from "../src/js/swapEngine.mjs";
 import { getVolumePresetsForExercise, recommendExtraExercises } from "../src/js/recommendEngine.mjs";
+import { createUiHistory } from "../src/js/uiHistory.mjs";
 
 function makeMemoryStorage(initial = null) {
   const map = new Map();
@@ -655,4 +656,92 @@ test("Smart extra recommendations filter pain/dislike/completed, expose volume p
   assert.equal(report.completedExercises, 2);
   assert.ok(report.todayStss > 0);
   assert.equal(report.regionStats.lats.level, "primary");
+});
+
+test("Quick 2-set mode compresses/restores safely, timer skip resets without chime & uiHistory tracks layers", () => {
+  const today = getWorkoutDateStr();
+  const store = createStore(makeMemoryStorage({
+    sessionDate: today,
+    todayRoutine: {
+      date: today,
+      title: "퀵 모드 테스트",
+      mode: "home",
+      estimatedMinutes: 36,
+      items: [
+        { id: "home_smr_glute", sets: 2, reps: "45초" },
+        { id: "home_deep_pushup", sets: 4, reps: "10회" },
+        { id: "home_band_pullup", sets: 3, reps: "4회" },
+        { id: "home_goblet_squat", sets: 4, reps: "10회", weightKg: 14 }
+      ]
+    },
+    records: {
+      // Completed 2 sets on home_deep_pushup -> must NOT shrink below already-completed sets!
+      home_deep_pushup: {
+        sets: [
+          { weightKg: 0, reps: "10회", done: true },
+          { weightKg: 0, reps: "10회", done: true },
+          { weightKg: 0, reps: "10회", done: false },
+          { weightKg: 0, reps: "10회", done: false }
+        ],
+        isCompleted: false,
+        lastUpdatedDate: today
+      },
+      // 1 set done on home_band_pullup -> shrinks from 3 to 2 preserving set 1 done
+      home_band_pullup: {
+        sets: [
+          { weightKg: 0, reps: "4회", done: true },
+          { weightKg: 0, reps: "4회", done: false },
+          { weightKg: 0, reps: "4회", done: false }
+        ],
+        isCompleted: false,
+        lastUpdatedDate: today
+      }
+    }
+  }));
+
+  assert.equal(store.isQuickModeActive(), false);
+  const resOn = store.toggleQuickMode();
+  assert.equal(resOn.active, true);
+  assert.equal(resOn.compressedCount, 2); // band_pullup + goblet_squat (deep_pushup >=2 done & smr skipped!)
+  assert.ok(resOn.estimatedMinutes < 36);
+  assert.equal(store.isQuickModeActive(), true);
+
+  let items = store.getTodayRoutineExercises();
+  assert.equal(items[0].defaultSets, 2);
+  assert.equal(items[1].defaultSets, 4); // preserved >=2 done
+  assert.equal(items[2].defaultSets, 2); // compressed 3 -> 2
+  assert.equal(store.getRecord(items[2], today).sets.filter(s => s.done).length, 1); // preserved 1 done set
+  assert.equal(items[3].defaultSets, 2); // compressed 4 -> 2
+
+  // Toggle again -> restores original sets and estimatedMinutes verbatim
+  const resOff = store.toggleQuickMode();
+  assert.equal(resOff.active, false);
+  assert.equal(resOff.reverted, true);
+  assert.equal(resOff.estimatedMinutes, 36);
+  assert.equal(store.isQuickModeActive(), false);
+  items = store.getTodayRoutineExercises();
+  assert.equal(items[2].defaultSets, 3);
+  assert.equal(items[3].defaultSets, 4);
+
+  // Timer skip cancels countdown silently & resets remaining to restSec
+  let completedFired = false;
+  const ctrl = createTimerController(store, { onComplete: () => { completedFired = true; } });
+  ctrl.start(60, "휴식", "home_goblet_squat");
+  assert.equal(ctrl.timer.running, true);
+  ctrl.skip(60);
+  assert.equal(ctrl.timer.running, false);
+  assert.equal(ctrl.timer.remaining, 60);
+  assert.equal(completedFired, false);
+
+  // uiHistory tracks layers cleanly even without window
+  const popped = [];
+  const uh = createUiHistory(tag => popped.push(tag));
+  uh.push("card");
+  uh.push("reportModal");
+  uh.replace("reportModal", "quickAddModal");
+  assert.equal(uh.getDepth(), 2);
+  uh.pop("quickAddModal");
+  assert.equal(uh.getDepth(), 1);
+  uh.clearTag("card");
+  assert.equal(uh.getDepth(), 0);
 });

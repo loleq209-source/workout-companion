@@ -150,6 +150,15 @@ export function renderDashboard({ store, sync, onRenderAll, onSelectExercise, sh
     modeSwapBtn.classList.toggle("badge-muted", !isGymMode);
   }
 
+  // Screen 1 Quick Mode Compression Toggle ("⚡ 2세트 퀵" / "↩ 원래 볼륨 복구")
+  const quickModeBtn = document.getElementById("dashQuickModeBtn");
+  if (quickModeBtn && typeof store.isQuickModeActive === "function") {
+    const isQuick = store.isQuickModeActive();
+    quickModeBtn.textContent = isQuick ? "↩ 원래 볼륨 복구" : "⚡ 2세트 퀵";
+    quickModeBtn.classList.toggle("badge-amber", isQuick);
+    quickModeBtn.classList.toggle("badge-muted", !isQuick);
+  }
+
   // CTA Button text
   const ctaBtn = document.getElementById("dashCtaBtn");
   if (ctaBtn) {

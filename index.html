@@ -923,6 +923,317 @@ body {
   gap: 5px;
 }
 
+/* Card Top Nav, Rest Skip & Responsive Tablet Scaling Controls */
+.card-top-action-btn {
+  height: 30px;
+  padding: 0 8px;
+  font-size: 11.5px;
+  font-weight: 800;
+  border-radius: 9px;
+  white-space: nowrap;
+  flex: 0 0 auto;
+}
+.card-top-finish-btn {
+  height: 30px;
+  padding: 0 9px;
+  font-size: 11.5px;
+  font-weight: 900;
+  border-radius: 9px;
+  white-space: nowrap;
+  flex: 0 0 auto;
+}
+.card-nav-btn {
+  height: 30px;
+  min-width: 28px;
+  padding: 0 6px;
+  border-radius: 9px;
+  border: 1px solid var(--border);
+  background: var(--card-2);
+  color: var(--text-soft);
+  font-size: 13px;
+  font-weight: 900;
+  white-space: nowrap;
+  flex: 0 0 auto;
+}
+.card-nav-btn:disabled {
+  opacity: 0.32;
+  cursor: default;
+}
+.card-nav-label {
+  display: none;
+  font-size: 11.5px;
+  font-weight: 800;
+}
+.floating-rest-jump-btn {
+  background: transparent;
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 800;
+  gap: 6px;
+  padding: 0;
+}
+.floating-rest-skip {
+  height: 22px;
+  padding: 0 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(250, 204, 21, 0.5);
+  background: rgba(250, 204, 21, 0.14);
+  color: var(--amber-bright);
+  font-size: 10.5px;
+  font-weight: 900;
+  white-space: nowrap;
+}
+.card-timer-col {
+  flex: 0 0 84px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+}
+.card-timer-ring-wrap {
+  position: relative;
+  width: 58px;
+  height: 58px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.card-timer-svg {
+  width: 58px;
+  height: 58px;
+  transform: rotate(-90deg);
+}
+.card-timer-time {
+  font-size: 13.5px;
+  font-weight: 900;
+  color: #ffffff;
+}
+.card-timer-label {
+  font-size: 8px;
+  font-weight: 800;
+  color: var(--text-muted);
+  max-width: 48px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.card-timer-btn {
+  flex: 1;
+  height: 22px;
+  border-radius: 6px;
+  font-size: 9px;
+  font-weight: 800;
+  padding: 0 3px;
+  white-space: nowrap;
+}
+.card-timer-skip-btn {
+  width: 100%;
+  height: 20px;
+  border-radius: 6px;
+  border: 1px solid rgba(250, 204, 21, 0.45);
+  background: rgba(250, 204, 21, 0.12);
+  color: var(--amber-bright);
+  font-size: 9px;
+  font-weight: 900;
+  white-space: nowrap;
+}
+.card-stepper-box {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 3px 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.card-stepper-label {
+  font-size: 8.5px;
+  color: var(--text-muted);
+  font-weight: 700;
+}
+.card-stepper-val {
+  font-size: 12.5px;
+  font-weight: 900;
+  color: #ffffff;
+}
+.card-stepper-btn {
+  width: 26px;
+  height: 26px;
+  font-size: 14px;
+  border-radius: 7px;
+}
+.card-main-cta {
+  height: 44px;
+  border-radius: 14px;
+  font-size: 14px;
+}
+.card-coach-title {
+  font-size: 16.5px;
+  font-weight: 900;
+  color: #ffffff;
+  word-break: keep-all;
+  line-height: 1.25;
+  letter-spacing: -0.3px;
+}
+.card-coach-step {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  font-size: 11.5px;
+  line-height: 1.38;
+}
+.card-coach-ox {
+  display: flex;
+  align-items: flex-start;
+  gap: 5px;
+  font-size: 11px;
+  line-height: 1.35;
+}
+
+/* Tablet Portrait Optimization (680px+: wider 720px portrait card, larger touch targets & 2-col Catalog) */
+@media (min-width: 680px) {
+  :root {
+    --nav-height: 72px;
+  }
+  .app-container {
+    max-width: 720px;
+    padding: 16px 22px;
+  }
+  .floating-nav {
+    max-width: 676px;
+    border-radius: 30px;
+  }
+  .nav-icon { font-size: 22px; }
+  .nav-label { font-size: 11.5px; }
+  .title-large { font-size: 24px; }
+  .hero-card { padding: 18px; }
+  .dash-card-item { padding: 15px 18px; }
+  .condition-chip {
+    height: 34px;
+    padding: 0 14px;
+    font-size: 12.5px;
+  }
+  .btn-primary {
+    height: 52px;
+    font-size: 16px;
+  }
+  .card-top-bar { min-height: 44px !important; gap: 8px !important; }
+  .card-top-action-btn,
+  .card-top-finish-btn,
+  .card-nav-btn {
+    height: 36px;
+    padding: 0 12px;
+    font-size: 13px;
+    border-radius: 10px;
+  }
+  .card-nav-label {
+    display: inline;
+  }
+  .step-chip {
+    flex: 0 0 32px;
+    width: 32px;
+    height: 32px;
+    font-size: 12.5px;
+  }
+  .unified-coach-body {
+    padding: 16px 20px 18px;
+    gap: 11px;
+  }
+  .card-coach-title {
+    font-size: 20px;
+  }
+  .card-coach-step {
+    font-size: 13.5px;
+    line-height: 1.48;
+  }
+  .card-coach-ox {
+    font-size: 13px;
+    line-height: 1.42;
+  }
+  .work-timer-btn {
+    height: 38px;
+    font-size: 13.5px;
+  }
+  .work-timer-reset-btn {
+    height: 38px;
+    width: 40px;
+    font-size: 14px;
+  }
+  .slim-control-box {
+    padding: 13px 16px;
+    border-radius: 16px;
+  }
+  .card-timer-col {
+    flex: 0 0 118px;
+    gap: 6px;
+  }
+  .card-timer-ring-wrap,
+  .card-timer-svg {
+    width: 78px;
+    height: 78px;
+  }
+  .card-timer-time {
+    font-size: 17px;
+  }
+  .card-timer-label {
+    font-size: 10px;
+    max-width: 64px;
+  }
+  .card-timer-btn {
+    height: 29px;
+    font-size: 11.5px;
+    border-radius: 8px;
+  }
+  .card-timer-skip-btn {
+    height: 26px;
+    font-size: 11px;
+    border-radius: 8px;
+  }
+  .set-dot-btn {
+    width: 22px;
+    height: 22px;
+  }
+  .set-dot-visual {
+    width: 11px;
+    height: 11px;
+  }
+  .card-stepper-box {
+    padding: 6px 12px;
+    border-radius: 10px;
+  }
+  .card-stepper-label {
+    font-size: 10.5px;
+  }
+  .card-stepper-val {
+    font-size: 15px;
+  }
+  .card-stepper-btn {
+    width: 38px;
+    height: 38px;
+    font-size: 18px;
+    border-radius: 9px;
+  }
+  .card-main-cta {
+    height: 54px;
+    font-size: 16px;
+    border-radius: 16px;
+  }
+  #catalogList {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+  #catalogList > .cat-empty-state {
+    grid-column: 1 / -1;
+  }
+  .modal-panel,
+  #rpeBottomSheet > div,
+  #zoomModal > div,
+  #addExModal > div {
+    max-width: 640px !important;
+  }
+}
+
   </style>
 </head>
 <body>
@@ -1001,6 +1312,7 @@ body {
           <div class="row-between" style="padding: 0 4px; gap: 6px; flex-wrap: wrap;">
             <span style="font-size: 13px; font-weight: 900; color: var(--text-soft);">루틴 종목</span>
             <div class="row-gap" style="gap: 5px; flex-wrap: wrap;">
+              <button id="dashQuickModeBtn" type="button" class="btn-tap badge badge-muted" style="font-size: 10.5px;">⚡ 2세트 퀵</button>
               <button id="dashModeSwapBtn" type="button" class="btn-tap badge badge-muted" style="font-size: 10.5px;">🔄 헬스 기구로 변환</button>
               <button id="dashReportBtn" type="button" class="btn-tap badge badge-lime hidden" style="font-size: 10.5px;">📊 완료 리포트 보기</button>
               <button id="dashQuickAddBtn" type="button" class="btn-tap badge badge-muted" style="font-size: 10.5px;">+ 종목 추가</button>
@@ -1017,12 +1329,14 @@ body {
       <!-- SCREEN 2: 순차 카드 진행 화면 (Ultra Compact 1-Screen Layout) -->
       <div id="viewCard" class="hidden" style="display:flex; flex-direction:column; gap:6px;">
         <!-- Top Slim Bar -->
-        <div class="card-top-bar" style="display:flex; align-items:center; justify-content:space-between; gap:6px; height:38px; padding:0 2px;">
-          <button id="cardBackBtn" type="button" class="btn-tap btn-secondary" style="height:30px; padding:0 8px; font-size:11.5px; font-weight:800; border-radius:9px; white-space:nowrap; flex:0 0 auto;">
+        <div class="card-top-bar" style="display:flex; align-items:center; justify-content:space-between; gap:5px; min-height:38px; padding:0 2px;">
+          <button id="cardBackBtn" type="button" class="btn-tap btn-secondary card-top-action-btn">
             ← 미션
           </button>
+          <button id="cardPrevBtn" type="button" class="btn-tap card-nav-btn" aria-label="이전 종목">‹<span class="card-nav-label"> 이전</span></button>
           <div id="cardStepBar" class="step-bar-scroll"></div>
-          <button id="cardDirectFinishBtn" type="button" class="btn-tap badge badge-lime" style="height:30px; padding:0 9px; font-size:11.5px; font-weight:900; border-radius:9px; white-space:nowrap; flex:0 0 auto;">
+          <button id="cardNextBtn" type="button" class="btn-tap card-nav-btn" aria-label="다음 종목"><span class="card-nav-label">다음 </span>›</button>
+          <button id="cardDirectFinishBtn" type="button" class="btn-tap badge badge-lime card-top-finish-btn">
             ✓ 완료
           </button>
         </div>
@@ -1125,10 +1439,13 @@ body {
   </div>
 
   <!-- Floating Running Rest Timer Pill (Shown when active away from focused timer card) -->
-  <button id="floatingRestPill" type="button" class="btn-tap floating-rest-pill hidden">
-    <span style="color: var(--accent);">⏱</span>
-    <span id="floatingRestText" class="tabular-nums">00:45 · 휴식 중</span>
-  </button>
+  <div id="floatingRestPill" class="floating-rest-pill hidden">
+    <button id="floatingRestJumpBtn" type="button" class="btn-tap floating-rest-jump-btn">
+      <span style="color: var(--accent);">⏱</span>
+      <span id="floatingRestText" class="tabular-nums">00:45 · 휴식 중</span>
+    </button>
+    <button id="floatingRestSkipBtn" type="button" class="btn-tap floating-rest-skip" aria-label="휴식 스킵">⏭ 스킵</button>
+  </div>
 
   <!-- Floating 3-Tab Bottom Bar -->
   <nav class="floating-nav">
@@ -3686,6 +4003,98 @@ body {
     
   };
 
+  __mods["js/uiHistory.mjs"] = function(__req, __exp) {
+    /**
+     * Browser & Android WebView Back-Button History Coordinator.
+     * Pushes lightweight same-document history entries for overlays/card views so hardware Back
+     * closes the top modal or returns from Screen 2 -> Screen 1 before triggering APK exit.
+     */
+    function createUiHistory(onBackLayer) {
+      const stack = [];
+      let pendingBacks = 0;
+    
+      function canUseHistory() {
+        return typeof window !== "undefined" && typeof history !== "undefined" && typeof history.pushState === "function";
+      }
+    
+      function push(id) {
+        if (!id || stack[stack.length - 1] === id) return;
+        stack.push(id);
+        if (canUseHistory()) {
+          try {
+            history.pushState({ wcLayer: id }, "");
+          } catch (e) {}
+        }
+      }
+    
+      function pop(id) {
+        if (!id || stack.length === 0) return;
+        if (stack[stack.length - 1] !== id) {
+          const idx = stack.lastIndexOf(id);
+          if (idx !== -1) stack.splice(idx, 1);
+          return;
+        }
+        stack.pop();
+        if (canUseHistory() && typeof history.back === "function") {
+          pendingBacks++;
+          try {
+            history.back();
+          } catch (e) {
+            pendingBacks = Math.max(0, pendingBacks - 1);
+          }
+        }
+      }
+    
+      function replace(oldId, newId) {
+        clearTag(oldId);
+        if (!newId) return;
+        if (stack[stack.length - 1] !== newId) {
+          stack.push(newId);
+        }
+        if (canUseHistory() && typeof history.replaceState === "function") {
+          try {
+            history.replaceState({ wcLayer: newId }, "");
+          } catch (e) {}
+        }
+      }
+    
+      function clearTag(id) {
+        for (let i = stack.length - 1; i >= 0; i--) {
+          if (stack[i] === id) stack.splice(i, 1);
+        }
+      }
+    
+      function handlePopState() {
+        if (pendingBacks > 0) {
+          pendingBacks--;
+          return;
+        }
+        const popped = stack.pop() || null;
+        if (typeof onBackLayer === "function") {
+          onBackLayer(popped);
+        }
+      }
+    
+      function attach() {
+        if (typeof window !== "undefined") {
+          window.addEventListener("popstate", handlePopState);
+        }
+      }
+    
+      return {
+        push,
+        pop,
+        replace,
+        clearTag,
+        attach,
+        getDepth: () => stack.length
+      };
+    }
+    
+    __exp.createUiHistory = createUiHistory;
+    
+  };
+
   __mods["js/bridge.mjs"] = function(__req, __exp) {
     /**
      * Native AndroidBridge (v2.1 + v3.0 compatible), Web Audio completion chime, and Haptics.
@@ -4981,6 +5390,126 @@ body {
         return count;
       }
     
+      function isQuickModeActive() {
+        return Boolean(state.todayRoutine && state.todayRoutine.quickBackup && Array.isArray(state.todayRoutine.quickBackup.items));
+      }
+    
+      function toggleQuickMode() {
+        ensureMaterializedRoutine();
+        const todayDate = getWorkoutDateStr();
+        const current = getTodayRoutineExercises();
+        const itemsArr = state.todayRoutine.items;
+    
+        if (isQuickModeActive()) {
+          const backup = state.todayRoutine.quickBackup;
+          let restoredCount = 0;
+          for (let i = 0; i < current.length; i++) {
+            const ex = current[i];
+            const rec = getRecord(ex, todayDate);
+            if (rec.isCompleted) continue;
+    
+            const byIdx = backup.items[i];
+            const origSpec =
+              byIdx && resolveExerciseId(byIdx.id) === ex.id
+                ? byIdx
+                : backup.items.find(b => resolveExerciseId(b && b.id) === ex.id);
+            if (!origSpec || !origSpec.sets) continue;
+    
+            const doneCount = Array.isArray(rec.sets) ? rec.sets.filter(s => s && s.done).length : 0;
+            const targetSets = Math.max(doneCount, Number(origSpec.sets) || 3);
+            const it = itemsArr[i];
+            if (it && Number(it.sets) !== targetSets) {
+              it.sets = targetSets;
+              restoredCount++;
+            }
+            const sample = (rec.sets && rec.sets[rec.sets.length - 1]) || {
+              weightKg: typeof ex.defaultWeightKg === "number" ? ex.defaultWeightKg : 0,
+              reps: ex.defaultReps || "10회"
+            };
+            while (rec.sets.length < targetSets) {
+              rec.sets.push({
+                weightKg: sample.weightKg != null ? sample.weightKg : 0,
+                reps: sample.reps || ex.defaultReps || "10회",
+                done: false
+              });
+            }
+          }
+    
+          if (backup.estimatedMinutes != null) {
+            state.todayRoutine.estimatedMinutes = backup.estimatedMinutes;
+          } else {
+            delete state.todayRoutine.estimatedMinutes;
+          }
+          delete state.todayRoutine.quickBackup;
+          markUserInteractedToday();
+          refreshMetrics();
+          persistState();
+          return {
+            compressedCount: restoredCount,
+            active: false,
+            reverted: true,
+            estimatedMinutes: state.todayRoutine.estimatedMinutes || 30
+          };
+        }
+    
+        const origMins = Number(state.todayRoutine.estimatedMinutes) || 30;
+        const origTotalSets = itemsArr.reduce((acc, it, idx) => {
+          const ex = current[idx];
+          return acc + (Number(it && it.sets) || (ex && ex.defaultSets) || 3);
+        }, 0);
+    
+        const backupItems = itemsArr.map((it, idx) => {
+          const ex = current[idx];
+          return {
+            id: it.id,
+            sets: Number(it.sets) || (ex && ex.defaultSets) || 3
+          };
+        });
+    
+        let compressedCount = 0;
+        for (let i = 0; i < current.length; i++) {
+          const ex = current[i];
+          const rec = getRecord(ex, todayDate);
+          const doneCount = Array.isArray(rec.sets) ? rec.sets.filter(s => s && s.done).length : 0;
+          if (rec.isCompleted || isWarmupOrStretch(ex) || doneCount >= 2) continue;
+    
+          const curSets = Number(itemsArr[i].sets) || Number(ex.defaultSets) || 3;
+          if (curSets <= 2) continue;
+    
+          itemsArr[i].sets = 2;
+          compressedCount++;
+          while (rec.sets.length > 2 && !rec.sets[rec.sets.length - 1].done) {
+            rec.sets.pop();
+          }
+        }
+    
+        if (compressedCount === 0) {
+          return { compressedCount: 0, active: false, reverted: false, estimatedMinutes: origMins };
+        }
+    
+        const newTotalSets = itemsArr.reduce((acc, it, idx) => {
+          const ex = current[idx];
+          return acc + (Number(it && it.sets) || (ex && ex.defaultSets) || 2);
+        }, 0);
+    
+        state.todayRoutine.quickBackup = {
+          estimatedMinutes: state.todayRoutine.estimatedMinutes != null ? state.todayRoutine.estimatedMinutes : 30,
+          items: backupItems
+        };
+        state.todayRoutine.estimatedMinutes =
+          origTotalSets > 0 ? Math.max(10, Math.round(origMins * (newTotalSets / origTotalSets))) : Math.max(10, Math.round(origMins * 0.65));
+    
+        markUserInteractedToday();
+        refreshMetrics();
+        persistState();
+        return {
+          compressedCount,
+          active: true,
+          reverted: false,
+          estimatedMinutes: state.todayRoutine.estimatedMinutes
+        };
+      }
+    
       function getFilteredCatalogExercises() {
         let list = getAllExercises(state.customExercises);
     
@@ -5083,6 +5612,8 @@ body {
         undoRoutineSwap,
         getRoutineEffectiveMode,
         toggleRoutineMode,
+        isQuickModeActive,
+        toggleQuickMode,
         bulkReplacePainExercises,
         getFilteredCatalogExercises,
         getLastRecord,
@@ -5201,6 +5732,19 @@ body {
         emitTick();
       }
     
+      function skip(defaultSec = null) {
+        clearInterval(timer.intervalId);
+        timer.intervalId = null;
+        timer.running = false;
+        timer.endTimestamp = 0;
+        const s = Math.max(1, Number(defaultSec || timer.duration) || 60);
+        timer.duration = s;
+        timer.remaining = s;
+        timer.label = "휴식";
+        cancelNativeTimer();
+        emitTick();
+      }
+    
       /**
        * When viewing a different exercise while timer is IDLE, update preview duration
        * to match the current exercise's default rest time.
@@ -5222,6 +5766,7 @@ body {
         toggle,
         addSeconds,
         reset,
+        skip,
         syncWithClock,
         previewExerciseRest
       };
@@ -6148,7 +6693,7 @@ body {
     const { EXTRA_MODES, getVolumePresetsForExercise, recommendExtraExercises } = __req("js/recommendEngine.mjs");
     const { renderCompletionReportModal } = __req("js/ui/report.mjs");
     
-    function createModalController({ store, sync, onRenderAll, showToast }) {
+    function createModalController({ store, sync, uiHistory = null, onRenderAll, showToast }) {
       let pendingRpeExerciseId = null;
       let guidePlayTimer = null;
       let guideViewMode = "full"; // "full" | "frame"
@@ -6173,11 +6718,16 @@ body {
         guidePlaying = false;
       }
     
-      function closeGuideModal() {
+      function closeGuideModal(fromPopState = false) {
         stopGuideAutoPlay();
         activeGuideEx = null;
         const modal = document.getElementById("zoomModal");
+        const wasOpen = modal && !modal.classList.contains("hidden");
         if (modal) modal.classList.add("hidden");
+        if (wasOpen && uiHistory) {
+          if (fromPopState) uiHistory.clearTag("zoomModal");
+          else uiHistory.pop("zoomModal");
+        }
       }
     
       function renderGuideModalBody() {
@@ -6341,7 +6891,11 @@ body {
         guideViewMode = initialMode;
         guideFrameIdx = 0;
         const modal = document.getElementById("zoomModal");
-        if (modal) modal.classList.remove("hidden");
+        if (modal) {
+          const alreadyOpen = !modal.classList.contains("hidden");
+          modal.classList.remove("hidden");
+          if (!alreadyOpen && uiHistory) uiHistory.push("zoomModal");
+        }
         renderGuideModalBody();
       }
     
@@ -6376,6 +6930,9 @@ body {
             state.todayCardIndex = firstIncomplete;
             onRenderAll();
           } else {
+            if (uiHistory && state.todayScreen === "card") {
+              uiHistory.replace("card", "reportModal");
+            }
             state.todayScreen = "dashboard";
             onRenderAll();
             showToast("🎉 오늘 추천 루틴을 모두 완료했습니다! 고생하셨습니다!");
@@ -6386,11 +6943,22 @@ body {
     
       function openCompletionReportModal() {
         renderCompletionReportModal(store);
-        document.getElementById("reportModal")?.classList.remove("hidden");
+        const modal = document.getElementById("reportModal");
+        if (modal) {
+          const alreadyOpen = !modal.classList.contains("hidden");
+          modal.classList.remove("hidden");
+          if (!alreadyOpen && uiHistory) uiHistory.push("reportModal");
+        }
       }
     
-      function closeCompletionReportModal() {
-        document.getElementById("reportModal")?.classList.add("hidden");
+      function closeCompletionReportModal(fromPopState = false) {
+        const modal = document.getElementById("reportModal");
+        const wasOpen = modal && !modal.classList.contains("hidden");
+        if (modal) modal.classList.add("hidden");
+        if (wasOpen && uiHistory) {
+          if (fromPopState) uiHistory.clearTag("reportModal");
+          else uiHistory.pop("reportModal");
+        }
       }
     
       function getAllDislikedIds() {
@@ -6590,7 +7158,7 @@ body {
         renderQuickAddCatalogOptions();
       }
     
-      function openQuickAddModal(preselectExId = null) {
+      function openQuickAddModal(preselectExId = null, options = {}) {
         quickAddRecMode = "custom";
         quickAddSearchQuery = "";
         const searchInput = document.getElementById("quickAddSearchInput");
@@ -6609,15 +7177,35 @@ body {
             if (sorted[0]) syncQuickAddDefaults(sorted[0].id, "직접 선택");
           }
         }
-        document.getElementById("quickAddModal")?.classList.remove("hidden");
+        const modal = document.getElementById("quickAddModal");
+        if (modal) {
+          const alreadyOpen = !modal.classList.contains("hidden");
+          modal.classList.remove("hidden");
+          if (uiHistory) {
+            if (options && options.replaceLayer) uiHistory.replace(options.replaceLayer, "quickAddModal");
+            else if (!alreadyOpen) uiHistory.push("quickAddModal");
+          }
+        }
       }
     
-      function closeQuickAddModal() {
-        document.getElementById("quickAddModal")?.classList.add("hidden");
+      function closeQuickAddModal(fromPopState = false, syncHistory = true) {
+        const modal = document.getElementById("quickAddModal");
+        const wasOpen = modal && !modal.classList.contains("hidden");
+        if (modal) modal.classList.add("hidden");
+        if (syncHistory && wasOpen && uiHistory) {
+          if (fromPopState) uiHistory.clearTag("quickAddModal");
+          else uiHistory.pop("quickAddModal");
+        }
       }
     
-      function closeSwapModal() {
-        document.getElementById("swapModal")?.classList.add("hidden");
+      function closeSwapModal(fromPopState = false) {
+        const modal = document.getElementById("swapModal");
+        const wasOpen = modal && !modal.classList.contains("hidden");
+        if (modal) modal.classList.add("hidden");
+        if (wasOpen && uiHistory) {
+          if (fromPopState) uiHistory.clearTag("swapModal");
+          else uiHistory.pop("swapModal");
+        }
       }
     
       function renderSwapModalBody() {
@@ -6714,7 +7302,47 @@ body {
         swapReason = alertAlt ? "pain" : "variation";
         swapReasonManual = false;
         renderSwapModalBody();
-        document.getElementById("swapModal")?.classList.remove("hidden");
+        const modal = document.getElementById("swapModal");
+        if (modal) {
+          const alreadyOpen = !modal.classList.contains("hidden");
+          modal.classList.remove("hidden");
+          if (!alreadyOpen && uiHistory) uiHistory.push("swapModal");
+        }
+      }
+    
+      function closeRpeBottomSheet(fromPopState = false, syncHistory = true) {
+        pendingRpeExerciseId = null;
+        const sheet = document.getElementById("rpeBottomSheet");
+        const wasOpen = sheet && !sheet.classList.contains("hidden");
+        if (sheet) sheet.classList.add("hidden");
+        if (syncHistory && wasOpen && uiHistory) {
+          if (fromPopState) uiHistory.clearTag("rpeBottomSheet");
+          else uiHistory.pop("rpeBottomSheet");
+        }
+      }
+    
+      function closeAddExModal(fromPopState = false) {
+        const modal = document.getElementById("addExModal");
+        const wasOpen = modal && !modal.classList.contains("hidden");
+        if (modal) modal.classList.add("hidden");
+        if (wasOpen && uiHistory) {
+          if (fromPopState) uiHistory.clearTag("addExModal");
+          else uiHistory.pop("addExModal");
+        }
+      }
+    
+      function closeTopModal(fromPopState = false) {
+        const isVis = id => {
+          const el = document.getElementById(id);
+          return el && !el.classList.contains("hidden");
+        };
+        if (isVis("zoomModal")) { closeGuideModal(fromPopState); return true; }
+        if (isVis("rpeBottomSheet")) { closeRpeBottomSheet(fromPopState); return true; }
+        if (isVis("swapModal")) { closeSwapModal(fromPopState); return true; }
+        if (isVis("quickAddModal")) { closeQuickAddModal(fromPopState); return true; }
+        if (isVis("reportModal")) { closeCompletionReportModal(fromPopState); return true; }
+        if (isVis("addExModal")) { closeAddExModal(fromPopState); return true; }
+        return false;
       }
     
       function openRpeBottomSheet(ex, rec) {
@@ -6727,7 +7355,11 @@ body {
         const titleEl = document.getElementById("rpeExTitle");
         if (titleEl) titleEl.textContent = `${ex.name} 완료!`;
         const sheet = document.getElementById("rpeBottomSheet");
-        if (sheet) sheet.classList.remove("hidden");
+        if (sheet) {
+          const alreadyOpen = !sheet.classList.contains("hidden");
+          sheet.classList.remove("hidden");
+          if (!alreadyOpen && uiHistory) uiHistory.push("rpeBottomSheet");
+        }
       }
     
       function finalizeFinishWithRpe(rpe) {
@@ -6735,6 +7367,7 @@ body {
         const exId = pendingRpeExerciseId;
         pendingRpeExerciseId = null;
         const sheet = document.getElementById("rpeBottomSheet");
+        const wasOpen = sheet && !sheet.classList.contains("hidden");
         if (sheet) sheet.classList.add("hidden");
     
         const allEx = store.getTodayRoutineExercises().concat(store.state.customExercises || []);
@@ -6756,6 +7389,18 @@ body {
           store.persistState();
         }
         sync.scheduleAutoPush(300);
+    
+        const hasRemaining = store.getTodayRoutineExercises().some(item => !store.getRecord(item).isCompleted);
+        if (!hasRemaining && uiHistory) {
+          uiHistory.clearTag("card");
+          if (wasOpen) {
+            uiHistory.replace("rpeBottomSheet", "reportModal");
+            // Clear flag so openCompletionReportModal knows layer is set cleanly
+          }
+        } else if (wasOpen && uiHistory) {
+          uiHistory.pop("rpeBottomSheet");
+        }
+    
         moveToNextIncompleteExercise();
       }
     
@@ -6764,23 +7409,26 @@ body {
         document.querySelectorAll(".rpe-btn").forEach(btn => {
           btn.addEventListener("click", () => finalizeFinishWithRpe(Number(btn.dataset.rpe)));
         });
+        document.getElementById("rpeBottomSheet")?.addEventListener("click", e => {
+          if (e.target.id === "rpeBottomSheet") closeRpeBottomSheet();
+        });
     
-        document.getElementById("zoomModalCloseBtn")?.addEventListener("click", closeGuideModal);
+        document.getElementById("zoomModalCloseBtn")?.addEventListener("click", () => closeGuideModal());
         document.getElementById("zoomModal")?.addEventListener("click", e => {
           if (e.target.id === "zoomModal") closeGuideModal();
         });
     
-        document.getElementById("reportModalCloseBtn")?.addEventListener("click", closeCompletionReportModal);
+        document.getElementById("reportModalCloseBtn")?.addEventListener("click", () => closeCompletionReportModal());
         document.getElementById("reportModal")?.addEventListener("click", e => {
           if (e.target.id === "reportModal") {
             closeCompletionReportModal();
           } else if (e.target.closest("#reportOpenExtraBtn")) {
-            closeCompletionReportModal();
-            openQuickAddModal();
+            document.getElementById("reportModal")?.classList.add("hidden");
+            openQuickAddModal(null, { replaceLayer: "reportModal" });
           }
         });
     
-        document.getElementById("quickAddCloseBtn")?.addEventListener("click", closeQuickAddModal);
+        document.getElementById("quickAddCloseBtn")?.addEventListener("click", () => closeQuickAddModal());
         document.getElementById("quickAddModal")?.addEventListener("click", e => {
           if (e.target.id === "quickAddModal") closeQuickAddModal();
         });
@@ -6827,7 +7475,13 @@ body {
             isExtra: true,
             extraReason: reasonName
           });
-          closeQuickAddModal();
+          const wasCard = store.state.todayScreen === "card" && store.state.activeTab === "today";
+          if (wasCard) {
+            closeQuickAddModal();
+          } else {
+            closeQuickAddModal(false, false);
+            if (uiHistory && idx >= 0) uiHistory.replace("quickAddModal", "card");
+          }
           if (idx >= 0) {
             const added = store.getTodayRoutineExercises()[idx];
             store.state.activeTab = "today";
@@ -6844,7 +7498,7 @@ body {
           }
         });
     
-        document.getElementById("swapModalCloseBtn")?.addEventListener("click", closeSwapModal);
+        document.getElementById("swapModalCloseBtn")?.addEventListener("click", () => closeSwapModal());
         document.getElementById("swapModal")?.addEventListener("click", e => {
           if (e.target.id === "swapModal") closeSwapModal();
         });
@@ -6867,10 +7521,16 @@ body {
         });
     
         document.getElementById("addCustomExBtn")?.addEventListener("click", () => {
-          document.getElementById("addExModal")?.classList.remove("hidden");
+          const modal = document.getElementById("addExModal");
+          if (modal) {
+            const alreadyOpen = !modal.classList.contains("hidden");
+            modal.classList.remove("hidden");
+            if (!alreadyOpen && uiHistory) uiHistory.push("addExModal");
+          }
         });
-        document.getElementById("addExModalCloseBtn")?.addEventListener("click", () => {
-          document.getElementById("addExModal")?.classList.add("hidden");
+        document.getElementById("addExModalCloseBtn")?.addEventListener("click", () => closeAddExModal());
+        document.getElementById("addExModal")?.addEventListener("click", e => {
+          if (e.target.id === "addExModal") closeAddExModal();
         });
     
         document.getElementById("saveNewExBtn")?.addEventListener("click", () => {
@@ -6895,7 +7555,7 @@ body {
           store.state.customExercises.push(newEx);
           store.persistState();
           sync.scheduleAutoPush(300);
-          document.getElementById("addExModal")?.classList.add("hidden");
+          closeAddExModal();
           document.getElementById("newExName").value = "";
           showToast(`✅ [${newEx.name}] 추가 완료!`);
           onRenderAll();
@@ -6910,6 +7570,7 @@ body {
         closeQuickAddModal,
         openSwapModal,
         closeSwapModal,
+        closeTopModal,
         directFinishExercise,
         openRpeBottomSheet,
         finalizeFinishWithRpe,
@@ -7075,6 +7736,15 @@ body {
         modeSwapBtn.classList.toggle("badge-muted", !isGymMode);
       }
     
+      // Screen 1 Quick Mode Compression Toggle ("⚡ 2세트 퀵" / "↩ 원래 볼륨 복구")
+      const quickModeBtn = document.getElementById("dashQuickModeBtn");
+      if (quickModeBtn && typeof store.isQuickModeActive === "function") {
+        const isQuick = store.isQuickModeActive();
+        quickModeBtn.textContent = isQuick ? "↩ 원래 볼륨 복구" : "⚡ 2세트 퀵";
+        quickModeBtn.classList.toggle("badge-amber", isQuick);
+        quickModeBtn.classList.toggle("badge-muted", !isQuick);
+      }
+    
       // CTA Button text
       const ctaBtn = document.getElementById("dashCtaBtn");
       if (ctaBtn) {
@@ -7216,6 +7886,7 @@ body {
       const timeText = document.getElementById("timerRingTime");
       const labelText = document.getElementById("timerRingLabel");
       const toggleBtn = document.getElementById("timerToggleBtn");
+      const skipBtn = document.getElementById("timerSkipBtn");
     
       if (timeText) {
         const m = String(Math.floor(timer.remaining / 60)).padStart(2, "0");
@@ -7232,6 +7903,10 @@ body {
       }
       if (toggleBtn) {
         toggleBtn.textContent = timer.running ? "⏸ 정지" : "▶ 시작";
+      }
+      if (skipBtn) {
+        const showSkip = Boolean(timer.running || timer.remaining < timer.duration);
+        skipBtn.classList.toggle("hidden", !showSkip);
       }
     }
     
@@ -7289,6 +7964,11 @@ body {
             onRenderAll();
           });
         });
+    
+        const prevBtn = document.getElementById("cardPrevBtn");
+        const nextBtn = document.getElementById("cardNextBtn");
+        if (prevBtn) prevBtn.disabled = store.state.todayCardIndex <= 0;
+        if (nextBtn) nextBtn.disabled = store.state.todayCardIndex >= items.length - 1;
       }
     
       function renderFocusedCard() {
@@ -7396,56 +8076,59 @@ body {
             ${prevRecordHtml}
             <div class="slim-control-box" style="display:flex; flex-direction:column; gap:6px;">
               ${workTimerHtml}
-              <div style="display:flex; align-items:center; gap:8px;">
-                <!-- Left: Compact Circular Rest Timer (60x60) -->
-                <div style="flex:0 0 78px; display:flex; flex-direction:column; align-items:center; gap:3px;">
-                  <div style="position:relative; width:58px; height:58px; display:flex; align-items:center; justify-content:center;">
-                    <svg width="58" height="58" viewBox="0 0 68 68" style="transform: rotate(-90deg);">
+              <div style="display:flex; align-items:center; gap:10px;">
+                <!-- Left: Compact Circular Rest Timer (Scales on Portrait Tablet) -->
+                <div class="card-timer-col">
+                  <div class="card-timer-ring-wrap">
+                    <svg class="card-timer-svg" viewBox="0 0 68 68">
                       <circle cx="34" cy="34" r="28" fill="none" stroke="#222226" stroke-width="5" />
                       <circle id="timerRingProgress" cx="34" cy="34" r="28" fill="none" stroke="#a3e635" stroke-width="5" stroke-linecap="round"
                         style="stroke-dasharray:${circum.toFixed(1)}; stroke-dashoffset:${(circum * (1 - ratio)).toFixed(1)}; transition: stroke-dashoffset 0.3s linear;" />
                     </svg>
                     <div style="position:absolute; text-align:center;">
-                      <div id="timerRingTime" class="tabular-nums" style="font-size:13.5px; font-weight:900; color:#ffffff;">${min}:${sec}</div>
-                      <div id="timerRingLabel" style="font-size:8px; font-weight:800; color:var(--text-muted); max-width:44px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${t.running ? "휴식 중" : "휴식"}</div>
+                      <div id="timerRingTime" class="tabular-nums card-timer-time">${min}:${sec}</div>
+                      <div id="timerRingLabel" class="card-timer-label">${t.running ? "휴식 중" : "휴식"}</div>
                     </div>
                   </div>
                   <div class="row-gap" style="gap:3px; width:100%;">
-                    <button id="timerToggleBtn" type="button" class="btn-tap" style="flex:1; height:22px; border-radius:6px; font-size:9px; font-weight:800; border:1px solid var(--accent); background:var(--accent-bg); color:var(--accent); padding:0 3px; white-space:nowrap;">
+                    <button id="timerToggleBtn" type="button" class="btn-tap card-timer-btn" style="border:1px solid var(--accent); background:var(--accent-bg); color:var(--accent);">
                       ${t.running ? "⏸ 정지" : "▶ 시작"}
                     </button>
-                    <button type="button" data-card-action="timer-add" class="btn-tap btn-secondary" style="flex:1; height:22px; border-radius:6px; font-size:9px; padding:0 3px; white-space:nowrap;">
+                    <button type="button" data-card-action="timer-add" class="btn-tap btn-secondary card-timer-btn">
                       +15초
                     </button>
                   </div>
+                  <button id="timerSkipBtn" type="button" data-card-action="timer-skip" class="btn-tap card-timer-skip-btn ${t.running || t.remaining < t.duration ? "" : "hidden"}">
+                    ⏭ 휴식 스킵
+                  </button>
                 </div>
     
                 <!-- Right: Interactive Set Dots + Steppers -->
-                <div style="flex:1; min-width:0; display:flex; flex-direction:column; gap:4px;">
+                <div style="flex:1; min-width:0; display:flex; flex-direction:column; gap:5px;">
                   <div style="display:flex; align-items:center; justify-content:space-between;">
-                    <span style="font-size:11px; font-weight:800; color:var(--text-soft);">${curSetNum} / ${rec.sets.length}세트 <span style="font-size:9.5px; color:var(--text-muted); font-weight:600;">(점 탭=되돌림)</span></span>
-                    <div class="row-gap" style="gap:1px;">${setDotsHtml}</div>
+                    <span style="font-size:11.5px; font-weight:800; color:var(--text-soft);">${curSetNum} / ${rec.sets.length}세트 <span style="font-size:9.5px; color:var(--text-muted); font-weight:600;">(점 탭=되돌림)</span></span>
+                    <div class="row-gap" style="gap:2px;">${setDotsHtml}</div>
                   </div>
     
-                  <div style="background:var(--card); border:1px solid var(--border); border-radius:8px; padding:3px 8px; display:flex; align-items:center; justify-content:space-between;">
+                  <div class="card-stepper-box">
                     <div>
-                      <div style="font-size:8px; color:var(--text-muted); font-weight:700;">중량</div>
-                      <div id="batchWeightDisplay" class="tabular-nums" style="font-size:12px; font-weight:900; color:#fff;">${currentWeight > 0 ? `${currentWeight}kg` : "맨몸/밴드"}</div>
+                      <div class="card-stepper-label">중량</div>
+                      <div id="batchWeightDisplay" class="tabular-nums card-stepper-val">${currentWeight > 0 ? `${currentWeight}kg` : "맨몸/밴드"}</div>
                     </div>
-                    <div class="row-gap" style="gap:3px;">
-                      <button type="button" data-card-action="step-weight" data-delta="-2" class="btn-tap stepper-btn" style="width:24px; height:24px; font-size:13px; border-radius:6px;">-</button>
-                      <button type="button" data-card-action="step-weight" data-delta="2" class="btn-tap stepper-btn" style="width:24px; height:24px; font-size:13px; border-radius:6px;">+</button>
+                    <div class="row-gap" style="gap:4px;">
+                      <button type="button" data-card-action="step-weight" data-delta="-2" class="btn-tap stepper-btn card-stepper-btn">-</button>
+                      <button type="button" data-card-action="step-weight" data-delta="2" class="btn-tap stepper-btn card-stepper-btn">+</button>
                     </div>
                   </div>
     
-                  <div style="background:var(--card); border:1px solid var(--border); border-radius:8px; padding:3px 8px; display:flex; align-items:center; justify-content:space-between;">
+                  <div class="card-stepper-box">
                     <div>
-                      <div style="font-size:8px; color:var(--text-muted); font-weight:700;">횟수/시간</div>
-                      <div id="batchRepsDisplay" class="tabular-nums" style="font-size:12px; font-weight:900; color:#fff;">${currentReps}</div>
+                      <div class="card-stepper-label">횟수/시간</div>
+                      <div id="batchRepsDisplay" class="tabular-nums card-stepper-val">${currentReps}</div>
                     </div>
-                    <div class="row-gap" style="gap:3px;">
-                      <button type="button" data-card-action="step-reps" data-delta="-1" class="btn-tap stepper-btn" style="width:24px; height:24px; font-size:13px; border-radius:6px;">-</button>
-                      <button type="button" data-card-action="step-reps" data-delta="1" class="btn-tap stepper-btn" style="width:24px; height:24px; font-size:13px; border-radius:6px;">+</button>
+                    <div class="row-gap" style="gap:4px;">
+                      <button type="button" data-card-action="step-reps" data-delta="-1" class="btn-tap stepper-btn card-stepper-btn">-</button>
+                      <button type="button" data-card-action="step-reps" data-delta="1" class="btn-tap stepper-btn card-stepper-btn">+</button>
                     </div>
                   </div>
                 </div>
@@ -7459,27 +8142,27 @@ body {
           if (!allDone) {
             const btnText = isLastRemainingSet ? "✅ 종목 완료" : `✅ ${curSetNum}세트 완료`;
             ctaButtonHtml = `
-              <button id="cardSetCompleteBtn" type="button" class="btn-tap btn-primary" style="height:44px; border-radius:14px; font-size:14px;">
+              <button id="cardSetCompleteBtn" type="button" class="btn-tap btn-primary card-main-cta">
                 ${btnText}
               </button>
             `;
           } else {
             ctaButtonHtml = `
-              <button id="cardSetCompleteBtn" type="button" class="btn-tap btn-primary" style="height:44px; border-radius:14px; font-size:14px; background:var(--amber-bright); color:#050507;">
+              <button id="cardSetCompleteBtn" type="button" class="btn-tap btn-primary card-main-cta" style="background:var(--amber-bright); color:#050507;">
                 ✅ 종목 완료 (다음 종목 이동)
               </button>
             `;
           }
         } else if (!allDone) {
           ctaButtonHtml = `
-            <button id="cardSetCompleteBtn" type="button" class="btn-tap btn-primary" style="height:44px; border-radius:14px; font-size:14px;">
+            <button id="cardSetCompleteBtn" type="button" class="btn-tap btn-primary card-main-cta">
               ✅ ${curSetNum}세트 완료 · ${ex.restSec || 60}초 휴식 시작
             </button>
           `;
         } else {
           const rpeLabel = rec.rpe != null ? ` · 현재 RPE ${rec.rpe}` : "";
           ctaButtonHtml = `
-            <button id="cardSetCompleteBtn" type="button" class="btn-tap btn-primary" style="height:44px; border-radius:14px; font-size:14px; background:var(--amber-bright); color:#050507;">
+            <button id="cardSetCompleteBtn" type="button" class="btn-tap btn-primary card-main-cta" style="background:var(--amber-bright); color:#050507;">
               🎉 전 세트 완료 (RPE 강도 기록${rpeLabel})
             </button>
           `;
@@ -7517,7 +8200,7 @@ body {
               <!-- 2. Exercise Title Row (No Truncation) + Extra Badge + Unilateral Badge + Undo Swap -->
               <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:6px;">
                 <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap; min-width:0; flex:1;">
-                  <span style="font-size:16.5px; font-weight:900; color:#ffffff; word-break:keep-all; line-height:1.25; letter-spacing:-0.3px;">${ex.name}</span>
+                  <span class="card-coach-title">${ex.name}</span>
                   ${ex.isExtra ? `<span class="badge-extra-mini">⚡ 추가</span>` : ""}
                 </div>
                 <div style="display:flex; align-items:center; gap:4px; flex-shrink:0; margin-top:1px;">
@@ -7545,8 +8228,8 @@ body {
                   ${phases
                     .map(
                       (p, pIdx) => `
-                    <div style="display:flex; align-items:flex-start; gap:6px; font-size:11.5px; line-height:1.38;">
-                      <span style="display:inline-flex; align-items:center; justify-content:center; width:16px; height:16px; border-radius:50%; background:var(--accent-bg); color:var(--accent); font-size:10px; font-weight:900; flex-shrink:0; margin-top:1px;">
+                    <div class="card-coach-step">
+                      <span style="display:inline-flex; align-items:center; justify-content:center; width:16px; height:16px; border-radius:50%; background:var(--accent-bg); color:var(--accent); font-size:10px; font-weight:900; flex-shrink:0; margin-top:2px;">
                         ${p.step || pIdx + 1}
                       </span>
                       <div style="flex:1; min-width:0; color:var(--text-soft);">
@@ -7561,19 +8244,19 @@ body {
                 </div>
               `
                   : `
-                <div style="font-size:11.5px; color:var(--text-soft); line-height:1.38;">
-                  <strong style="color:#ffffff;">[동작 요약]</strong> ${ex.prep || "올바른 자세를 유지하며 통제된 속도로 진행합니다."}
+                <div class="card-coach-step" style="color:var(--text-soft);">
+                  <div><strong style="color:#ffffff;">[동작 요약]</strong> ${ex.prep || "올바른 자세를 유지하며 통제된 속도로 진행합니다."}</div>
                 </div>
               `
               }
     
               <!-- 5. Posture Check Box (#1c1c1f) -->
               <div style="background:var(--card-2); border:1px solid var(--border); border-radius:10px; padding:6px 9px; display:flex; flex-direction:column; gap:3.5px;">
-                <div style="display:flex; align-items:flex-start; gap:5px; font-size:11px; line-height:1.35;">
+                <div class="card-coach-ox">
                   <span style="color:var(--accent); font-weight:900; flex-shrink:0;">⭕</span>
                   <span style="color:var(--text-soft);">${doCue}</span>
                 </div>
-                <div style="display:flex; align-items:flex-start; gap:5px; font-size:11px; line-height:1.35;">
+                <div class="card-coach-ox">
                   <span style="color:var(--rose); font-weight:900; flex-shrink:0;">❌</span>
                   <span style="color:var(--text-soft);">${dontCue}</span>
                 </div>
@@ -7741,6 +8424,13 @@ body {
               }
             } else if (act === "timer-add") {
               timerCtrl.addSeconds(15);
+            } else if (act === "timer-skip") {
+              if (typeof timerCtrl.skip === "function") {
+                timerCtrl.skip(ex.restSec || 60);
+              } else {
+                timerCtrl.reset(ex.restSec || 60, ex.id);
+              }
+              showToast("⏭ 휴식을 스킵했습니다.");
             } else if (act === "step-weight") {
               const delta = Number(el.dataset.delta);
               store.markUserInteractedToday();
@@ -7988,7 +8678,7 @@ body {
     
       const items = store.getFilteredCatalogExercises();
       if (!items.length) {
-        listContainer.innerHTML = `<div class="card-surface" style="text-align:center; color:var(--text-muted); font-size:12.5px; padding:20px;">조건에 맞는 운동 종목이 없습니다. 프리셋이나 필터를 조정해 보세요.</div>`;
+        listContainer.innerHTML = `<div class="card-surface cat-empty-state" style="text-align:center; color:var(--text-muted); font-size:12.5px; padding:20px;">조건에 맞는 운동 종목이 없습니다. 프리셋이나 필터를 조정해 보세요.</div>`;
         return;
       }
     
@@ -8305,6 +8995,7 @@ body {
     const { createStore } = __req("js/store.mjs");
     const { createTimerController, createWorkTimerController } = __req("js/timer.mjs");
     const { createSyncService } = __req("js/sync.mjs");
+    const { createUiHistory } = __req("js/uiHistory.mjs");
     const { hasGasBridge } = __req("js/bridge.mjs");
     const { showToast, updateSyncBadge, setSyncStatusMsg } = __req("js/ui/toast.mjs");
     const { createModalController } = __req("js/ui/modals.mjs");
@@ -8365,8 +9056,10 @@ body {
             onRenderAll: renderAll,
             showToast,
             onSelectExercise: idx => {
+              const prevScreen = state.todayScreen;
               state.todayCardIndex = idx;
               state.todayScreen = "card";
+              if (prevScreen !== "card") uiHistory.push("card");
               renderAll();
             }
           });
@@ -8420,7 +9113,21 @@ body {
       }
     });
     
-    modals = createModalController({ store, sync, onRenderAll: renderAll, showToast });
+    const uiHistory = createUiHistory(() => {
+      if (modals && modals.closeTopModal(true)) return;
+      if (store.state.activeTab === "today" && store.state.todayScreen === "card") {
+        store.state.todayScreen = "dashboard";
+        renderAll();
+        return;
+      }
+      if (store.state.activeTab !== "today") {
+        store.state.activeTab = "today";
+        store.persistState();
+        renderAll();
+      }
+    });
+    
+    modals = createModalController({ store, sync, uiHistory, onRenderAll: renderAll, showToast });
     cardCtrl = createCardController({ store, timerCtrl, workTimerCtrl, sync, modals, onRenderAll: renderAll, showToast });
     
     // Hook called by Android MainActivity.onResume() when returning to WebView
@@ -8444,6 +9151,7 @@ body {
     document.addEventListener("DOMContentLoaded", () => {
       cardCtrl.initSwipeGesture();
       modals.bindModalEvents();
+      uiHistory.attach();
     
       // Register Service Worker for true offline PWA support
       if ("serviceWorker" in navigator && !hasGasBridge() && location.protocol.startsWith("http")) {
@@ -8453,32 +9161,53 @@ body {
       // Bottom Navigation
       document.querySelectorAll(".nav-item").forEach(btn => {
         btn.addEventListener("click", () => {
-          store.state.activeTab = btn.dataset.tab;
+          const nextTab = btn.dataset.tab;
+          const prevTab = store.state.activeTab;
+          if (nextTab === "today" && prevTab !== "today") {
+            uiHistory.pop("tab");
+          } else if (nextTab !== "today" && prevTab === "today") {
+            uiHistory.push("tab");
+          }
+          store.state.activeTab = nextTab;
           store.persistState();
           renderAll();
         });
       });
     
-      // Floating Rest Mini Pill jump back to active card
-      document.getElementById("floatingRestPill")?.addEventListener("click", () => {
+      // Floating Rest Mini Pill jump back to active card OR quick skip rest
+      document.getElementById("floatingRestJumpBtn")?.addEventListener("click", () => {
         const items = store.getTodayRoutineExercises();
         const idx = items.findIndex(x => x.id === timerCtrl.timer.exerciseId);
+        const prevTab = store.state.activeTab;
+        const prevScreen = store.state.todayScreen;
         store.state.activeTab = "today";
         store.state.todayScreen = "card";
+        if (prevTab !== "today") uiHistory.clearTag("tab");
+        if (prevScreen !== "card") uiHistory.push("card");
         if (idx !== -1) store.state.todayCardIndex = idx;
         renderAll();
+      });
+    
+      document.getElementById("floatingRestSkipBtn")?.addEventListener("click", e => {
+        e.stopPropagation();
+        if (typeof timerCtrl.skip === "function") timerCtrl.skip();
+        updateFloatingTimerPill();
+        showToast("⏭ 휴식을 스킵했습니다.");
       });
     
       // Dashboard CTA & Quick Add
       document.getElementById("dashCtaBtn")?.addEventListener("click", () => {
         const items = store.getTodayRoutineExercises();
         const firstIncomplete = items.findIndex(e => !store.getRecord(e).isCompleted);
+        const prevScreen = store.state.todayScreen;
         store.state.todayScreen = "card";
         store.state.todayCardIndex = firstIncomplete !== -1 ? firstIncomplete : 0;
+        if (prevScreen !== "card") uiHistory.push("card");
         renderAll();
       });
     
       document.getElementById("dashQuickAddBtn")?.addEventListener("click", () => {
+        if (store.state.activeTab === "today") uiHistory.push("tab");
         store.state.activeTab = "catalog";
         store.persistState();
         renderAll();
@@ -8486,6 +9215,22 @@ body {
     
       document.getElementById("dashBottomAddBtn")?.addEventListener("click", () => {
         modals.openQuickAddModal();
+      });
+    
+      document.getElementById("dashQuickModeBtn")?.addEventListener("click", () => {
+        const res = store.toggleQuickMode();
+        if (res.reverted || res.compressedCount > 0) {
+          if (typeof sync.commitTodayHistory === "function") sync.commitTodayHistory();
+          sync.scheduleAutoPush(400);
+          renderAll();
+          if (res.reverted) {
+            showToast(`↩ 원래 세트 수로 복구했습니다! (예상 약 ${res.estimatedMinutes}분)`);
+          } else {
+            showToast(`⚡ ${res.compressedCount}개 근력 종목 2세트 압축! (예상 약 ${res.estimatedMinutes}분)`);
+          }
+        } else {
+          showToast("압축할 미완료 3세트+ 근력 종목이 없습니다.");
+        }
       });
     
       document.getElementById("dashModeSwapBtn")?.addEventListener("click", () => {
@@ -8512,7 +9257,16 @@ body {
       // Card Screen Top Controls
       document.getElementById("cardBackBtn")?.addEventListener("click", () => {
         store.state.todayScreen = "dashboard";
+        uiHistory.pop("card");
         renderAll();
+      });
+    
+      document.getElementById("cardPrevBtn")?.addEventListener("click", () => {
+        cardCtrl.navigateCardWithSwipe(-1);
+      });
+    
+      document.getElementById("cardNextBtn")?.addEventListener("click", () => {
+        cardCtrl.navigateCardWithSwipe(1);
       });
     
       document.getElementById("cardDirectFinishBtn")?.addEventListener("click", () => {
