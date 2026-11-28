@@ -4353,7 +4353,10 @@ body {
       if (Array.isArray(state.dislikedExercises)) {
         state.dislikedExercises.forEach(id => {
           const resId = resolveExerciseId(id);
-          if (resId && state.records[resId] && !state.records[resId].preference) {
+          if (!resId) return;
+          if (!state.records[resId]) {
+            state.records[resId] = { sets: [], isCompleted: false, rpe: null, preference: "dislike", preferenceNote: "", lastUpdatedDate: "" };
+          } else if (!state.records[resId].preference) {
             state.records[resId].preference = "dislike";
           }
         });
