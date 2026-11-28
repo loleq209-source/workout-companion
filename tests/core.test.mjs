@@ -5,7 +5,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { formatLocalDate, addDaysLocal, parseLocalDateNoon, getWorkoutDateStr } from "../src/js/date.mjs";
-import { EXERCISES, ENRICHED_DB, getMuscleGroup, isWarmupOrStretch, resolveAssetBase } from "../src/js/data.mjs";
+import { EXERCISES, ENRICHED_DB, getMuscleGroup, isWarmupOrStretch, resolveAssetBase, parseTimedSeconds } from "../src/js/data.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const enrichedJson = JSON.parse(fs.readFileSync(path.resolve(__dirname, "../data/exercises_enriched_34.json"), "utf8"));
@@ -15,7 +15,7 @@ import { createStore } from "../src/js/store.mjs";
 import { upsertTodayHistory, applyLoadedDriveData } from "../src/js/sync.mjs";
 import { createTimerController } from "../src/js/timer.mjs";
 import { mapExerciseToMuscleRegions, buildTodayReportData } from "../src/js/muscleMap.mjs";
-import { getSwapCandidates } from "../src/js/swapEngine.mjs";
+import { getSwapCandidates, HOME_TO_GYM_MAP } from "../src/js/swapEngine.mjs";
 
 function makeMemoryStorage(initial = null) {
   const map = new Map();
@@ -33,9 +33,9 @@ test("Date helpers perform local arithmetic without UTC shift", () => {
   assert.equal(addDaysLocal("2026-11-25", -6), "2026-11-19");
 });
 
-test("Data mapping classifies all 48 exercises cleanly & preserves legacy aliases", () => {
-  assert.equal(EXERCISES.length, 48);
-  assert.equal(EXERCISES.filter(x => x.mode === "home").length, 36);
+test("Data mapping classifies all 58 exercises cleanly & preserves legacy aliases", () => {
+  assert.equal(EXERCISES.length, 58);
+  assert.equal(EXERCISES.filter(x => x.mode === "home").length, 46);
   assert.equal(EXERCISES.filter(x => x.mode === "gym").length, 12);
   const legPress = EXERCISES.find(x => x.id === "gym_leg_press");
   const legCurl = EXERCISES.find(x => x.id === "gym_leg_curl");
@@ -468,6 +468,7 @@ test("Smart swap, 1:1 Home<->Gym conversion, partial set preservation, Undo & bu
   const bulkCount = store.bulkReplacePainExercises(["허리"]);
   assert.equal(bulkCount, 2);
   items = store.getTodayRoutineExercises();
+  assert.equal(items[2].id, "home_inverted_row");
   assert.equal(items[2].swapReason, "pain");
   assert.equal(items[3].id, "home_kickstand_rdl");
   assert.equal(items[3].swapReason, "pain");
@@ -504,4 +505,33 @@ test("Dislike toggle syncs dislikedExercises, pushes to bottom of candidates, & 
   // Toggle off removes from dislikedExercises
   assert.equal(store.setExercisePreference("home_kb_floor_2arm", null), false);
   assert.equal(store.state.dislikedExercises.includes("home_kb_floor_2arm"), false);
+});
+
+test("New 10 home exercises (total 58) map cleanly across groups, heatmap, timers & Home<->Gym swaps", () => {
+  const newIds = [
+    "home_kb_sumo_deadlift",
+    "home_kb_reverse_lunge",
+    "home_kb_calf_raise",
+    "home_kb_clean_press",
+    "home_pushup_scapula",
+    "home_kb_upright_row",
+    "home_inverted_row",
+    "home_side_plank",
+    "home_bird_dog",
+    "home_smr_quad_itb"
+  ];
+  for (const id of newIds) {
+    const ex = EXERCISES.find(x => x.id === id);
+    assert.ok(ex, `Missing exercise ${id}`);
+    assert.ok(ENRICHED_DB[id] && Array.isArray(ENRICHED_DB[id].phases) && ENRICHED_DB[id].phases.length === 3, `Missing phases for ${id}`);
+    const hm = mapExerciseToMuscleRegions(ex);
+    assert.ok(hm.primary.length + hm.stretch.length > 0, `Missing heatmap for ${id}`);
+  }
+  assert.equal(isWarmupOrStretch(EXERCISES.find(x => x.id === "home_smr_quad_itb")), true);
+  assert.equal(getMuscleGroup(EXERCISES.find(x => x.id === "home_smr_quad_itb")), null);
+  assert.equal(parseTimedSeconds("좌우 각 35초"), 35);
+  assert.equal(HOME_TO_GYM_MAP.home_inverted_row[0], "gym_long_pull");
+  assert.equal(HOME_TO_GYM_MAP.home_kb_sumo_deadlift[0], "gym_inner_thigh");
+  assert.equal(HOME_TO_GYM_MAP.home_kb_reverse_lunge[0], "gym_leg_press");
+  assert.equal(HOME_TO_GYM_MAP.home_kb_clean_press[0], "gym_shoulder_press");
 });

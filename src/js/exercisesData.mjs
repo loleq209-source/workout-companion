@@ -1,4 +1,4 @@
-// Canonical 48-exercise catalog
+// Canonical 58-exercise catalog
 export const EXERCISES = [
   {
     "id": "home_smr",
@@ -1211,5 +1211,265 @@ export const EXERCISES = [
     ],
     "breathing": "무릎을 들어 올릴 때 짧게 내쉬며 복압을 유지하고 일정한 호흡을 유지합니다.",
     "tips": "케틀벨 무게에 상체가 옆으로 무너지거나 무릎을 낮게 끌지 않도록 똑바로 서세요."
+  },
+  {
+    "id": "home_kb_sumo_deadlift",
+    "mode": "home",
+    "category": "하체·파워",
+    "presets": [
+      "all",
+      "lower_core",
+      "riding_recovery"
+    ],
+    "name": "14kg 케틀벨 스모 데드리프트",
+    "equipment": "14kg 케틀벨",
+    "targetMuscle": "내전근·대둔근·햄스트링",
+    "defaultWeightKg": 14,
+    "defaultSets": 3,
+    "defaultReps": "15회",
+    "restSec": 60,
+    "pairName": "레그프레스 / 인어 사이",
+    "prep": "양발을 어깨너비 1.5배 이상 넓게 벌리고 발끝을 35~45도 바깥쪽으로 열어 중앙에 케틀벨을 둡니다.",
+    "steps": [
+      "척추 중립을 유지한 채 엉덩이를 뒤로 빼며 무릎을 발끝 방향으로 열어 케틀벨 손잡이를 잡습니다.",
+      "발바닥 전체로 바닥을 강하게 밀어내며 무릎과 고관절을 동시에 펴고 일어납니다.",
+      "정점에서 대둔근과 허벅지 안쪽(내전근)을 수축한 뒤 힙 힌지로 천천히 내려놓습니다."
+    ],
+    "breathing": "내려가며 깊게 들이마시고, 바닥을 밀며 일어날 때 강하게 내쉽니다.",
+    "tips": "무릎이 안쪽으로 모이지 않도록 발끝과 같은 방향을 유지하세요."
+  },
+  {
+    "id": "home_kb_reverse_lunge",
+    "mode": "home",
+    "category": "하체·파워",
+    "presets": [
+      "all",
+      "lower_core"
+    ],
+    "name": "14kg 케틀벨 리버스 런지",
+    "equipment": "14kg 케틀벨",
+    "targetMuscle": "대퇴사두근·대둔근·고관절 안정근",
+    "defaultWeightKg": 14,
+    "defaultSets": 3,
+    "defaultReps": "좌우 각 10회",
+    "restSec": 60,
+    "pairName": "레그프레스 / 레그 익스텐션",
+    "prep": "케틀벨을 가슴 앞(고블릿 그립)에 단단히 받쳐 들고 양발을 골반 너비로 섭니다.",
+    "steps": [
+      "한쪽 다리를 뒤로 길게 뻗으며 뒷무릎이 바닥에 닿기 직전까지 수직으로 앉습니다.",
+      "앞발 뒤꿈치로 지면을 힘껏 눌러 앞쪽 대퇴사두와 둔근 힘으로 제자리로 돌아옵니다.",
+      "좌우 각 10회씩 골반이 좌우로 흔들리지 않게 진행합니다."
+    ],
+    "breathing": "뒤로 앉을 때 들이마시고, 앞다리로 밀어 올라올 때 내쉽니다.",
+    "tips": "무릎 전방 부담이 적어 스쿼트 대체로 적합하며, 앞무릎이 안쪽으로 쓰러지지 않게 유지하세요."
+  },
+  {
+    "id": "home_kb_calf_raise",
+    "mode": "home",
+    "category": "하체·파워",
+    "presets": [
+      "all",
+      "lower_core",
+      "riding_recovery"
+    ],
+    "name": "14kg 케틀벨 스탠딩 카프 레이즈",
+    "equipment": "14kg 케틀벨",
+    "targetMuscle": "비복근·가자미근(종아리)·발목 안정화",
+    "defaultWeightKg": 14,
+    "defaultSets": 3,
+    "defaultReps": "15회",
+    "restSec": 45,
+    "pairName": "종아리·아킬레스건 강화",
+    "prep": "한 손으로 케틀벨을 들고 다른 손은 벽이나 치닝디핑 프레임을 가볍게 잡아 균형을 맞춥니다.",
+    "steps": [
+      "양발(또는 한 발)을 골반 너비로 두고 무릎을 곧게 편 상태를 유지합니다.",
+      "엄지발가락 아래 볼 부분으로 바닥을 밀어 뒤꿈치를 최대한 높게 들어 1초 수축합니다.",
+      "종아리 신전을 느끼며 2초간 천천히 뒤꿈치를 바닥 가까이 내립니다."
+    ],
+    "breathing": "뒤꿈치를 들어 올릴 때 내쉬고, 천천히 내릴 때 들이마십니다.",
+    "tips": "반동으로 튕기지 말고 최고점에서 1초 정지해 종아리 수축을 극대화하세요."
+  },
+  {
+    "id": "home_kb_clean_press",
+    "mode": "home",
+    "category": "상체 밀기·어깨",
+    "presets": [
+      "all",
+      "upper_core"
+    ],
+    "name": "14kg 케틀벨 원암 클린 & 프레스",
+    "equipment": "14kg 케틀벨",
+    "targetMuscle": "전면·측면 삼각근·삼두근·코어·둔근",
+    "defaultWeightKg": 14,
+    "defaultSets": 3,
+    "defaultReps": "좌우 각 8회",
+    "restSec": 60,
+    "pairName": "숄더 프레스 머신",
+    "prep": "발보다 반 발짝 앞 바닥에 케틀벨을 두고 한 손으로 잡아 힙 힌지 자세를 취합니다.",
+    "steps": [
+      "둔근·힙 스냅 탄력으로 케틀벨을 당기며 팔꿈치를 안으로 말아 랙 포지션(가슴 앞)으로 부드럽게 올립니다.",
+      "복부와 엉덩이를 단단히 잠근 뒤 손바닥이 정면을 향하게 회전하며 머리 위로 프레스합니다.",
+      "다시 랙 포지션을 거쳐 힙 힌지로 가랑이 사이를 지나며 다음 반복을 이어갑니다."
+    ],
+    "breathing": "랙으로 올릴 때 짧게 뱉고, 프레스 전 숨을 참고 코어를 잠근 뒤 정점에서 내쉽니다.",
+    "tips": "클린 시 케틀벨이 손목을 때리지 않도록 팔을 뻗지 말고 몸 가까이 당겨 감아올리세요."
+  },
+  {
+    "id": "home_pushup_scapula",
+    "mode": "home",
+    "category": "상체 밀기·어깨",
+    "presets": [
+      "all",
+      "upper_core",
+      "warmup"
+    ],
+    "name": "푸시업 바 스카풀라 푸시업",
+    "equipment": "푸시업 바",
+    "targetMuscle": "전거근·견갑 안정근·전면 삼각근",
+    "defaultWeightKg": null,
+    "defaultSets": 3,
+    "defaultReps": "12회",
+    "restSec": 45,
+    "pairName": "견갑 전인·어깨 안정화",
+    "prep": "푸시업 바를 어깨 수직 아래에 두고 팔꿈치를 완전히 편 하이 플랭크 자세를 취합니다.",
+    "steps": [
+      "팔꿈치를 전혀 구부리지 않은 상태에서 가슴만 아래로 내려 양 날개뼈를 가운데로 모읍니다(후인).",
+      "푸시업 바를 강하게 아래로 밀어 등을 천장 쪽으로 살짝 둥글게 밀어 올립니다(전인).",
+      "정점에서 겨드랑이 아래 전거근 수축을 1초 유지한 뒤 천천히 반복합니다."
+    ],
+    "breathing": "날개뼈를 모으며 내려갈 때 들이마시고, 강하게 밀어 올릴 때 내쉽니다.",
+    "tips": "허리가 아래로 꺾이지 않도록 복부와 엉덩이 긴장을 유지하고 견갑골만 움직이세요."
+  },
+  {
+    "id": "home_kb_upright_row",
+    "mode": "home",
+    "category": "상체 당기기",
+    "presets": [
+      "all",
+      "upper_core"
+    ],
+    "name": "14kg 케틀벨 하이풀 (업라이트 로우)",
+    "equipment": "14kg 케틀벨",
+    "targetMuscle": "측면 삼각근·상부 승모근·능형근",
+    "defaultWeightKg": 14,
+    "defaultSets": 3,
+    "defaultReps": "12회",
+    "restSec": 45,
+    "pairName": "측면 어깨·등 상부 당기기",
+    "prep": "케틀벨 손잡이 양옆을 두 손으로 잡고 어깨너비로 바르게 서서 어깨를 아래로 내립니다.",
+    "steps": [
+      "코어 긴장을 유지한 채 팔꿈치가 손목보다 항상 위쪽에 오도록 옆·위 방향으로 당깁니다.",
+      "어깨 충돌 방지를 위해 턱 밑까지 억지로 당기지 않고 가슴 상단(쇄골 아래) 높이까지만 끌어올립니다.",
+      "측면 삼각근과 승모근 긴장을 유지하며 2초간 천천히 내려옵니다."
+    ],
+    "breathing": "당겨 올릴 때 내쉬고, 천천히 내릴 때 들이마십니다.",
+    "tips": "어깨 충돌 증후군 예방을 위해 반드시 가슴 상단 높이까지만 당기고, 어깨를 귀 쪽으로 으쓱하지 마세요."
+  },
+  {
+    "id": "home_inverted_row",
+    "mode": "home",
+    "category": "상체 당기기",
+    "presets": [
+      "all",
+      "upper_core",
+      "lower_core",
+      "riding_recovery"
+    ],
+    "name": "치닝디핑 인버티드 로우",
+    "equipment": "치닝디핑",
+    "targetMuscle": "광배근·능형근·후면 삼각근·이두근",
+    "defaultWeightKg": null,
+    "defaultSets": 3,
+    "defaultReps": "8회",
+    "restSec": 75,
+    "pairName": "롱 풀 (시티드 로우)",
+    "prep": "치닝디핑 딥스 손잡이(또는 낮은 바)를 오버그립으로 잡고 다리를 앞으로 뻗어 몸을 대각선 일직선으로 만듭니다.",
+    "steps": [
+      "복부와 엉덩이에 힘을 주어 머리부터 발뒤꿈치까지 처지지 않게 고정합니다.",
+      "가슴을 바/손잡이 사이로 끌어당기며 양 날개뼈를 등 중앙으로 강하게 조입니다.",
+      "정점에서 1초 정지한 뒤 2초간 통제하며 팔을 펴 내려옵니다."
+    ],
+    "breathing": "가슴을 당겨 올릴 때 내쉬고, 내려갈 때 들이마십니다.",
+    "tips": "무릎을 굽혀 발을 당기면 난이도를 쉽게 조절할 수 있으며, 서서 허리를 숙이는 로우보다 요추 부담이 적습니다."
+  },
+  {
+    "id": "home_side_plank",
+    "mode": "home",
+    "category": "코어·마무리",
+    "presets": [
+      "all",
+      "upper_core",
+      "lower_core",
+      "riding_recovery"
+    ],
+    "name": "사이드 플랭크",
+    "equipment": "맨몸·매트",
+    "targetMuscle": "외복사근·요방형근·중둔근",
+    "defaultWeightKg": null,
+    "defaultSets": 3,
+    "defaultReps": "좌우 각 35초",
+    "restSec": 45,
+    "pairName": "측면 코어·골반 안정화",
+    "prep": "옆으로 누워 한쪽 팔꿈치를 어깨 수직 아래 바닥에 대고 양발을 위아래로 포개거나 앞뒤로 둡니다.",
+    "steps": [
+      "발 옆면과 팔뚝으로 매트를 밀어내며 골반을 들어 머리-척추-발끝 일직선을 만듭니다.",
+      "아래쪽 옆구리(외복사근)와 중둔근으로 골반이 아래로 처지지 않게 버팁니다.",
+      "규칙적으로 호흡하며 좌우 각 35초씩 버팁니다."
+    ],
+    "breathing": "숨을 참지 말고 흉곽을 열어 일정하게 호흡합니다.",
+    "tips": "엉덩이가 뒤로 빠지거나 어깨가 귀로 솟지 않도록 몸을 수직 평면에 세워 유지하세요."
+  },
+  {
+    "id": "home_bird_dog",
+    "mode": "home",
+    "category": "코어·마무리",
+    "presets": [
+      "all",
+      "upper_core",
+      "lower_core",
+      "riding_recovery"
+    ],
+    "name": "버드독 (척추 중립 코어)",
+    "equipment": "맨몸·매트",
+    "targetMuscle": "척추기립근·복횡근·대둔근",
+    "defaultWeightKg": null,
+    "defaultSets": 3,
+    "defaultReps": "좌우 각 10회",
+    "restSec": 45,
+    "pairName": "요추 중립 코어 재활",
+    "prep": "매트 위 네발기기 자세(어깨 아래 손목, 골반 아래 무릎)를 잡고 복압을 가볍게 채웁니다.",
+    "steps": [
+      "허리가 꺾이거나 골반이 한쪽으로 기울지 않도록 고정합니다.",
+      "오른팔을 귀 옆으로, 왼쪽 다리를 뒤로 수평이 되게 천천히 뻗어 2초간 정지합니다.",
+      "제자리로 돌아온 뒤 반대쪽 팔다리를 교차로 뻗으며 좌우 각 10회 진행합니다."
+    ],
+    "breathing": "팔다리를 뻗고 멈출 때 내쉬며 복압을 유지하고, 돌아올 때 들이마십니다.",
+    "tips": "다리를 높이 차올리면 허리가 꺾이므로 발뒤꿈치를 뒤쪽 벽으로 민다는 느낌으로 수평까지만 뻗으세요."
+  },
+  {
+    "id": "home_smr_quad_itb",
+    "mode": "home",
+    "category": "웜업·이완",
+    "presets": [
+      "all",
+      "warmup",
+      "riding_recovery"
+    ],
+    "name": "폼롤러 앞허벅지·장경인대 이완",
+    "equipment": "폼롤러",
+    "targetMuscle": "대퇴사두근·외측광근·장경인대",
+    "defaultWeightKg": null,
+    "defaultSets": 2,
+    "defaultReps": "45초",
+    "restSec": 20,
+    "pairName": "라이딩 후 허벅지 근막 이완",
+    "prep": "플랭크 자세처럼 팔꿈치를 바닥에 대고 엎드려 한쪽 허벅지 앞·바깥쪽 아래에 폼롤러를 가로로 둡니다.",
+    "steps": [
+      "반대쪽 발을 바닥에 지지해 체중 압력을 조절하며 앞허벅지(대퇴사두근)를 위아래로 천천히 굴립니다.",
+      "몸을 30도 옆으로 살짝 틀어 외측광근·장경인대 부위를 부드럽게 지그시 풀어줍니다.",
+      "무릎 뼈와 고관절 뼈 바로 위는 피하고 좌우 각 45초씩 진행합니다."
+    ],
+    "breathing": "자극이 큰 지점에서 숨을 멈추지 말고 길게 내쉬며 허벅지 힘을 뺍니다.",
+    "tips": "옆허벅지 통증이 너무 심하면 반대 다리로 체중을 많이 분산시켜 부드럽게 굴리세요."
   }
 ];

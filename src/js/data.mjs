@@ -56,6 +56,7 @@ const STRETCH_IDS = new Set([
   "home_smr_back",
   "home_smr_glute",
   "home_smr_thoracic",
+  "home_smr_quad_itb",
   "home_dead_hang"
 ]);
 
@@ -113,6 +114,9 @@ export function getMuscleGroup(ex) {
     id === "gym_inner_thigh" ||
     id.includes("squat") ||
     id.includes("bulgarian") ||
+    id.includes("lunge") ||
+    id.includes("deadlift") ||
+    id.includes("calf_raise") ||
     id.includes("rdl") ||
     id.includes("swing") ||
     id.includes("glute_bridge")
@@ -130,6 +134,7 @@ export function getMuscleGroup(ex) {
     id === "gym_pec_deck" ||
     id === "gym_shoulder_press" ||
     id === "home_kb_press" ||
+    id === "home_kb_clean_press" ||
     id === "home_kb_halo" ||
     id === "home_kb_triceps" ||
     id.includes("floor_1arm") ||
@@ -155,6 +160,7 @@ export function getMuscleGroup(ex) {
     cat.includes("코어") ||
     id.includes("plank") ||
     id.includes("deadbug") ||
+    id.includes("bird_dog") ||
     id.includes("knee") ||
     id.includes("twist") ||
     id.includes("side_bend") ||

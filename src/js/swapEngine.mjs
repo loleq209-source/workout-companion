@@ -10,11 +10,13 @@ export const HOME_TO_GYM_MAP = {
   home_kb_floor_2arm: ["gym_chest_press", "gym_bench_press"],
   home_kb_floor_1arm: ["gym_chest_press", "gym_bench_press"],
   home_close_pushup: ["gym_pec_deck", "gym_chest_press"],
+  home_pushup_scapula: ["gym_pec_deck", "gym_chest_press"],
   home_dips: ["gym_chest_press", "gym_pec_deck"],
   home_kb_triceps: ["gym_pec_deck", "gym_chest_press"],
 
   // 상체 밀기 (어깨)
   home_kb_press: ["gym_shoulder_press"],
+  home_kb_clean_press: ["gym_shoulder_press", "gym_chest_press"],
   home_pike_pushup: ["gym_shoulder_press"],
   home_kb_halo: ["gym_shoulder_press"],
 
@@ -24,16 +26,21 @@ export const HOME_TO_GYM_MAP = {
   home_scapular_pullup: ["gym_high_pulley", "gym_long_pull"],
   home_pullup: ["gym_high_pulley"],
 
-  // 상체 당기기 (수평)
+  // 상체 당기기 (수평·상부)
   home_kb_row: ["gym_long_pull", "gym_high_pulley"],
+  home_inverted_row: ["gym_long_pull", "gym_high_pulley"],
+  home_kb_upright_row: ["gym_shoulder_press", "gym_long_pull"],
 
   // 팔 (이두·악력)
   home_kb_curl: ["gym_arm_curl"],
   home_gyro_ball: ["gym_arm_curl"],
 
-  // 하체 (전면·복합)
+  // 하체 (전면·복합·종아리)
   home_goblet_squat: ["gym_leg_press", "gym_leg_ext"],
   home_bulgarian: ["gym_leg_press", "gym_leg_ext"],
+  home_kb_reverse_lunge: ["gym_leg_press", "gym_leg_ext"],
+  home_kb_sumo_deadlift: ["gym_inner_thigh", "gym_leg_press"],
+  home_kb_calf_raise: ["gym_leg_curl", "gym_leg_press"],
 
   // 하체 (후면·둔근)
   home_kickstand_rdl: ["gym_leg_curl", "gym_inner_thigh"],
@@ -42,6 +49,8 @@ export const HOME_TO_GYM_MAP = {
 
   // 코어
   home_forearm_plank: ["gym_plank"],
+  home_side_plank: ["gym_plank"],
+  home_bird_dog: ["gym_plank"],
   home_deadbug: ["gym_plank"],
   home_hanging_knee: ["gym_plank"],
   home_side_bend: ["gym_plank"],
@@ -52,16 +61,16 @@ export const HOME_TO_GYM_MAP = {
 export const GYM_TO_HOME_MAP = {
   gym_chest_press: ["home_deep_pushup", "home_kb_floor_2arm", "home_dips"],
   gym_bench_press: ["home_decline_pushup", "home_deep_pushup", "home_kb_floor_2arm"],
-  gym_pec_deck: ["home_close_pushup", "home_kb_floor_2arm"],
-  gym_shoulder_press: ["home_kb_press", "home_pike_pushup", "home_kb_halo"],
+  gym_pec_deck: ["home_close_pushup", "home_pushup_scapula", "home_kb_floor_2arm"],
+  gym_shoulder_press: ["home_kb_press", "home_kb_clean_press", "home_pike_pushup", "home_kb_upright_row"],
   gym_high_pulley: ["home_band_pullup", "home_band_chinup", "home_scapular_pullup"],
-  gym_long_pull: ["home_kb_row", "home_band_pullup"],
+  gym_long_pull: ["home_kb_row", "home_inverted_row", "home_band_pullup"],
   gym_arm_curl: ["home_kb_curl"],
-  gym_leg_press: ["home_goblet_squat", "home_bulgarian"],
-  gym_leg_ext: ["home_bulgarian", "home_goblet_squat"],
+  gym_leg_press: ["home_goblet_squat", "home_kb_reverse_lunge", "home_bulgarian"],
+  gym_leg_ext: ["home_bulgarian", "home_kb_reverse_lunge", "home_goblet_squat"],
   gym_leg_curl: ["home_kickstand_rdl", "home_kb_glute_bridge", "home_kb_swing"],
-  gym_inner_thigh: ["home_kb_glute_bridge", "home_goblet_squat"],
-  gym_plank: ["home_forearm_plank", "home_deadbug", "home_hanging_knee"]
+  gym_inner_thigh: ["home_kb_sumo_deadlift", "home_kb_glute_bridge", "home_goblet_squat"],
+  gym_plank: ["home_forearm_plank", "home_side_plank", "home_bird_dog", "home_deadbug"]
 };
 
 export function pickModeConversionTarget(ex, targetMode, usedIds, customExercises = []) {
