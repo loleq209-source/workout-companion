@@ -15,7 +15,7 @@ import { createStore } from "../src/js/store.mjs";
 import { upsertTodayHistory, applyLoadedDriveData } from "../src/js/sync.mjs";
 import { createTimerController } from "../src/js/timer.mjs";
 import { mapExerciseToMuscleRegions, buildTodayReportData } from "../src/js/muscleMap.mjs";
-import { getSwapCandidates, HOME_TO_GYM_MAP } from "../src/js/swapEngine.mjs";
+import { getSwapCandidates, HOME_TO_GYM_MAP, GYM_TO_HOME_MAP } from "../src/js/swapEngine.mjs";
 import { getVolumePresetsForExercise, recommendExtraExercises } from "../src/js/recommendEngine.mjs";
 import { createUiHistory } from "../src/js/uiHistory.mjs";
 
@@ -744,4 +744,48 @@ test("Quick 2-set mode compresses/restores safely, timer skip resets without chi
   assert.equal(uh.getDepth(), 1);
   uh.clearTag("card");
   assert.equal(uh.getDepth(), 0);
+});
+
+test("Full 58-exercise catalog audit invariants hold (assets, bilateral reps, pain alts, swap maps & muscle map)", () => {
+  const exIds = new Set(EXERCISES.map(x => x.id));
+  assert.equal(Object.keys(ENRICHED_DB).length, 58);
+
+  const guidesDir = path.resolve(__dirname, "../assets/guides");
+  const guideFiles = fs.readdirSync(guidesDir);
+  assert.equal(guideFiles.length, 232); // Exactly 58 x 4 WebP files, zero orphans
+
+  for (const ex of EXERCISES) {
+    const en = ENRICHED_DB[ex.id];
+    assert.ok(en, `Missing ENRICHED_DB entry for ${ex.id}`);
+    const repsStr = String(ex.defaultReps || "");
+    const hasBilateralLabel = repsStr.includes("좌우") || repsStr.includes("각");
+    assert.equal(Boolean(en.unilateral), hasBilateralLabel, `Bilateral mismatch for ${ex.id}: reps="${repsStr}", unilateral=${en.unilateral}`);
+
+    for (const pa of en.painAlternatives || []) {
+      assert.ok(exIds.has(pa.altId), `Broken pain alt ${pa.altId} on ${ex.id}`);
+      assert.notEqual(pa.altId, ex.id);
+    }
+
+    const hm = mapExerciseToMuscleRegions(ex);
+    assert.ok(hm.primary.length + hm.secondary.length + hm.stretch.length > 0, `Missing heatmap for ${ex.id}`);
+    if (ex.mode === "home" && !isWarmupOrStretch(ex)) assert.ok(HOME_TO_GYM_MAP[ex.id], `Missing H2G swap for ${ex.id}`);
+    if (ex.mode === "gym" && !isWarmupOrStretch(ex)) assert.ok(GYM_TO_HOME_MAP[ex.id], `Missing G2H swap for ${ex.id}`);
+  }
+
+  for (const [k, arr] of Object.entries(HOME_TO_GYM_MAP)) {
+    assert.ok(exIds.has(k), `Invalid H2G key ${k}`);
+    for (const v of arr) assert.ok(exIds.has(v), `Invalid H2G target ${v}`);
+  }
+  for (const [k, arr] of Object.entries(GYM_TO_HOME_MAP)) {
+    assert.ok(exIds.has(k), `Invalid G2H key ${k}`);
+    for (const v of arr) assert.ok(exIds.has(v), `Invalid G2H target ${v}`);
+  }
+
+  assert.equal(EXERCISES.find(x => x.id === "home_smr_quad_itb").defaultReps, "좌우 각 45초");
+  assert.equal(ENRICHED_DB.gym_plank.tempo, "등척성 50초 유지");
+  assert.equal(ENRICHED_DB.home_kb_floor_2arm.painAlternatives[0].altId, "home_pushup_scapula");
+  assert.equal(ENRICHED_DB.gym_leg_curl.painAlternatives[0].altId, "gym_leg_ext");
+  assert.equal(ENRICHED_DB.gym_inner_thigh.painAlternatives[0].altId, "home_kb_glute_bridge");
+  assert.equal(ENRICHED_DB.home_gyro_ball.painAlternatives[0].altId, "home_smr");
+  assert.deepEqual(mapExerciseToMuscleRegions(EXERCISES.find(x => x.id === "home_pushup_scapula")).primary, ["front_delts"]);
 });

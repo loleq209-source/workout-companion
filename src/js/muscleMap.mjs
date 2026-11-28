@@ -57,7 +57,7 @@ const EXACT_MAP = {
   home_deep_pushup: { primary: ["chest"], secondary: ["front_delts", "triceps"] },
   home_decline_pushup: { primary: ["chest", "front_delts"], secondary: ["triceps"] },
   home_pike_pushup: { primary: ["front_delts"], secondary: ["triceps", "chest"] },
-  home_pushup_scapula: { primary: ["chest", "front_delts"], secondary: ["core"] },
+  home_pushup_scapula: { primary: ["front_delts"], secondary: ["chest", "core"] },
   home_close_pushup: { primary: ["triceps", "chest"], secondary: ["front_delts"] },
   home_dips: { primary: ["chest", "triceps"], secondary: ["front_delts"] },
   home_kb_floor_1arm: { primary: ["chest"], secondary: ["front_delts", "triceps", "core"] },

@@ -24,7 +24,6 @@ export const HOME_TO_GYM_MAP = {
   home_band_pullup: ["gym_high_pulley", "gym_long_pull"],
   home_band_chinup: ["gym_high_pulley", "gym_long_pull"],
   home_scapular_pullup: ["gym_high_pulley", "gym_long_pull"],
-  home_pullup: ["gym_high_pulley"],
 
   // 상체 당기기 (수평·상부)
   home_kb_row: ["gym_long_pull", "gym_high_pulley"],

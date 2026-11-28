@@ -162,6 +162,7 @@ export const EXERCISES = [
     "category": "상체 당기기",
     "presets": [
       "all",
+      "upper_core",
       "warmup",
       "riding_recovery"
     ],
@@ -1460,7 +1461,7 @@ export const EXERCISES = [
     "targetMuscle": "대퇴사두근·외측광근·장경인대",
     "defaultWeightKg": null,
     "defaultSets": 2,
-    "defaultReps": "45초",
+    "defaultReps": "좌우 각 45초",
     "restSec": 20,
     "pairName": "라이딩 후 허벅지 근막 이완",
     "prep": "플랭크 자세처럼 팔꿈치를 바닥에 대고 엎드려 한쪽 허벅지 앞·바깥쪽 아래에 폼롤러를 가로로 둡니다.",

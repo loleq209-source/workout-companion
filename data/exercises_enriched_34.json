@@ -24,9 +24,9 @@
           "breath": "깊은 호흡"
         }
       ],
-      "doCue": "등 상부(흉추)와 겨드랑이 아래 광배근 부위에 천천히 체중을 실어 20초씩 부드럽게 이완",
+      "doCue": "등 상부(흉추)와 겨드랑이 아래 광배근 부위에 천천히 체중을 실어 15초씩 부드럽게 이완",
       "dontCue": "허리(요추)를 직접 압박해 굴리거나 목을 억지로 꺾어 긴장하지 않기",
-      "tempo": "등 상부 20초 · 광배근 좌우 20초",
+      "tempo": "등 상부 15초 · 광배근 좌우 각 15초 (총 45초)",
       "unilateral": false,
       "painAlternatives": [
         {
@@ -154,9 +154,9 @@
         },
         {
           "area": "허리",
-          "altId": "gym_long_pull",
-          "altName": "롱 풀 (시티드 로우)",
-          "reason": "상체 숙임 부담 시 앉아서 등 당기기 대체"
+          "altId": "gym_high_pulley",
+          "altName": "하이풀리 (랫풀다운)",
+          "reason": "상체 숙임·허리 굴곡 부담 없는 수직 랫풀다운으로 대체"
         }
       ]
     },
@@ -413,9 +413,9 @@
       "painAlternatives": [
         {
           "area": "어깨",
-          "altId": "home_deep_pushup",
-          "altName": "푸시업 바 딥 푸시업",
-          "reason": "맨몸 가동범위로 자연스러운 견갑 움직임 확보"
+          "altId": "home_pushup_scapula",
+          "altName": "푸시업 바 스카풀라 푸시업",
+          "reason": "어깨 전면 깊은 신전 없이 전거근·견갑 안정화로 안전 대체"
         }
       ]
     },
@@ -783,9 +783,9 @@
       "painAlternatives": [
         {
           "area": "무릎",
-          "altId": "gym_leg_press",
-          "altName": "레그프레스",
-          "reason": "슬개골 전단력이 불편할 때 닫힌 사슬 하체 운동으로 대체"
+          "altId": "gym_inner_thigh",
+          "altName": "인어 사이 (Inner Thigh)",
+          "reason": "슬개골 굴곡·신전 부담 없이 허벅지 안쪽 자극으로 전환"
         }
       ]
     },
@@ -820,9 +820,9 @@
       "painAlternatives": [
         {
           "area": "허리",
-          "altId": "home_kickstand_rdl",
-          "altName": "14kg 케틀벨 킥스탠드 RDL",
-          "reason": "엎드린 허리 꺾임이 불편할 때 스탠딩 햄스트링 대체"
+          "altId": "gym_leg_ext",
+          "altName": "레그 익스텐션",
+          "reason": "등받이 지지 좌식 머신으로 요추 꺾임 없이 하체 자극"
         }
       ]
     },
@@ -857,9 +857,9 @@
       "painAlternatives": [
         {
           "area": "무릎",
-          "altId": "home_goblet_squat",
-          "altName": "14kg 케틀벨 고블릿 스쿼트",
-          "reason": "와이드 스탠스로 내전근과 하체를 자연스럽게 동시 자극"
+          "altId": "home_kb_glute_bridge",
+          "altName": "14kg 케틀벨 글루트 브릿지",
+          "reason": "수직 정강이 유지로 무릎 압박 없이 둔근·내전근 안정화"
         }
       ]
     },
@@ -1123,7 +1123,7 @@
       ]
     },
     "gym_plank": {
-      "tempo": "등척성 60초 유지",
+      "tempo": "등척성 50초 유지",
       "unilateral": false,
       "doCue": "팔꿈치와 발끝으로 바닥을 서로 당기는 느낌으로 복부·둔근에 강한 긴장 유지",
       "dontCue": "허리가 아래로 꺾이거나 엉덩이가 너무 높게 솟아오름",
@@ -1139,7 +1139,7 @@
           "step": 2,
           "title": "일직선 코어 잠금",
           "breath": "일정한 호흡 유지",
-          "tempo": "60초 버티기",
+          "tempo": "50초 버티기",
           "cue": "머리부터 발뒤꿈치까지 일직선을 만들고 둔근과 배꼽을 단단히 조입니다."
         },
         {
@@ -1227,9 +1227,9 @@
       "painAlternatives": [
         {
           "area": "손목",
-          "altId": "home_kb_curl",
-          "altName": "14kg 케틀벨 양손 바이셉 컬",
-          "reason": "회전 부하 대신 중립 그립 컬로 안전하게 전완·상완 자극"
+          "altId": "home_smr",
+          "altName": "폼롤러 등 상부·광배근 이완 (SMR)",
+          "reason": "손목 꺾임·중량 파지 없이 상체·전완 긴장 완화"
         }
       ]
     },
