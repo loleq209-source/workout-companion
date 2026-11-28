@@ -94,10 +94,11 @@ export function pickModeConversionTarget(ex, targetMode, usedIds, customExercise
  * 1) Pain-safe recommendations (matching active painAreas first, then other painAlternatives)
  * 2) Target-matched equivalents (1:1 mode counterparts + same muscle group alternatives)
  */
-export function getSwapCandidates(ex, targetMode, painAreas = [], customExercises = []) {
+export function getSwapCandidates(ex, targetMode, painAreas = [], customExercises = [], dislikedIds = []) {
   if (!ex) return [];
   const allEx = getAllExercises(customExercises);
   const byId = new Map(allEx.map(x => [x.id, x]));
+  const dislikedSet = new Set(Array.isArray(dislikedIds) ? dislikedIds : []);
   const seen = new Set([ex.id]);
   const results = [];
 
@@ -109,7 +110,8 @@ export function getSwapCandidates(ex, targetMode, painAreas = [], customExercise
       ex: candEx,
       badgeType, // "pain_active" | "pain_alt" | "target"
       tagText,
-      reasonText
+      reasonText,
+      isDisliked: dislikedSet.has(candEx.id)
     });
   };
 
@@ -172,7 +174,6 @@ export function getSwapCandidates(ex, targetMode, painAreas = [], customExercise
     .sort((a, b) => b.score - a.score);
 
   for (const item of pool) {
-    if (results.length >= 5) break;
     pushCandidate(item.ex, "target", "🎯 동일 타깃 부위");
   }
 
@@ -185,10 +186,13 @@ export function getSwapCandidates(ex, targetMode, painAreas = [], customExercise
         ex: opp,
         badgeType: "pain_active",
         tagText: `🩹 ${activeAlert.matchedArea} 안전 추천 (${opp.mode === "gym" ? "기구" : "홈트"})`,
-        reasonText: activeAlert.reason || ""
+        reasonText: activeAlert.reason || "",
+        isDisliked: dislikedSet.has(opp.id)
       });
     }
   }
 
+  // Push disliked exercises to the bottom without blocking explicit selection
+  results.sort((a, b) => Number(a.isDisliked) - Number(b.isDisliked));
   return results.slice(0, 5);
 }

@@ -62,6 +62,7 @@ export function buildWorkoutLogPayload(store, targetDate = getWorkoutDateStr()) 
     preset: state.preset,
     routineTitle: state.todayRoutine ? state.todayRoutine.title : "오늘의 추천 루틴",
     bodyCondition: state.bodyCondition || { status: "ok", painAreas: [], updatedAt: "" },
+    dislikedExercises: Array.isArray(state.dislikedExercises) ? state.dislikedExercises.slice() : [],
     summary: {
       totalExercises: items.length,
       completedExercises: routineItems.filter(e => e.isCompleted).length,
@@ -254,6 +255,13 @@ export function applyLoadedDriveData(store, data, options = {}) {
       };
     }
   }
+  if (Array.isArray(data.dislikedExercises)) {
+    data.dislikedExercises.forEach(eid => {
+      if (!state.records[eid]) state.records[eid] = { sets: [], isCompleted: false, rpe: null, preference: "dislike", preferenceNote: "", lastUpdatedDate: "" };
+      else if (!state.records[eid].preference) state.records[eid].preference = "dislike";
+    });
+  }
+  if (typeof store.syncDislikedList === "function") store.syncDislikedList();
   if (data.enrichedExercises && data.enrichedExercises.exercises && typeof data.enrichedExercises.exercises === "object") {
     Object.assign(ENRICHED_DB, data.enrichedExercises.exercises);
   }
@@ -302,6 +310,7 @@ export function createSyncService(store, uiHooks = {}) {
       todayRoutine: state.todayRoutine,
       metrics: state.metrics,
       bodyCondition: state.bodyCondition || { status: "ok", painAreas: [], updatedAt: "" },
+      dislikedExercises: Array.isArray(state.dislikedExercises) ? state.dislikedExercises.slice() : [],
       log: payloadLog
     };
 

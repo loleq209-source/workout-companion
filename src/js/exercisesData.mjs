@@ -9,22 +9,22 @@ export const EXERCISES = [
       "warmup",
       "riding_recovery"
     ],
-    "name": "폼롤러 근막 이완 (SMR)",
+    "name": "폼롤러 등 상부·광배근 이완 (SMR)",
     "equipment": "폼롤러",
-    "targetMuscle": "흉추·광배근·대퇴사두·햄스트링·둔근",
+    "targetMuscle": "흉추(등 상부)·광배근·능형근",
     "defaultWeightKg": null,
     "defaultSets": 2,
     "defaultReps": "45초",
-    "restSec": 30,
+    "restSec": 20,
     "pairName": "스트레칭 존 매트 이완",
-    "prep": "폼롤러를 바닥에 가로로 두고 이완하려는 부위를 올려놓습니다.",
+    "prep": "매트에 무릎을 세우고 누워 날개뼈 아래(등 상부)에 폼롤러를 가로로 받친 뒤 머리 뒤를 가볍게 감쌉니다.",
     "steps": [
-      "흉추: 날개뼈 아래쪽에 대고 머리 뒤를 받친 뒤 엉덩이를 살짝 들어 위아래로 천천히 롤링합니다. (요추 직접 압박 금지)",
-      "광배근: 옆으로 누워 겨드랑이 바로 아래쪽을 앞뒤·위아래로 미세하게 굴립니다.",
-      "하체: 허벅지 앞/뒤와 둔근 위에 대고 팔로 체중을 분산하며 천천히 왕복합니다."
+      "날개뼈 아래 흉추 셋업: 엉덩이를 살짝 들어 등 상부에 체중을 싣고 날개뼈를 양옆으로 열어줍니다.",
+      "등 상부 천천히 롤링: 15~20초간 위아래 짧은 폭으로 천천히 굴리며 뭉친 지점을 이완합니다. (요추 직접 압박 금지)",
+      "겨드랑이 아래 광배근 이완: 옆으로 돌아 누워 겨드랑이 아래쪽 광배근 옆면을 롤러에 대고 좌우 각 20초씩 풀어줍니다."
     ],
-    "breathing": "트리거 포인트에서 3~5초 멈추고 코로 깊게 들이마신 뒤 입으로 길게 내쉽니다.",
-    "tips": "무릎·고관절 뼈와 요추는 직접 누르지 말고, 상처나 염증 부위는 피하세요."
+    "breathing": "압박 지점에서 숨을 참지 말고 길게 내쉬며 등·어깨 힘을 뺍니다.",
+    "tips": "허리(요추) 뼈를 직접 굴리지 말고 등 상부와 겨드랑이 아래 광배근에만 집중하세요."
   },
   {
     "id": "home_thoracic_rot",
@@ -40,8 +40,8 @@ export const EXERCISES = [
     "targetMuscle": "등 상부(흉추) 회전 가동성·어깨",
     "defaultWeightKg": null,
     "defaultSets": 2,
-    "defaultReps": "10회",
-    "restSec": 30,
+    "defaultReps": "좌우 각 10회",
+    "restSec": 20,
     "pairName": "팩덱플라이 역방향 (가동성 보강)",
     "prep": "손목은 어깨 아래, 무릎은 골반 아래에 두는 네발기기 자세를 취합니다.",
     "steps": [
@@ -66,8 +66,8 @@ export const EXERCISES = [
     "targetMuscle": "광배근·대원근·승모근 하부",
     "defaultWeightKg": null,
     "defaultSets": 3,
-    "defaultReps": "6회",
-    "restSec": 60,
+    "defaultReps": "4회",
+    "restSec": 90,
     "pairName": "하이풀리 (랫풀다운)",
     "prep": "어시스트 밴드를 발/무릎에 걸고 어깨너비보다 약간 넓게 손등이 얼굴을 향하는 오버그립으로 바를 잡습니다.",
     "steps": [
@@ -92,8 +92,8 @@ export const EXERCISES = [
     "targetMuscle": "광배근 하부·이두근·전완근",
     "defaultWeightKg": null,
     "defaultSets": 3,
-    "defaultReps": "6회",
-    "restSec": 60,
+    "defaultReps": "4회",
+    "restSec": 90,
     "pairName": "케이블 언더그립 랫풀다운",
     "prep": "어시스트 밴드를 걸고 어깨너비로 손바닥이 얼굴을 향하는 언더그립으로 바를 잡습니다.",
     "steps": [
@@ -119,7 +119,7 @@ export const EXERCISES = [
     "targetMuscle": "광배근·능형근·승모근 중부·후면 삼각근",
     "defaultWeightKg": 14,
     "defaultSets": 3,
-    "defaultReps": "10회",
+    "defaultReps": "좌우 각 10회",
     "restSec": 60,
     "pairName": "롱 풀 / 시티드 로우 (45kg)",
     "prep": "한 손으로 치닝디핑 프레임을 짚고 상체를 약 45도 숙여 반대손으로 14kg 케틀벨을 잡습니다.",
@@ -196,7 +196,7 @@ export const EXERCISES = [
     "defaultWeightKg": null,
     "defaultSets": 4,
     "defaultReps": "10회",
-    "restSec": 60,
+    "restSec": 75,
     "pairName": "벤치프레스 (40kg) / 체스트프레스 (45kg)",
     "prep": "푸시업 바를 어깨너비의 1.2~1.5배로 두고 손목 중립으로 잡아 플랭크 자세를 만듭니다.",
     "steps": [
@@ -221,7 +221,7 @@ export const EXERCISES = [
     "defaultWeightKg": null,
     "defaultSets": 3,
     "defaultReps": "10회",
-    "restSec": 60,
+    "restSec": 75,
     "pairName": "숄더 프레스 머신 (30kg)",
     "prep": "푸시업 바를 어깨너비로 짚고 엉덩이를 천장 쪽으로 높게 들어 역 V자(ㅅ자)를 만듭니다.",
     "steps": [
@@ -296,8 +296,8 @@ export const EXERCISES = [
     "targetMuscle": "대흉근·전면 삼각근·삼두근",
     "defaultWeightKg": 14,
     "defaultSets": 3,
-    "defaultReps": "10회",
-    "restSec": 60,
+    "defaultReps": "좌우 각 10회",
+    "restSec": 45,
     "pairName": "벤치프레스 (40kg) / 체스트프레스 (45kg)",
     "prep": "바닥에 등을 대고 누워 무릎을 세우고 케틀벨 몸통이 손목 바깥 전완근 위에 얹히게 쥡니다.",
     "steps": [
@@ -322,7 +322,7 @@ export const EXERCISES = [
     "defaultWeightKg": 14,
     "defaultSets": 4,
     "defaultReps": "12회",
-    "restSec": 60,
+    "restSec": 45,
     "pairName": "벤치프레스 (40kg) / 팩덱플라이 (30kg)",
     "prep": "바닥에 누워 무릎을 세우고 양손으로 14kg 케틀벨 손잡이 양옆 기둥을 감싸 쥐고 가슴 위에 둡니다.",
     "steps": [
@@ -347,7 +347,7 @@ export const EXERCISES = [
     "defaultWeightKg": null,
     "defaultSets": 3,
     "defaultReps": "12회",
-    "restSec": 60,
+    "restSec": 75,
     "pairName": "팩덱플라이 정방향 (30kg)",
     "prep": "푸시업 바 두 개를 가슴 중앙 폭(약 20~25cm)으로 나란히 두고 플랭크 자세를 취합니다.",
     "steps": [
@@ -371,7 +371,7 @@ export const EXERCISES = [
     "defaultWeightKg": 14,
     "defaultSets": 4,
     "defaultReps": "10회",
-    "restSec": 90,
+    "restSec": 60,
     "pairName": "레그프레스 (105kg)",
     "prep": "발을 어깨너비보다 넓게 벌리고 발끝을 15~30도 밖으로 둔 채 케틀벨을 가슴에 밀착합니다.",
     "steps": [
@@ -395,7 +395,7 @@ export const EXERCISES = [
     "targetMuscle": "대퇴사두근·대둔근·햄스트링·고관절 안정근",
     "defaultWeightKg": 14,
     "defaultSets": 3,
-    "defaultReps": "10회",
+    "defaultReps": "좌우 각 10회",
     "restSec": 60,
     "pairName": "레그 익스텐션 (40kg) / 인어 사이 (45kg)",
     "prep": "지지대에서 한 걸음 반 앞에 서서 한쪽 발등을 뒤쪽 지지대에 올려놓습니다.",
@@ -419,7 +419,7 @@ export const EXERCISES = [
     "targetMuscle": "햄스트링·대둔근·척추기립근",
     "defaultWeightKg": 14,
     "defaultSets": 3,
-    "defaultReps": "12회",
+    "defaultReps": "좌우 각 12회",
     "restSec": 60,
     "pairName": "레그컬 - 라잉 타입 (37.5kg)",
     "prep": "앞발에 체중 85%를 싣고 반대발은 한 뼘 뒤로 빼 발가락 끝만 대어 균형을 잡습니다.",
@@ -549,8 +549,8 @@ export const EXERCISES = [
     "targetMuscle": "고관절 장요근·대퇴직근",
     "defaultWeightKg": null,
     "defaultSets": 2,
-    "defaultReps": "30초",
-    "restSec": 30,
+    "defaultReps": "좌우 각 30초",
+    "restSec": 20,
     "pairName": "하체 쿨다운 스트레칭",
     "prep": "매트 위에서 한쪽 무릎을 바닥에 대고 앞다리는 90도로 세운 반무릎 런지 자세를 취합니다.",
     "steps": [
@@ -575,8 +575,8 @@ export const EXERCISES = [
     "targetMuscle": "비복근·가자미근·아킬레스건",
     "defaultWeightKg": null,
     "defaultSets": 2,
-    "defaultReps": "30초",
-    "restSec": 30,
+    "defaultReps": "좌우 각 30초",
+    "restSec": 20,
     "pairName": "하체 쿨다운 스트레칭",
     "prep": "벽 앞에 서서 양손을 벽에 대고 한쪽 발 앞꿈치를 벽면에 대며 뒤꿈치는 바닥에 붙입니다.",
     "steps": [
@@ -600,7 +600,7 @@ export const EXERCISES = [
     "targetMuscle": "외복사근·내복사근·요방형근",
     "defaultWeightKg": 14,
     "defaultSets": 3,
-    "defaultReps": "12회",
+    "defaultReps": "좌우 각 12회",
     "restSec": 45,
     "pairName": "코어 측면 안정화",
     "prep": "오른손으로 14kg 케틀벨을 쥐고 몸 옆에 내린 채 정면을 바라보고 섭니다.",
@@ -745,7 +745,7 @@ export const EXERCISES = [
     "defaultWeightKg": 45,
     "defaultSets": 4,
     "defaultReps": "10회",
-    "restSec": 60,
+    "restSec": 90,
     "pairName": "푸시업 바 딥 푸시업",
     "prep": "의자 높이를 손잡이가 가슴 중앙~유두 라인에 오도록 조절하고 풋레일로 안전하게 세팅합니다.",
     "steps": [
@@ -769,7 +769,7 @@ export const EXERCISES = [
     "defaultWeightKg": 40,
     "defaultSets": 4,
     "defaultReps": "10회",
-    "restSec": 75,
+    "restSec": 90,
     "pairName": "푸시업 바 딥 푸시업 / 케틀벨 플로어 프레스",
     "prep": "바벨(20kg) 양쪽에 10kg 원판씩 장착(총 40kg) 후 눈이 바 아래에 오도록 눕습니다.",
     "steps": [
@@ -818,7 +818,7 @@ export const EXERCISES = [
     "defaultWeightKg": 30,
     "defaultSets": 3,
     "defaultReps": "10회",
-    "restSec": 60,
+    "restSec": 90,
     "pairName": "파이크 푸시업 / 14kg 케틀벨 숄더 프레스",
     "prep": "손잡이가 귀~턱 높이에 오도록 의자를 조절하고 허리를 등받이에 밀착합니다.",
     "steps": [
@@ -843,7 +843,7 @@ export const EXERCISES = [
     "defaultWeightKg": 47.5,
     "defaultSets": 3,
     "defaultReps": "10회",
-    "restSec": 60,
+    "restSec": 90,
     "pairName": "치닝디핑 풀업 / 친업",
     "prep": "허벅지 패드에 다리를 단단히 고정하고 어깨너비보다 약간 넓게 바를 잡습니다.",
     "steps": [
@@ -869,7 +869,7 @@ export const EXERCISES = [
     "defaultWeightKg": 45,
     "defaultSets": 3,
     "defaultReps": "10회",
-    "restSec": 60,
+    "restSec": 90,
     "pairName": "14kg 케틀벨 원암 로우",
     "prep": "발판에 발을 대고 무릎을 살짝 굽힌 채 가슴을 펴고 그립을 잡습니다.",
     "steps": [
@@ -893,7 +893,7 @@ export const EXERCISES = [
     "defaultWeightKg": 25,
     "defaultSets": 3,
     "defaultReps": "12회",
-    "restSec": 45,
+    "restSec": 60,
     "pairName": "14kg 케틀벨 양손 바이셉 컬",
     "prep": "겨드랑이를 패드 상단에 밀착하고 팔꿈치 회전축을 머신 축에 맞춥니다.",
     "steps": [
@@ -943,7 +943,7 @@ export const EXERCISES = [
     "defaultWeightKg": null,
     "defaultSets": 2,
     "defaultReps": "45초",
-    "restSec": 30,
+    "restSec": 20,
     "pairName": "스트레칭 존 매트 이완",
     "prep": "매트에 무릎을 세우고 누워 뒤통수 바로 아래 뼈와 목이 만나는 지점에 폼롤러를 가로로 받칩니다.",
     "steps": [
@@ -969,7 +969,7 @@ export const EXERCISES = [
     "defaultWeightKg": null,
     "defaultSets": 2,
     "defaultReps": "45초",
-    "restSec": 30,
+    "restSec": 20,
     "pairName": "스트레칭 존 매트 이완",
     "prep": "폼롤러를 세로로 두고 끝부분에 엉덩이를 댄 뒤 척추와 머리 전체가 폼롤러 위에 놓이도록 눕습니다.",
     "steps": [
@@ -994,8 +994,8 @@ export const EXERCISES = [
     "targetMuscle": "대둔근·이상근·고관절 외회전근",
     "defaultWeightKg": null,
     "defaultSets": 2,
-    "defaultReps": "45초",
-    "restSec": 30,
+    "defaultReps": "좌우 각 45초",
+    "restSec": 20,
     "pairName": "스트레칭 존 매트 이완",
     "prep": "폼롤러 위에 앉아 양손을 뒤쪽 바닥에 짚고, 한쪽 발목을 반대쪽 무릎 위에 올려 4자 다리를 만듭니다.",
     "steps": [
@@ -1021,7 +1021,7 @@ export const EXERCISES = [
     "defaultWeightKg": null,
     "defaultSets": 2,
     "defaultReps": "45초",
-    "restSec": 30,
+    "restSec": 20,
     "pairName": "스트레칭 존 매트 이완",
     "prep": "폼롤러를 날개뼈 하단에 가로로 대고 엉덩이는 바닥에 붙인 채 무릎을 세우고 눕습니다.",
     "steps": [
@@ -1048,7 +1048,7 @@ export const EXERCISES = [
     "defaultWeightKg": null,
     "defaultSets": 3,
     "defaultReps": "30초",
-    "restSec": 30,
+    "restSec": 45,
     "pairName": "치닝디핑 스카풀라 풀업 (연계)",
     "prep": "치닝디핑 바를 어깨보다 약간 넓게 오버핸드 그립으로 단단히 잡습니다.",
     "steps": [
@@ -1072,8 +1072,8 @@ export const EXERCISES = [
     "targetMuscle": "전완굴근·전완신근·손목 안정근",
     "defaultWeightKg": null,
     "defaultSets": 2,
-    "defaultReps": "45초",
-    "restSec": 30,
+    "defaultReps": "좌우 각 45초",
+    "restSec": 45,
     "pairName": "14kg 케틀벨 양손 바이셉 컬",
     "prep": "화살표 방향으로 내부 로터를 감았다가 튕겨 회전을 시작합니다.",
     "steps": [
@@ -1098,7 +1098,7 @@ export const EXERCISES = [
     "defaultWeightKg": null,
     "defaultSets": 3,
     "defaultReps": "8회",
-    "restSec": 60,
+    "restSec": 75,
     "pairName": "시티드 체스트프레스 (61kg)",
     "prep": "평행바 사이에 밴드를 걸고 무릎을 얹어 팔을 펴서 지지합니다.",
     "steps": [
@@ -1123,7 +1123,7 @@ export const EXERCISES = [
     "defaultWeightKg": null,
     "defaultSets": 3,
     "defaultReps": "10회",
-    "restSec": 60,
+    "restSec": 75,
     "pairName": "인클라인 벤치프레스",
     "prep": "푸시업 바를 바닥에 어깨너비로 두고 발을 의자나 침대 위에 올립니다.",
     "steps": [
@@ -1148,7 +1148,7 @@ export const EXERCISES = [
     "defaultWeightKg": 14,
     "defaultSets": 3,
     "defaultReps": "10회",
-    "restSec": 60,
+    "restSec": 45,
     "pairName": "케이블 트라이셉스 푸시다운",
     "prep": "케틀벨 손잡이를 양손으로 단단히 쥐고 머리 위로 수직으로 뻗습니다.",
     "steps": [
@@ -1174,7 +1174,7 @@ export const EXERCISES = [
     "defaultWeightKg": 14,
     "defaultSets": 3,
     "defaultReps": "15회",
-    "restSec": 60,
+    "restSec": 45,
     "pairName": "레그프레스 (120kg)",
     "prep": "무릎을 세우고 누워 골반 접히는 부위에 케틀벨을 얹어 양손으로 잡습니다.",
     "steps": [
@@ -1200,7 +1200,7 @@ export const EXERCISES = [
     "targetMuscle": "외복사근·요방형근·악력",
     "defaultWeightKg": 14,
     "defaultSets": 3,
-    "defaultReps": "40초",
+    "defaultReps": "좌우 각 40초",
     "restSec": 45,
     "pairName": "포어암 플랭크 & 데드버그",
     "prep": "한 손으로 케틀벨을 들고 상체가 기울지 않게 수직을 유지합니다.",

@@ -25,7 +25,7 @@ export const MUSCLE_REGIONS = {
 
 const EXACT_MAP = {
   // Warmup / Stretch
-  home_smr: { stretch: ["traps_rear_delts", "quads_hip", "hamstrings", "glutes"] },
+  home_smr: { stretch: ["traps_rear_delts", "lats"] },
   home_thoracic_rot: { stretch: ["traps_rear_delts", "lower_back"] },
   home_hip_flexor_stretch: { stretch: ["quads_hip"] },
   home_calf_stretch: { stretch: ["calves"] },

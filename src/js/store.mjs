@@ -51,6 +51,7 @@ export function createStore(storage = typeof localStorage !== "undefined" ? loca
           }
         : { status: "ok", painAreas: [], updatedAt: "" },
     history: Array.isArray(saved && saved.history) ? saved.history : [],
+    dislikedExercises: Array.isArray(saved && saved.dislikedExercises) ? saved.dislikedExercises.slice() : [],
     gasUrl: (saved && saved.gasUrl) || DEFAULT_GAS_URL,
     lastSyncAt: (saved && saved.lastSyncAt) || "",
     pendingSync: Boolean(saved && saved.pendingSync),
@@ -58,6 +59,27 @@ export function createStore(storage = typeof localStorage !== "undefined" ? loca
     sessionDate: (saved && saved.sessionDate) || today,
     interactedDate: (saved && saved.interactedDate) || ""
   };
+
+  function syncDislikedList() {
+    const set = new Set();
+    Object.keys(state.records || {}).forEach(k => {
+      if (state.records[k] && state.records[k].preference === "dislike") {
+        set.add(resolveExerciseId(k));
+      }
+    });
+    state.dislikedExercises = [...set];
+    return state.dislikedExercises;
+  }
+  // Hydrate initial dislikedExercises from both saved array & records
+  if (Array.isArray(state.dislikedExercises)) {
+    state.dislikedExercises.forEach(id => {
+      const resId = resolveExerciseId(id);
+      if (resId && state.records[resId] && !state.records[resId].preference) {
+        state.records[resId].preference = "dislike";
+      }
+    });
+  }
+  syncDislikedList();
 
   // Validate preset id against known catalog presets
   if (!["all_catalog", "today_ai", "warmup", "upper_core", "lower_core", "riding_recovery", "custom"].includes(state.preset)) {
@@ -88,10 +110,24 @@ export function createStore(storage = typeof localStorage !== "undefined" ? loca
           workoutExtra: state.workoutExtra,
           wellness: state.wellness,
           metrics: state.metrics,
-          bodyCondition: state.bodyCondition
+          bodyCondition: state.bodyCondition,
+          dislikedExercises: state.dislikedExercises
         })
       );
     } catch (e) {}
+  }
+
+  function setExercisePreference(exId, nextPref) {
+    if (!exId) return false;
+    const resId = resolveExerciseId(exId);
+    const all = getAllExercises(state.customExercises);
+    const ex = all.find(x => x.id === resId) || { id: resId };
+    const rec = getRecord(ex);
+    rec.preference = nextPref || null;
+    syncDislikedList();
+    markPendingSync();
+    persistState();
+    return rec.preference === "dislike";
   }
 
   function resetExerciseCompletion(newDate = getWorkoutDateStr()) {
@@ -698,6 +734,8 @@ export function createStore(storage = typeof localStorage !== "undefined" ? loca
     markPendingSync,
     clearPendingSync,
     setBodyCondition,
+    syncDislikedList,
+    setExercisePreference,
     getRecord,
     getTodayRoutineExercises,
     addExerciseToTodayRoutine,

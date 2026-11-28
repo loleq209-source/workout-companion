@@ -77,7 +77,7 @@ export function renderCatalog({ store, sync, modals, onRenderAll, showToast }) {
             </div>
             <div class="row-gap" style="gap:4px; flex-shrink:0;">
               <button type="button" class="btn-tap badge ${pref === "like" ? "badge-lime" : "badge-muted"}" data-cat-act="pref-like" data-ex-id="${ex.id}" style="padding:3px 7px;" title="선호">⭐</button>
-              <button type="button" class="btn-tap badge ${pref === "dislike" ? "badge-rose" : "badge-muted"}" data-cat-act="pref-dislike" data-ex-id="${ex.id}" style="padding:3px 7px;" title="비선호">⚠️</button>
+              <button type="button" class="btn-tap badge ${pref === "dislike" ? "badge-rose" : "badge-muted"}" data-cat-act="pref-dislike" data-ex-id="${ex.id}" style="padding:3px 7px;" title="비선호">👎</button>
               ${isCustom ? `<button type="button" class="btn-tap badge badge-rose" data-cat-act="delete-custom" data-ex-id="${ex.id}" style="padding:3px 7px;" title="삭제">🗑️</button>` : ""}
             </div>
           </div>
@@ -115,14 +115,13 @@ export function renderCatalog({ store, sync, modals, onRenderAll, showToast }) {
       const rec = store.getRecord(effectiveEx);
 
       if (act === "pref-like") {
-        rec.preference = rec.preference === "like" ? null : "like";
-        store.persistState();
-        sync.scheduleAutoPush(600);
+        store.setExercisePreference(ex.id, rec.preference === "like" ? null : "like");
+        sync.pushToGoogleDrive(true);
         renderCatalog({ store, sync, modals, onRenderAll, showToast });
       } else if (act === "pref-dislike") {
-        rec.preference = rec.preference === "dislike" ? null : "dislike";
-        store.persistState();
-        sync.scheduleAutoPush(600);
+        const isNowDisliked = store.setExercisePreference(ex.id, rec.preference === "dislike" ? null : "dislike");
+        sync.pushToGoogleDrive(true);
+        showToast(isNowDisliked ? `👎 [${ex.name}] 비선호로 설정됨` : `↺ [${ex.name}] 비선호 해제됨`);
         renderCatalog({ store, sync, modals, onRenderAll, showToast });
       } else if (act === "add-jump") {
         const existingIdx = store.getTodayRoutineExercises().findIndex(x => x.id === ex.id);

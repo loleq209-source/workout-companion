@@ -166,9 +166,8 @@ export function createModalController({ store, sync, onRenderAll, showToast }) {
           }
         } else if (act === "set-pref") {
           const val = btn.dataset.pref;
-          rec.preference = rec.preference === val ? null : val;
-          store.persistState();
-          sync.scheduleAutoPush(600);
+          store.setExercisePreference(ex.id, rec.preference === val ? null : val);
+          sync.pushToGoogleDrive(true);
           renderGuideModalBody();
           onRenderAll();
         } else if (act === "jump-today") {
@@ -257,14 +256,17 @@ export function createModalController({ store, sync, onRenderAll, showToast }) {
   function openQuickAddModal(preselectExId = null) {
     const sel = document.getElementById("quickAddExSelect");
     const allEx = getAllExercises(store.state.customExercises);
+    const dislikedSet = new Set(Array.isArray(store.state.dislikedExercises) ? store.state.dislikedExercises : []);
+    const sortedEx = allEx.slice().sort((a, b) => Number(dislikedSet.has(a.id)) - Number(dislikedSet.has(b.id)));
     if (sel) {
-      sel.innerHTML = allEx
+      sel.innerHTML = sortedEx
         .map(ex => {
           const tag = ex.mode === "gym" ? "기구" : String(ex.id).startsWith("custom_") ? "내종목" : "홈트";
-          return `<option value="${ex.id}">[${tag}] ${ex.name} (${ex.targetMuscle})</option>`;
+          const dislikeTag = dislikedSet.has(ex.id) ? " · 👎 비선호" : "";
+          return `<option value="${ex.id}">[${tag}] ${ex.name} (${ex.targetMuscle})${dislikeTag}</option>`;
         })
         .join("");
-      const chosenId = preselectExId && allEx.some(x => x.id === preselectExId) ? preselectExId : (allEx[0] && allEx[0].id);
+      const chosenId = preselectExId && sortedEx.some(x => x.id === preselectExId) ? preselectExId : (sortedEx[0] && sortedEx[0].id);
       if (chosenId) sel.value = chosenId;
       syncQuickAddDefaults(chosenId);
     }
@@ -306,7 +308,7 @@ export function createModalController({ store, sync, onRenderAll, showToast }) {
       store.state.bodyCondition && Array.isArray(store.state.bodyCondition.painAreas)
         ? store.state.bodyCondition.painAreas
         : [];
-    const cands = getSwapCandidates(ex, swapTabMode, painAreas, store.state.customExercises);
+    const cands = getSwapCandidates(ex, swapTabMode, painAreas, store.state.customExercises, store.state.dislikedExercises);
     const listWrap = document.getElementById("swapCandidateList");
     if (!listWrap) return;
 
@@ -330,7 +332,10 @@ export function createModalController({ store, sync, onRenderAll, showToast }) {
         return `
           <button type="button" class="btn-tap swap-cand-card ${c.badgeType === "pain_active" ? "is-pain-safe" : ""}" data-swap-pick="${cand.id}">
             <div class="row-between" style="width:100%; gap:6px;">
-              <span class="badge ${badgeCls}" style="font-size:10px;">${c.tagText}</span>
+              <div class="row-gap" style="gap:4px; flex-wrap:wrap;">
+                <span class="badge ${badgeCls}" style="font-size:10px;">${c.tagText}</span>
+                ${c.isDisliked ? `<span class="badge badge-rose" style="font-size:9.5px;">👎 비선호</span>` : ""}
+              </div>
               <span style="font-size:10.5px; color:var(--text-muted); font-weight:700;">${cand.defaultSets}세트 × ${cand.defaultReps} · ${w}</span>
             </div>
             <div style="font-size:14.5px; font-weight:900; color:#ffffff;">${cand.name}</div>

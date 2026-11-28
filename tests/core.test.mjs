@@ -472,3 +472,36 @@ test("Smart swap, 1:1 Home<->Gym conversion, partial set preservation, Undo & bu
   assert.equal(items[3].id, "home_kickstand_rdl");
   assert.equal(items[3].swapReason, "pain");
 });
+
+test("Dislike toggle syncs dislikedExercises, pushes to bottom of candidates, & home_smr maps upper back/lats only", () => {
+  const smr = EXERCISES.find(x => x.id === "home_smr");
+  assert.equal(smr.name, "폼롤러 등 상부·광배근 이완 (SMR)");
+  assert.equal(smr.restSec, 20);
+  const smrMap = mapExerciseToMuscleRegions(smr);
+  assert.deepEqual(smrMap.stretch, ["traps_rear_delts", "lats"]);
+
+  // Calibrated restSec & unilateral labels
+  assert.equal(EXERCISES.find(x => x.id === "home_band_pullup").restSec, 90);
+  assert.equal(EXERCISES.find(x => x.id === "home_band_pullup").defaultReps, "4회");
+  assert.equal(EXERCISES.find(x => x.id === "home_dips").restSec, 75);
+  assert.equal(EXERCISES.find(x => x.id === "gym_leg_press").restSec, 90);
+  assert.equal(EXERCISES.find(x => x.id === "gym_leg_curl").restSec, 60);
+  assert.equal(EXERCISES.find(x => x.id === "home_kb_glute_bridge").restSec, 45);
+  assert.equal(EXERCISES.find(x => x.id === "home_kb_row").defaultReps, "좌우 각 10회");
+
+  const today = getWorkoutDateStr();
+  const store = createStore(makeMemoryStorage({ sessionDate: today }));
+  assert.equal(store.setExercisePreference("home_kb_floor_2arm", "dislike"), true);
+  assert.ok(store.state.dislikedExercises.includes("home_kb_floor_2arm"));
+
+  const cands = getSwapCandidates(EXERCISES.find(x => x.id === "home_deep_pushup"), "home", [], [], store.state.dislikedExercises);
+  const disIdx = cands.findIndex(c => c.ex.id === "home_kb_floor_2arm");
+  if (disIdx !== -1) {
+    assert.equal(cands[disIdx].isDisliked, true);
+    assert.ok(cands.slice(0, disIdx).every(c => !c.isDisliked));
+  }
+
+  // Toggle off removes from dislikedExercises
+  assert.equal(store.setExercisePreference("home_kb_floor_2arm", null), false);
+  assert.equal(store.state.dislikedExercises.includes("home_kb_floor_2arm"), false);
+});

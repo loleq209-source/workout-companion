@@ -388,25 +388,30 @@ export function createCardController({ store, timerCtrl, workTimerCtrl, sync, mo
             </div>
           </div>
 
-          <!-- 6. Bottom Utility Bar: Tempo (Left) + Pain Alternative Switch (Right) -->
-          <div style="display:flex; align-items:center; justify-content:space-between; min-height:30px; background:var(--card-2); border:1px solid var(--border); border-radius:9px; padding:3px 8px; gap:6px;">
-            <div style="display:flex; align-items:center; gap:5px; min-width:0; flex-shrink:1;">
-              <span style="font-size:11px; font-weight:800; color:var(--text-soft); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">⏱ ${tempo}</span>
-              ${enriched && enriched.unilateral ? `<span class="badge badge-purple" style="font-size:9.5px; padding:1px 5px; flex-shrink:0;">좌우 각각</span>` : ""}
+          <!-- 6. Bottom Utility Bar: Tempo (Left) + Dislike & Swap Controls (Right) -->
+          <div style="display:flex; align-items:center; justify-content:space-between; min-height:30px; background:var(--card-2); border:1px solid var(--border); border-radius:9px; padding:3px 7px; gap:5px;">
+            <div style="display:flex; align-items:center; gap:4px; min-width:0; flex-shrink:1;">
+              <span style="font-size:10.5px; font-weight:800; color:var(--text-soft); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">⏱ ${tempo}</span>
+              ${enriched && enriched.unilateral ? `<span class="badge badge-purple" style="font-size:9px; padding:1px 5px; flex-shrink:0;">좌우</span>` : ""}
             </div>
-            ${
-              alertAlt
-                ? `
-              <button type="button" data-card-action="open-swap-sheet" class="btn-tap" style="font-size:10.5px; font-weight:800; color:#fde047; background:rgba(250,204,21,0.18); border:1px solid rgba(250,204,21,0.55); border-radius:7px; height:24px; padding:0 8px; display:flex; align-items:center; gap:3px; white-space:nowrap; max-width:65%; overflow:hidden; text-overflow:ellipsis; flex-shrink:0;">
-                <span style="overflow:hidden; text-overflow:ellipsis;">🩹 ${alertAlt.matchedArea} 주의 · 종목 교체</span>
+            <div style="display:flex; align-items:center; gap:4px; flex-shrink:0;">
+              <button type="button" data-card-action="toggle-dislike" class="btn-tap" style="font-size:10px; font-weight:800; height:24px; padding:0 6px; border-radius:7px; white-space:nowrap; border:1px solid ${rec.preference === "dislike" ? "rgba(251,113,133,0.65)" : "var(--border)"}; background:${rec.preference === "dislike" ? "rgba(251,113,133,0.18)" : "rgba(255,255,255,0.04)"}; color:${rec.preference === "dislike" ? "var(--rose)" : "var(--text-muted)"};">
+                👎 비선호
               </button>
-            `
-                : `
-              <button type="button" data-card-action="open-swap-sheet" class="btn-tap" style="font-size:10.5px; font-weight:800; color:var(--accent); background:var(--accent-bg); border:1px solid rgba(163,230,53,0.35); border-radius:7px; height:24px; padding:0 8px; display:flex; align-items:center; gap:3px; white-space:nowrap; flex-shrink:0;">
-                🔄 종목 교체 · 대체
-              </button>
-            `
-            }
+              ${
+                alertAlt
+                  ? `
+                <button type="button" data-card-action="open-swap-sheet" class="btn-tap" style="font-size:10px; font-weight:800; color:#fde047; background:rgba(250,204,21,0.18); border:1px solid rgba(250,204,21,0.55); border-radius:7px; height:24px; padding:0 7px; display:flex; align-items:center; gap:2px; white-space:nowrap;">
+                  🩹 ${alertAlt.matchedArea} 교체
+                </button>
+              `
+                  : `
+                <button type="button" data-card-action="open-swap-sheet" class="btn-tap" style="font-size:10px; font-weight:800; color:var(--accent); background:var(--accent-bg); border:1px solid rgba(163,230,53,0.35); border-radius:7px; height:24px; padding:0 7px; display:flex; align-items:center; gap:2px; white-space:nowrap;">
+                  🔄 종목 교체 · 대체
+                </button>
+              `
+              }
+            </div>
           </div>
         </div>
       </div>
@@ -508,6 +513,11 @@ export function createCardController({ store, timerCtrl, workTimerCtrl, sync, mo
           if (modals && typeof modals.openSwapModal === "function") {
             modals.openSwapModal(store.state.todayCardIndex);
           }
+        } else if (act === "toggle-dislike") {
+          const isNowDisliked = store.setExercisePreference(ex.id, rec.preference === "dislike" ? null : "dislike");
+          sync.pushToGoogleDrive(true);
+          renderFocusedCard();
+          showToast(isNowDisliked ? `👎 [${ex.name}] 비선호로 체크됨 (이후 추천 후순위)` : `↺ [${ex.name}] 비선호 해제됨`);
         } else if (act === "undo-swap") {
           if (store.undoRoutineSwap(store.state.todayCardIndex)) {
             sync.scheduleAutoPush(300);
